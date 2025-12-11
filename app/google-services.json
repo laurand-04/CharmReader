@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "425236553954",
+    "project_id": "bdlogin-6130c",
+    "storage_bucket": "bdlogin-6130c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425236553954:android:99d5f4002e50fc288c7ebb",
+        "android_client_info": {
+          "package_name": "com.tfg.charmreader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyACu14xrJlF5CrRbUOVtHTK5FDP5rrO5Vs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

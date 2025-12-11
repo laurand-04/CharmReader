@@ -1,0 +1,14 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/tusLibros"
+        android:title="Tus libros" />
+    <item
+        android:id="@+id/estanteria"
+        android:title="Estanteria" />
+    <item
+        android:id="@+id/proximamente"
+        android:title="Próximamente" />
+    <item
+        android:id="@+id/espera"
+        android:title="A la espera" />
+</menu>

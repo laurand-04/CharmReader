@@ -1,0 +1,17 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="ThemeOverlay.Material3.BottomNavigationView." parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+    </style>
+    <style name="Base.Theme.CharmReader" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
+
+    <style name="Theme.CharmReader" parent="Base.Theme.CharmReader" />
+
+    <style name="BottomNavigation">
+
+    </style>
+
+</resources>

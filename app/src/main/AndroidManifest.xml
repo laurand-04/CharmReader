@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CharmReader"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <activity
+            android:name=".autentication.LoginActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".autentication.RegisterActivity" />
+
+        <activity android:name=".autentication.RecuperacionActivity" />
+
+        <activity android:name=".menu.MainActivity" />
+
+        <activity android:name=".menu.EstanteriaFragment" />
+
+        <activity android:name=".menu.EsperaFragment" />
+
+        <activity android:name=".menu.ProximamenteFragment" />
+
+        <activity android:name=".menu.TusLibrosFragment" />
+
+        <activity android:name=".objetosBD.API"/>
+
+        <activity android:name=".objetosBD.CCLibrosDeUsuario"/>
+
+        <activity android:name=".objetosBD.CCLibrosSinEstrenar"/>
+
+        <activity android:name=".objetosBD.Libro"/>
+
+        <activity android:name=".objetosBD.LibrosDeUsuario"/>
+
+        <activity android:name=".objetosBD.LibrosSinEstrenar"/>
+
+        <activity android:name=".objetosBD.Usuario"/>
+
+        <activity android:name=".CargarNuevoLibro"/>
+
+        <activity android:name=".NuevoFuturoLibro"/>
+
+        <activity android:name=".Visor"/>
+
+        <activity android:name=".Visor_n"/>
+
+
+    </application>
+
+</manifest>
