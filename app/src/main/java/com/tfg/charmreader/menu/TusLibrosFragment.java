@@ -62,11 +62,9 @@ public class TusLibrosFragment extends Fragment {
             if (listaLibrosUsuarioGlobal != null) {
                 for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
                     if (ldu.getId().getIdL() == libro.getId()) {
-
-                        String url = ldu.getRuta();  // <-- aquí está la URL
-
                         Intent intent = new Intent(getActivity(), Visor_n.class);
-                        intent.putExtra("URL_LIBRO", url);
+                        intent.putExtra("URL_LIBRO", ldu.getRuta());
+                        intent.putExtra("idL", ldu.getId().getIdL());
                         startActivity(intent);
                         return;
                     }

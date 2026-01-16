@@ -9,11 +9,36 @@ public class LibrosDeUsuario {
     private int capitulo;
     @SerializedName("ruta")
     private String ruta;
+    @SerializedName("scroll")
+    private float scroll;
+    @SerializedName("idEstanteria")
+    private int idEstanteria;
+    @SerializedName("valoracion")
+    private int valoracion;
+    @SerializedName("descripcion")
+    private String descripcion;
 
     public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub) {
         this.id = id;
         this.capitulo = capituloActual;
         this.ruta = rutaEpub;
+    }
+
+    public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub, float scroll) {
+        this.id = id;
+        this.capitulo = capituloActual;
+        this.ruta = rutaEpub;
+        this.scroll = scroll;
+    }
+
+    public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub, float scroll, int idEstanteria, int valoracion, String descripcion) {
+        this.id = id;
+        this.capitulo = capituloActual;
+        this.ruta = rutaEpub;
+        this.scroll = scroll;
+        this.idEstanteria = idEstanteria;
+        this.valoracion = valoracion;
+        this.descripcion = descripcion;
     }
 
     public CCLibrosDeUsuario getId() {
@@ -38,5 +63,26 @@ public class LibrosDeUsuario {
 
     public void setRuta(String ruta) {
         this.ruta = ruta;
+    }
+
+    public void setScroll(float scroll) {
+        this.scroll = scroll;
+    }
+    public float getScroll() {
+        return scroll;
+    }
+
+
+
+    public void setIdEstanteria(int idEstanteria) {
+        this.idEstanteria = idEstanteria;
+    }
+
+    public void setValoracion(int valoracion) {
+        this.valoracion = valoracion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
     }
 }

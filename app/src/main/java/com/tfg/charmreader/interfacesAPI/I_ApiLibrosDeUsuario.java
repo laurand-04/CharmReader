@@ -16,4 +16,7 @@ public interface I_ApiLibrosDeUsuario {
 
     @GET("/libros_de_usuarios/usuario/{idUsuario}")
     Call<List<LibrosDeUsuario>> obtenerLibrosDeUsuario(@Path("idUsuario") int idUsuario);
+
+    @GET("/libros_de_usuarios/usuario/{idUsuario}/libro/{idLibro}")
+    Call<LibrosDeUsuario> getLibrodeUsuario(@Path("idUsuario") int idUsuario, @Path("idLibro") int idLibro);
 }

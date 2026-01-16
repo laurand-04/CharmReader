@@ -143,7 +143,7 @@ public class CargarNuevoLibro extends AppCompatActivity {
         }
 
         String correo = user.getEmail();
-        int idUsuario = obtenerIdUsuarioDesdeAPI(correo);
+        int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI(correo);
 
         if (idUsuario == -1) {
             Log.e("PROGRESO", "No se pudo obtener ID de usuario, progreso no guardado");
@@ -175,25 +175,6 @@ public class CargarNuevoLibro extends AppCompatActivity {
             }
         }).start();
     }
-
-    private int obtenerIdUsuarioDesdeAPI(String correo) {
-        try {
-            Response<Usuario> resp = apiUsuario.getIdUsuarioPorCorreo(correo).execute(); // llama a tu API
-            if (resp.isSuccessful() && resp.body() != null) {
-                int idUsuario = resp.body().getId();
-                Log.e("PROGRESO", "El id del usuario es: " + idUsuario);
-                //Toast.makeText(this, "El id del usuario es: " + idUsuario, Toast.LENGTH_SHORT).show();
-                return idUsuario; // devuelve el ID del usuario
-            } else {
-                Log.e("API_ERROR_USUARIO (Clase:CargarNuevoLibro, metodo:obtenerIdUsuarioDesdeAPI)", "Código: " + resp.code());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1; // devuelve -1 si hubo error
-    }
-
-
 
 }
 
