@@ -1,4 +1,4 @@
-package com.tfg.charmreader;
+package com.tfg.charmreader.menu.tusLibros;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.gson.Gson;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibro;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.interfacesAPI.I_ApiUsuario;
@@ -20,7 +21,6 @@ import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.CCLibrosDeUsuario;
 import com.tfg.charmreader.objetosBD.Libro;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
-import com.tfg.charmreader.objetosBD.Usuario;
 
 import java.io.InputStream;
 
@@ -143,7 +143,7 @@ public class CargarNuevoLibro extends AppCompatActivity {
         }
 
         String correo = user.getEmail();
-        int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI(correo);
+        int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
 
         if (idUsuario == -1) {
             Log.e("PROGRESO", "No se pudo obtener ID de usuario, progreso no guardado");

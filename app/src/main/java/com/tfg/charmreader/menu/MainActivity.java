@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tfg.charmreader.R;
+import com.tfg.charmreader.menu.estanteria.EstanteriaFragment;
+import com.tfg.charmreader.menu.tusLibros.TusLibrosFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +22,14 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 
         // Cargar fragmento por defecto
-        loadFragment(new TusLibrosFragment());
+        //loadFragment(new TusLibrosFragment());
+
+        // PASO 1: Solo cargamos el fragmento por defecto si es la primera vez que se abre la actividad.
+        // Si savedInstanceState NO es nulo, Android ya ha restaurado el fragmento que estaba abierto
+        // (por ejemplo, el de Estanterías) y no debemos sobreescribirlo con el de Libros.
+        if (savedInstanceState == null) {
+            loadFragment(new TusLibrosFragment());
+        }
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
@@ -45,6 +54,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadFragment(Fragment fragment) {
+        // Evita recargar el mismo fragmento si ya es el que se está mostrando
+        Fragment actual = getSupportFragmentManager().findFragmentById(R.id.contenedor_fragmento);
+        if (actual != null && actual.getClass().equals(fragment.getClass())) {
+            return;
+        }
+
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.contenedor_fragmento, fragment)

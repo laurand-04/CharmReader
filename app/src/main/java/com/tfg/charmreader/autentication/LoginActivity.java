@@ -8,11 +8,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.menu.MainActivity;
 import com.tfg.charmreader.databinding.ActivityLoginBinding;
 
 import androidx.appcompat.app.AlertDialog;
 import android.content.DialogInterface;
+import android.util.Log;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -50,6 +52,7 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         startActivity(new Intent(this, MainActivity.class));
+
                         finish();
                     } else {
                         mostrarError(task.getException());

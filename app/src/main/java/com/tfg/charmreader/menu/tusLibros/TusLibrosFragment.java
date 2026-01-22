@@ -1,4 +1,4 @@
-package com.tfg.charmreader.menu;
+package com.tfg.charmreader.menu.tusLibros;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -18,41 +18,34 @@ import android.view.ViewGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.tfg.charmreader.CargarNuevoLibro;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Visor_n;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibro;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
-import com.tfg.charmreader.interfacesAPI.I_ApiUsuario;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.Libro;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
-import com.tfg.charmreader.objetosBD.Usuario;
-import com.tfg.charmreader.LibrosAdapter;
+import com.tfg.charmreader.menu.adapterRecyclerView.LibrosAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import retrofit2.Response;
-
 public class TusLibrosFragment extends Fragment {
 
-    private static final String TAG = "TusLibrosFragment";
+    //private static final String TAG = "TusLibrosFragment";
 
-    private I_ApiUsuario apiUsuario = API.getInstancia().create(I_ApiUsuario.class);
     private RecyclerView rvLibros;
     private LibrosAdapter adapter;
 
     // 🔥 VARIABLE GLOBAL PARA GUARDAR LISTA LIBROS-USUARIO
     private List<LibrosDeUsuario> listaLibrosUsuarioGlobal;
 
-    public TusLibrosFragment() { }
+    public TusLibrosFragment() {}
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tus_libros, container, false);
-
         rvLibros = view.findViewById(R.id.recyclerLibros);
         rvLibros.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -95,7 +88,14 @@ public class TusLibrosFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            cargarLibros();
+            // Le damos 500 milisegundos al servidor para que procese el guardado
+            // antes de pedir la lista actualizada.
+            if (rvLibros != null) {
+                rvLibros.postDelayed(() -> {
+                    Log.d("TusLibrosFragment", "Refrescando lista tras guardado...");
+                    cargarLibros();
+                }, 500);
+            }
         }
     }
 
@@ -105,7 +105,7 @@ public class TusLibrosFragment extends Fragment {
 
         new Thread(() -> {
             try {
-                int idUsuario = obtenerIdUsuarioDesdeAPI(firebaseUser.getEmail());
+                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
                 if (idUsuario == -1) return;
 
                 I_ApiLibrosDeUsuario apiLibrosUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
@@ -133,17 +133,5 @@ public class TusLibrosFragment extends Fragment {
                 Log.e("TusLibrosFragment", "Error cargando libros", e);
             }
         }).start();
-    }
-
-    private int obtenerIdUsuarioDesdeAPI(String correo) {
-        try {
-            Response<Usuario> resp = apiUsuario.getIdUsuarioPorCorreo(correo).execute();
-            if (resp.isSuccessful() && resp.body() != null) {
-                return resp.body().getId();
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Excepción al obtener ID de usuario", e);
-        }
-        return -1;
     }
 }

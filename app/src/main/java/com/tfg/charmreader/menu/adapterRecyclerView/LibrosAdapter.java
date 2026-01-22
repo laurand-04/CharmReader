@@ -1,4 +1,4 @@
-package com.tfg.charmreader;
+package com.tfg.charmreader.menu.adapterRecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.objetosBD.Libro;
-import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
 
 import java.util.List;
 

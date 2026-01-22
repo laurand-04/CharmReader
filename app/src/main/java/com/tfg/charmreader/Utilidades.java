@@ -2,38 +2,52 @@ package com.tfg.charmreader;
 
 import android.util.Log;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibro;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.interfacesAPI.I_ApiUsuario;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.Usuario;
 
+import java.io.IOException;
+
 import retrofit2.Response;
 
 public class Utilidades {
 
-    public static I_ApiLibro apiLibro = API.getInstancia().create(I_ApiLibro.class);
-    public static  I_ApiLibrosDeUsuario apiLibrosDeUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
-    public static I_ApiUsuario apiUsuario = API.getInstancia().create(I_ApiUsuario.class);
+    public static I_ApiLibro apiLibro =
+            API.getInstancia().create(I_ApiLibro.class);
+    public static I_ApiLibrosDeUsuario apiLibrosDeUsuario =
+            API.getInstancia().create(I_ApiLibrosDeUsuario.class);
+    public static I_ApiUsuario apiUsuario =
+            API.getInstancia().create(I_ApiUsuario.class);
 
-    public static int obtenerIdUsuarioDesdeAPI(String correo) {
-        try {
-            Response<Usuario> resp = apiUsuario.getIdUsuarioPorCorreo(correo).execute(); // llama a tu API
-            if (resp.isSuccessful() && resp.body() != null) {
-                int idUsuario = resp.body().getId();
-                Log.e("PROGRESO", "El id del usuario es: " + idUsuario);
-                //Toast.makeText(this, "El id del usuario es: " + idUsuario, Toast.LENGTH_SHORT).show();
-                return idUsuario; // devuelve el ID del usuario
-            } else {
-                Log.e("API_ERROR_USUARIO (Clase:CargarNuevoLibro, metodo:obtenerIdUsuarioDesdeAPI)", "Código: " + resp.code());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1; // devuelve -1 si hubo error
+    // 🔹 CALLBACK
+    public interface IdUsuarioCallback {
+        void onIdCargado(int idUsuario);
     }
-
-
-
-
+    public static int obtenerIdUsuarioDesdeAPI() {
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (firebaseUser == null || firebaseUser.getEmail() == null) {
+            Log.e("AUTH", "Usuario Firebase nulo");
+            return -1;
+        }
+        return getIdUsuarioPorCorreo(firebaseUser.getEmail());
+    }
+    private static int getIdUsuarioPorCorreo(String correo){
+        try {
+            Response<Usuario> response = apiUsuario.getIdUsuarioPorCorreo(correo).execute();
+            if (response.isSuccessful() && response.body() != null) {
+                Log.d("PROGRESO", "ID obtenido getIdUsuarioPorCorreo: " + response.body().getId());
+                return response.body().getId();
+            } else {
+                Log.e("API_ERROR", "Respuesta inválida en getIdUsuarioPorCorreo");
+            }
+        } catch (IOException e) {
+            Log.d("Error clase utilidad", "problema en getIdUsuarioPorCorreo");
+            throw new RuntimeException(e);
+        }
+        return -1;
+    }
 }

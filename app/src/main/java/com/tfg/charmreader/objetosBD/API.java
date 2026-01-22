@@ -8,7 +8,7 @@ public class API {
 
     private API(){
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.1.54:2025/") // IP de mi API
+                .baseUrl("http://192.168.1.67:2025/") // IP de mi API
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -17,7 +17,7 @@ public class API {
     public static synchronized Retrofit getInstancia() {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()
-                    .baseUrl("http://192.168.1.54:2025/") // IP de mi API
+                    .baseUrl("http://192.168.1.67:2025/") // IP de mi API
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }

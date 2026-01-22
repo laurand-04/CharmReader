@@ -35,13 +35,13 @@
 
         <activity android:name=".menu.MainActivity" />
 
-        <activity android:name=".menu.EstanteriaFragment" />
+        <activity android:name=".menu.estanteria.EstanteriaFragment" />
 
         <activity android:name=".menu.EsperaFragment" />
 
         <activity android:name=".menu.ProximamenteFragment" />
 
-        <activity android:name=".menu.TusLibrosFragment" />
+        <activity android:name=".menu.tusLibros.TusLibrosFragment" />
 
         <activity android:name=".objetosBD.API"/>
 
@@ -57,13 +57,17 @@
 
         <activity android:name=".objetosBD.Usuario"/>
 
-        <activity android:name=".CargarNuevoLibro"/>
+        <activity android:name=".menu.tusLibros.CargarNuevoLibro"/>
 
         <activity android:name=".NuevoFuturoLibro"/>
 
         <activity android:name=".Visor"/>
 
-        <activity android:name=".Visor_n"/>
+        <activity android:name=".menu.tusLibros.Visor_n"/>
+
+        <activity android:name=".objetosBD.Estanteria"/>
+
+        <activity android:name=".menu.estanteria.CargarNuevaEstanteria"/>
 
 
     </application>

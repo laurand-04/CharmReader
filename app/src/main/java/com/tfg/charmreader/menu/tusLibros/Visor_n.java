@@ -1,6 +1,5 @@
-package com.tfg.charmreader;
+package com.tfg.charmreader.menu.tusLibros;
 
-import android.adservices.ondevicepersonalization.OnDevicePersonalizationException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,10 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.gson.Gson;
-import com.tfg.charmreader.objetosBD.CCLibrosDeUsuario;
+import com.tfg.charmreader.R;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
-import com.tfg.charmreader.objetosBD.Usuario;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +24,6 @@ import java.util.List;
 import nl.siegmann.epublib.domain.Resource;
 import nl.siegmann.epublib.domain.TOCReference;
 import nl.siegmann.epublib.epub.EpubReader;
-import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 public class Visor_n extends AppCompatActivity {
@@ -164,7 +161,7 @@ public class Visor_n extends AppCompatActivity {
                 if (user == null) return;
 
                 String correo = user.getEmail();
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI(correo);
+                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
                 int idLibro = getIntent().getIntExtra("idL", -1);
 
                 if (idUsuario == -1 || idLibro == -1) return;
@@ -218,7 +215,11 @@ public class Visor_n extends AppCompatActivity {
                 if (user == null) return;
 
                 int idLibro = getIntent().getIntExtra("idL", -1);
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI(user.getEmail());
+                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
+                if(idUsuario == -1 || idLibro == -1){
+                    Log.e("ERROR en Visor_n", "Error con idusuario o idLibro en cargarProgresoInicial");
+                    return;
+                }
 
                 Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
                         .getLibrodeUsuario(idUsuario, idLibro).execute();
