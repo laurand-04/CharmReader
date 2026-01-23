@@ -13,6 +13,8 @@ public class Estanteria {
     @SerializedName("nombre")
     private String nombre;
 
+    public Estanteria(){}
+
     public Estanteria(int idU, String nombre) {
         this.idU = idU;
         this.nombre = nombre;

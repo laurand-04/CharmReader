@@ -14,7 +14,7 @@ public class LibrosDeUsuario {
     @SerializedName("idEstanteria")
     private int idEstanteria;
     @SerializedName("valoracion")
-    private int valoracion;
+    private double valoracion;
     @SerializedName("descripcion")
     private String descripcion;
 
@@ -31,7 +31,7 @@ public class LibrosDeUsuario {
         this.scroll = scroll;
     }
 
-    public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub, float scroll, int idEstanteria, int valoracion, String descripcion) {
+    public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub, float scroll, int idEstanteria, double valoracion, String descripcion) {
         this.id = id;
         this.capitulo = capituloActual;
         this.ruta = rutaEpub;
@@ -78,11 +78,19 @@ public class LibrosDeUsuario {
         this.idEstanteria = idEstanteria;
     }
 
-    public void setValoracion(int valoracion) {
+    public void setValoracion(double valoracion) {
         this.valoracion = valoracion;
+    }
+
+    public double getValoracion() {
+        return valoracion;
     }
 
     public void setDescripcion(String descripcion) {
         this.descripcion = descripcion;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
     }
 }

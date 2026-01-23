@@ -42,8 +42,10 @@ public class EstanteriaFragment extends Fragment {
         rvEstanterias.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // Configuración del click corregida para usar el objeto directo
+        // En EstanteriaFragment.java
         adapter = new EstanteriasAdapter(new ArrayList<>(), estanteria -> {
-            Intent intent = new Intent(getActivity(), Visor_n.class); //ESTOY HAY QUE CAMBIARLO A LA  CLASE QUE LISTA TODOS LOS LIBROS DE UNA ESTANTERIA
+            Log.d("DEBUG_APP", "CLICK DETECTADO en: " + estanteria.getNombre()); // Si esto no sale, el problema es el Adapter
+            Intent intent = new Intent(getActivity(), LibrosEstanteria.class);
             intent.putExtra("Nombre", estanteria.getNombre());
             intent.putExtra("idEstanteria", estanteria.getId());
             startActivity(intent);

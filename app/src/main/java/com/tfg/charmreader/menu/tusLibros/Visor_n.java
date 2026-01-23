@@ -99,6 +99,7 @@ public class Visor_n extends AppCompatActivity {
     private void nextChapter() {
         if (currentChapter < chapters.size() - 1) {
             currentChapter++;
+            scrollGuardado = 0f; // Resetear scroll para el nuevo capítulo
             showChapter(currentChapter);
         }
     }
@@ -106,6 +107,7 @@ public class Visor_n extends AppCompatActivity {
     private void prevChapter() {
         if (currentChapter > 0) {
             currentChapter--;
+            scrollGuardado = 0f; // Resetear scroll para el nuevo capítulo
             showChapter(currentChapter);
         }
     }
@@ -244,7 +246,6 @@ public class Visor_n extends AppCompatActivity {
     }
 
     private void aplicarScroll() {
-        // Usamos un delay un poco mayor para asegurar el renderizado
         webViewContent.postDelayed(() -> {
             float scale = webViewContent.getScale();
             int contentHeight = (int) (webViewContent.getContentHeight() * scale);
@@ -254,13 +255,13 @@ public class Visor_n extends AppCompatActivity {
             if (maxScroll > 0) {
                 int scrollY = (int) (maxScroll * scrollGuardado);
                 webViewContent.scrollTo(0, scrollY);
-                Log.d("SCROLL_SUCCESS", "Scroll realizado a: " + scrollY + " de un máximo de " + maxScroll);
+                Log.d("SCROLL_SUCCESS", "Scroll realizado a: " + scrollY);
 
-                // OJO: No pongas scrollGuardado = 0 aquí todavía,
-                // pruébalo primero comentando esa línea para ver si funciona.
+                // IMPORTANTE: Reseteamos para que no afecte al pasar de capítulo
+                scrollGuardado = 0f;
             } else {
-                // Si entra aquí, es que el WebView cree que el contenido mide 0
-                Log.e("SCROLL_FAIL", "No se pudo scroll: contentHeight=" + contentHeight + " viewHeight=" + viewHeight);
+                Log.e("SCROLL_FAIL", "Reintentando scroll...");
+                // Si falla porque el WebView no ha renderizado, podrías reintentar una vez más
             }
         }, 500);
     }

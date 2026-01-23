@@ -69,6 +69,13 @@
 
         <activity android:name=".menu.estanteria.CargarNuevaEstanteria"/>
 
+        <activity android:name=".menu.estanteria.CargarNuevoLibroEstanteria"/>
+
+        <activity android:name=".menu.estanteria.LibrosEstanteria"/>
+
+        <activity android:name=".menu.estanteria.ValoracionLibro"/>
+
+
 
     </application>
 
