@@ -6,6 +6,7 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
 
     <application
@@ -35,28 +36,6 @@
 
         <activity android:name=".menu.MainActivity" />
 
-        <activity android:name=".menu.estanteria.EstanteriaFragment" />
-
-        <activity android:name=".menu.EsperaFragment" />
-
-        <activity android:name=".menu.ProximamenteFragment" />
-
-        <activity android:name=".menu.tusLibros.TusLibrosFragment" />
-
-        <activity android:name=".objetosBD.API"/>
-
-        <activity android:name=".objetosBD.CCLibrosDeUsuario"/>
-
-        <activity android:name=".objetosBD.CCLibrosSinEstrenar"/>
-
-        <activity android:name=".objetosBD.Libro"/>
-
-        <activity android:name=".objetosBD.LibrosDeUsuario"/>
-
-        <activity android:name=".objetosBD.LibrosSinEstrenar"/>
-
-        <activity android:name=".objetosBD.Usuario"/>
-
         <activity android:name=".menu.tusLibros.CargarNuevoLibro"/>
 
         <activity android:name=".NuevoFuturoLibro"/>
@@ -65,8 +44,6 @@
 
         <activity android:name=".menu.tusLibros.Visor_n"/>
 
-        <activity android:name=".objetosBD.Estanteria"/>
-
         <activity android:name=".menu.estanteria.CargarNuevaEstanteria"/>
 
         <activity android:name=".menu.estanteria.CargarNuevoLibroEstanteria"/>
@@ -74,6 +51,10 @@
         <activity android:name=".menu.estanteria.LibrosEstanteria"/>
 
         <activity android:name=".menu.estanteria.ValoracionLibro"/>
+
+        <activity android:name=".menu.proximamente.BuscadorAPIExterna"/>
+
+        <activity android:name=".menu.proximamente.ProximoLibro"/>
 
 
 

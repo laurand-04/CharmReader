@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.menu.estanteria.EstanteriaFragment;
+import com.tfg.charmreader.menu.proximamente.ProximamenteFragment;
 import com.tfg.charmreader.menu.tusLibros.TusLibrosFragment;
 
 public class MainActivity extends AppCompatActivity {
