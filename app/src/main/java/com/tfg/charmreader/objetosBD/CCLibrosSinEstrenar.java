@@ -1,23 +1,29 @@
 package com.tfg.charmreader.objetosBD;
 
-public class CCLibrosSinEstrenar {
-    private int idu;      // ID del usuario
-    private int idlibro;  // ID del libro
+import com.google.gson.annotations.SerializedName;
 
-    public CCLibrosSinEstrenar(int idu, int idlibro) {
+import java.io.Serializable;
+
+public class CCLibrosSinEstrenar implements Serializable {
+    @SerializedName("idu")
+    private int idu;
+    @SerializedName("nombre")
+    private String nombre;
+
+    public CCLibrosSinEstrenar(int idu, String idlibro) {
         this.idu = idu;
-        this.idlibro = idlibro;
+        this.nombre = idlibro;
     }
 
     public int getIdu() {
         return idu;
     }
 
-    public int getIdlibro() {
-        return idlibro;
+    public String getNombre() {
+        return nombre;
     }
 
-    public void setIdlibro(int idlibro) {
-        this.idlibro = idlibro;
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
     }
 }

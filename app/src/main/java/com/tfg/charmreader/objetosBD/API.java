@@ -1,5 +1,8 @@
 package com.tfg.charmreader.objetosBD;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -16,9 +19,13 @@ public class API {
 
     public static synchronized Retrofit getInstancia() {
         if (retrofit == null) {
+            Gson gson = new GsonBuilder()
+                    .setDateFormat("yyyy-MM-dd")
+                    .create();
+
             retrofit = new Retrofit.Builder()
-                    .baseUrl("http://192.168.1.59:2025/") // IP de mi API
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .baseUrl("http://192.168.1.59:2025/")
+                    .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
         }
         return retrofit;

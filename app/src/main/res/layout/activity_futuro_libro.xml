@@ -10,6 +10,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Detalles del Lanzamiento"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="24dp"
+            android:textColor="@color/black"/>
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -17,7 +26,7 @@
             android:hint="Título del libro">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etTitulo"
+                android:id="@+id/etDetalleTitulo"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textCapSentences" />
@@ -31,7 +40,7 @@
             android:hint="Autor">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etAutor"
+                android:id="@+id/etDetalleAutor"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName" />
@@ -46,22 +55,19 @@
             app:startIconDrawable="@android:drawable/ic_menu_my_calendar">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etFecha"
+                android:id="@+id/etDetalleFecha"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:focusable="false"
-                android:clickable="true"
-                android:cursorVisible="false"
-                android:longClickable="false" />
+                android:clickable="true" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGuardar"
+            android:id="@+id/btnActualizar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="32dp"
-            android:padding="12dp"
-            android:text="Guardar Libro"
+            android:text="Guardar Cambios"
             app:cornerRadius="8dp" />
 
     </LinearLayout>

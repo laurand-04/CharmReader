@@ -4,16 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".menu.EsperaFragment">
+    tools:context=".menu.futuro.EsperaFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- RecyclerView para mostrar los libros -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerLibrosSinEstrenar"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="A la espera" />
+        android:layout_above="@id/fab_add_LibrosSinEstrenar"
+        android:padding="8dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add"
+        android:id="@+id/fab_add_LibrosSinEstrenar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="Añadir"
@@ -22,6 +24,6 @@
         android:layout_margin="16dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        app:backgroundTint="#BB86FC"/>
+        app:backgroundTint="?attr/colorPrimary"/>
 
 </RelativeLayout >

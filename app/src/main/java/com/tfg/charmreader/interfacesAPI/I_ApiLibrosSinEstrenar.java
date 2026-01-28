@@ -17,7 +17,7 @@ public interface I_ApiLibrosSinEstrenar {
     @GET("/libros_sin_estrenar/usuario/{id}")
     Call<ArrayList<LibrosSinEstrenar>> getLibrosSinEstrenarPorUsuario(@Path("id") int id);
 
-    @POST("/libros_sin_estrenar")
+    @POST("/libros_sin_estrenar/nuevo")
     Call<LibrosSinEstrenar> guardarLibrosSinEstrenar(@Body LibrosSinEstrenar librosSinEstrenar);
 
     @PUT("/libros_sin_estrenar/{idu}/{nombre}")
