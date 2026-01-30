@@ -2,17 +2,17 @@ package com.tfg.charmreader.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
-import com.tfg.charmreader.Public;
+import com.tfg.charmreader.menu.publ.Public;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.menu.estanteria.EstanteriaFragment;
-import com.tfg.charmreader.menu.futuro.EsperaFragment;
-import com.tfg.charmreader.menu.proximamente.ProximamenteFragment;
-import com.tfg.charmreader.menu.tusLibros.TusLibrosFragment;
+import com.tfg.charmreader.menu.priv.estanteria.EstanteriaFragment;
+import com.tfg.charmreader.menu.priv.futuro.EsperaFragment;
+import com.tfg.charmreader.menu.priv.proximamente.ProximamenteFragment;
+import com.tfg.charmreader.menu.priv.tusLibros.TusLibrosFragment;
 
 public class MainActivity extends AppCompatActivity {
 
