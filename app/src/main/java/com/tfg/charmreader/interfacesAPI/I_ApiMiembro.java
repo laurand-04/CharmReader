@@ -1,11 +1,12 @@
 package com.tfg.charmreader.interfacesAPI;
 
+import com.tfg.charmreader.objetosBD.GrupoLectura;
 import com.tfg.charmreader.objetosBD.Miembro;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.*;
 
-public interface I_APIMiembro {
+public interface I_ApiMiembro {
     @POST("miembros/unirse")
     Call<Miembro> unirse(@Body Miembro miembro);
 
@@ -20,4 +21,7 @@ public interface I_APIMiembro {
 
     @GET("miembros/grupo/{idGrupo}/contar")
     Call<Long> contarMiembros(@Path("idGrupo") int idGrupo);
+
+    @GET("miembros/usuario/{idUsuario}/grupos")
+    Call<List<GrupoLectura>> obtenerGruposDondeEsMiembro(@Path("idUsuario") int idUsuario);
 }

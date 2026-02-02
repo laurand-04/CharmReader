@@ -12,8 +12,8 @@ import com.google.android.material.tabs.TabLayout;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_APICatalogo;
-import com.tfg.charmreader.interfacesAPI.I_APIMiembro;
-import com.tfg.charmreader.interfacesAPI.I_APIValoracion;
+import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
+import com.tfg.charmreader.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookIntAdapter;
 import com.tfg.charmreader.menu.publ.adapterReclyclerView.ValoracionAdapter;
@@ -35,9 +35,9 @@ public class InfoGrupoPublica extends AppCompatActivity {
     private ValoracionAdapter valoracionAdapter;
     private Button btnSuscribirse, btnDesubscribirse;
 
-    private final I_APIMiembro apiMiembro = API.getInstancia().create(I_APIMiembro.class);
+    private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
     private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
-    private final I_APIValoracion apiValoracion = API.getInstancia().create(I_APIValoracion.class);
+    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
 
     private int idUsuarioLogueado;
 

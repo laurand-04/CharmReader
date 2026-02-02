@@ -14,7 +14,7 @@ public interface I_ApiGrupoLectura {
     @GET("/grupo/todos")
     Call<List<GrupoLectura>> obtenerGrupos();
     @GET("/grupo/usuario/{id}")
-    Call<List<GrupoLectura>> obtenerGruposDeUsuario(@Path("id") int idUsuario);
+    Call<List<GrupoLectura>> obtenerGruposPorAdmin(@Path("id") int id);
 
     @GET("/grupo/buscar/{nombre}")
     Call<GrupoLectura> buscarGrupoPorNombre(@Path("nombre") String nombre);

@@ -7,6 +7,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.menu.publ.explorar.ExplorarFragment;
+import com.tfg.charmreader.menu.publ.misGrupos.MisGruposFragment;
 
 public class Public extends AppCompatActivity {
 

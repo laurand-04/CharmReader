@@ -11,16 +11,12 @@ public class Votacion implements Serializable {
     private int idGrupo;
 
     @SerializedName("idBook")
-    private int idBook; // int en API
+    private int idBook;
 
-    @SerializedName("valor")
-    private boolean valor;
-
-    public Votacion(int idUsuario, int idGrupo, int idBook, boolean valor) {
+    public Votacion(int idUsuario, int idGrupo, int idBook) {
         this.idUsuario = idUsuario;
         this.idGrupo = idGrupo;
         this.idBook = idBook;
-        this.valor = valor;
     }
 
     public int getIdUsuario() {
@@ -45,13 +41,5 @@ public class Votacion implements Serializable {
 
     public void setIdBook(int idBook) {
         this.idBook = idBook;
-    }
-
-    public boolean isValor() {
-        return valor;
-    }
-
-    public void setValor(boolean valor) {
-        this.valor = valor;
     }
 }

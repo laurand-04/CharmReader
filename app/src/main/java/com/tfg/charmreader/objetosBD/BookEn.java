@@ -2,7 +2,9 @@ package com.tfg.charmreader.objetosBD;
 
 import com.google.gson.annotations.SerializedName;
 
-public class BookEn {
+import java.io.Serializable;
+
+public class BookEn implements Serializable {
     @SerializedName("id")
     private int id;
     @SerializedName("idU")

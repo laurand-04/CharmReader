@@ -10,6 +10,9 @@ public class Valoracion implements Serializable {
     @SerializedName("idUsuario")
     private int idUsuario;
 
+    @SerializedName("idGrupo")
+    private int idGrupo;
+
     @SerializedName("calificacion")
     private int calificacion;
 
@@ -73,5 +76,13 @@ public class Valoracion implements Serializable {
 
     public void setIdReferencia(int idReferencia) {
         this.idReferencia = idReferencia;
+    }
+
+    public int getIdGrupo() {
+        return idGrupo;
+    }
+
+    public void setIdGrupo(int idGrupo) {
+        this.idGrupo = idGrupo;
     }
 }

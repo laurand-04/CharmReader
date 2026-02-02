@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="160dp"
+            android:layout_height="240dp"
+            android:layout_gravity="center"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="8dp"
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeWidth="0dp"
+            android:layout_marginTop="20dp">
+            <ImageView
+                android:id="@+id/ivDetallePortada"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_libro" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tvDetalleTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:textAlignment="center"
+            android:textColor="#212121"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:text="Título del Libro" />
+
+        <TextView
+            android:id="@+id/tvDetalleSubtitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textColor="#757575"
+            android:textSize="16sp"
+            android:text="Subtítulo aquí" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"
+            android:layout_marginVertical="20dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:baselineAligned="false">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="AUTOR" android:textSize="10sp" android:textStyle="bold" android:textColor="#1976D2"/>
+                <TextView android:id="@+id/tvDetalleAutor" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="---" android:textColor="#424242"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="AÑO" android:textSize="10sp" android:textStyle="bold" android:textColor="#1976D2"/>
+                <TextView android:id="@+id/tvDetalleAnio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="---" android:textColor="#424242"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="TEMA" android:textSize="10sp" android:textStyle="bold" android:textColor="#1976D2"/>
+                <TextView android:id="@+id/tvDetalleTema" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="---" android:textColor="#424242" android:maxLines="1" android:ellipsize="end"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RESUMEN"
+            android:layout_marginTop="24dp"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#1976D2"
+            android:letterSpacing="0.1"/>
+
+        <TextView
+            android:id="@+id/tvDetalleResumen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:lineSpacingExtra="4dp"
+            android:text="Aquí va la descripción larga del libro..."
+            android:textColor="#616161"
+            android:textSize="15sp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

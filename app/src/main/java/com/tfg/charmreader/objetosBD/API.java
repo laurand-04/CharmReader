@@ -11,7 +11,7 @@ public class API {
 
     private API(){
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://192.168.1.59:2025/") // IP de mi API
+                .baseUrl("http://192.168.1.66:2025/") // IP de mi API
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
@@ -24,7 +24,7 @@ public class API {
                     .create();
 
             retrofit = new Retrofit.Builder()
-                    .baseUrl("http://192.168.1.59:2025/")
+                    .baseUrl("http://192.168.1.66:2025/")
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
         }

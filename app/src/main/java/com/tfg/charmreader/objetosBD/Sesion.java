@@ -4,16 +4,17 @@ import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Date;
 
 public class Sesion implements Serializable {
     @SerializedName("idGrupo")
     private int idGrupo;
 
     @SerializedName("fecha")
-    private LocalDate fecha; // LocalDate en API
+    private Date fecha; // LocalDate en API
 
     @SerializedName("hora")
-    private LocalTime hora; // LocalTime en API
+    private String hora; // LocalTime en API
 
     @SerializedName("capituloInicio")
     private int capituloInicio;
@@ -29,19 +30,19 @@ public class Sesion implements Serializable {
         this.idGrupo = idGrupo;
     }
 
-    public LocalDate getFecha() {
+    public Date getFecha() {
         return fecha;
     }
 
-    public void setFecha(LocalDate fecha) {
+    public void setFecha(Date fecha) {
         this.fecha = fecha;
     }
 
-    public LocalTime getHora() {
+    public String getHora() {
         return hora;
     }
 
-    public void setHora(LocalTime hora) {
+    public void setHora(String hora) {
         this.hora = hora;
     }
 

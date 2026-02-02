@@ -7,8 +7,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.interfacesAPI.I_APIMiembro;
-import com.tfg.charmreader.interfacesAPI.I_APIValoracion;
+import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
+import com.tfg.charmreader.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.GrupoLectura;
 import com.tfg.charmreader.objetosBD.Valoracion;
@@ -25,8 +25,8 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
 
     private List<GrupoLectura> grupos;
     private OnItemClickListener listener;
-    private final I_APIMiembro apiMiembro = API.getInstancia().create(I_APIMiembro.class);
-    private final I_APIValoracion apiValoracion = API.getInstancia().create(I_APIValoracion.class);
+    private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
+    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
 
     public interface OnItemClickListener {
         void onItemClick(GrupoLectura grupo);
