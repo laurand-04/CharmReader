@@ -9,6 +9,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.tfg.charmreader.Utilidades;
+import com.tfg.charmreader.admin.AdminMainActivity;
 import com.tfg.charmreader.menu.MainActivity;
 import com.tfg.charmreader.databinding.ActivityLoginBinding;
 
@@ -43,21 +44,37 @@ public class LoginActivity extends AppCompatActivity {
     private void login() {
         String email = binding.emailEditText.getText().toString().trim();
         String password = binding.passwordEditText.getText().toString().trim();
+
         if (email.isEmpty() || password.isEmpty()) {
-            mostrarAlerta("Alerta", "Rellena todos los campos para poder iniciar sesion");
+            mostrarAlerta("Alerta", "Rellena todos los campos para poder iniciar sesión");
             return;
         }
 
+        // 1. COMPROBACIÓN DE MODO ADMINISTRADOR (HARDCODED PARA TFG)
+        // Puedes usar un correo específico de admin que registres en Firebase
+        if (email.equals("admin") && password.equals("admin")) {
+            startActivity(new Intent(this, AdminMainActivity.class));
+            finish();
+            return;
+        }
+
+        // 2. LOGUEO NORMAL PARA USUARIOS
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        startActivity(new Intent(this, MainActivity.class));
-
-                        finish();
+                        // Aquí podrías incluso preguntar a tu API si este ID de usuario
+                        // tiene ROL_ADMIN en tu base de datos SQL
+                        irAMainActivity();
                     } else {
                         mostrarError(task.getException());
                     }
                 });
+    }
+
+    private void irAMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 
     public void mostrarAlerta(String titulo, String contenido) {

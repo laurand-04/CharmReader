@@ -6,6 +6,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 
 public interface I_ApiGrupoLectura {
@@ -18,4 +19,10 @@ public interface I_ApiGrupoLectura {
 
     @GET("/grupo/buscar/{nombre}")
     Call<GrupoLectura> buscarGrupoPorNombre(@Path("nombre") String nombre);
+
+    @GET("/grupo/buscar/{id}")
+    Call<GrupoLectura> obtenerGrupoPorId(@Path("id") int idGrupo);
+
+    @PUT("grupo/actualizar")
+    Call<GrupoLectura> actualizar(@Body GrupoLectura grupo);
 }

@@ -1,0 +1,7 @@
+<resources>
+    <string-array name="frecuencias_array">
+        <item>Semanal</item>
+        <item>Quincenal</item>
+        <item>Mensual</item>
+    </string-array>
+</resources>

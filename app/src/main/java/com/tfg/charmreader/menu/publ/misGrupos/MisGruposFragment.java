@@ -81,12 +81,10 @@ public class MisGruposFragment extends Fragment {
             if (tabLayout.getSelectedTabPosition() == 0) {
                 // Pestaña "Suscrito" -> Información del grupo
                 intent = new Intent(getActivity(), InfoGrupoPrivada.class);
-                intent.putExtra("objetoGrupo", grupo);
             } else {
                 // Pestaña "Creados" -> Gestión del grupo (ManejoGrupo)
                 intent = new Intent(getActivity(), ManejoGrupo.class);
             }
-
             intent.putExtra("objetoGrupo", grupo);
             startActivity(intent);
         });

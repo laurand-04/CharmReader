@@ -10,6 +10,9 @@ public interface I_APICatalogo {
     @POST("catalogo/añadir")
     Call<CatalogoLectura> añadirLibro(@Body CatalogoLectura lectura);
 
+    @POST("catalogo/cerrarVotaciones/{idGrupo}")
+    Call<Void> cerrarVotaciones(@Path("idGrupo") int idGrupo);
+
     @GET("catalogo/grupo/{idGrupo}")
     Call<List<CatalogoLectura>> verCatalogo(@Path("idGrupo") int idGrupo);
 

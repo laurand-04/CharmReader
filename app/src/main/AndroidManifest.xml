@@ -74,6 +74,19 @@
 
         <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionGrupo"/>
 
+        <activity android:name=".menu.publ.misGrupos.creados.Suscritos"/>
+
+        <activity android:name=".menu.publ.misGrupos.creados.EditarGrupo"/>
+
+        <activity android:name=".menu.publ.misGrupos.creados.NuevoLibroPropuesto"/>
+
+        <activity android:name=".menu.publ.explorar.NuevoGrupo"/>
+
+        <activity android:name=".autentication.Perfil"/>
+
+        <activity android:name=".admin.AdminMainActivity"/>
+
+
     </application>
 
 </manifest>

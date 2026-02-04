@@ -1,55 +1,132 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:background="#F0F4F8"> <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="PANEL DE ADMINISTRACIÓN"
-    android:textColor="#37474F"
-    android:textSize="12sp"
-    android:textStyle="bold"
-    android:letterSpacing="0.1"
-    android:layout_marginBottom="16dp"/>
+    android:background="#F8F9FA">
 
-    <TextView
-        android:id="@+id/tvNombreGestion"
+    <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Cargando grupo..."
-        android:textColor="#102A43"
-        android:textSize="26sp"
-        android:textStyle="bold" />
+        android:background="@android:color/white"
+        app:elevation="0dp">
 
-    <TextView
-        android:id="@+id/tvIdGestion"
+        <LinearLayout
+            android:id="@+id/btnCabeceraGrupo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="#EEEEEE">
+                <ImageView
+                    android:id="@+id/ivAvatarGrupo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_libro" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView
+                    android:id="@+id/tvTituloManejo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+                <TextView
+                    android:id="@+id/tvSubsManejo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#388E3C"
+                    android:textSize="13sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/tvUbicacionManejo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#757575"
+                    android:textSize="12sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginTop="2dp"/>
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/ivEditarGrupo"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="10dp"
+                android:src="@android:drawable/ic_menu_manage"
+                app:tint="#1976D2" />
+        </LinearLayout>
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabsManejo"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            app:tabIndicatorColor="#1976D2"
+            app:tabSelectedTextColor="#1976D2"
+            app:tabMode="fixed"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPagerManejo"
         android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="ID: --"
-        android:textColor="#627D98"
-        android:textSize="14sp" />
+        android:layout_gravity="bottom|end"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:layout_margin="16dp">
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:background="#D9E2EC"
-        android:layout_marginVertical="20dp"/>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabFinalizarVotacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:srcCompat="@drawable/ic_gavel"
+            app:backgroundTint="#424242"
+            app:tint="@android:color/white"
+            app:elevation="2dp"
+            app:pressedTranslationZ="0dp"
+            app:borderWidth="0dp"
+            android:contentDescription="Finalizar votaciones" />
 
-    <Button
-        android:id="@+id/btnVerMiembros"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Gestionar Miembros"
-        android:layout_marginBottom="8dp"
-        android:backgroundTint="#243B53"/>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAñadirLectura"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@android:drawable/ic_input_add"
+            app:backgroundTint="#1976D2"
+            app:tint="@android:color/white"
+            app:elevation="2dp"
+            app:pressedTranslationZ="0dp"
+            app:borderWidth="0dp" />
+    </LinearLayout>
 
-    <Button
-        android:id="@+id/btnEliminarGrupo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Eliminar Grupo"
-        android:backgroundTint="#D32F2F" />
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

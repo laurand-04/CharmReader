@@ -25,10 +25,17 @@ public class BookEn implements Serializable {
     private String autor;
 
     @SerializedName("tema")
-    private String tema;
+    private TemaLibro tema;
 
     @SerializedName("resumen")
     private String resumen;
+
+    public enum TemaLibro {
+        AVENTURAS, CIENCIA_FICCION, DRAMA, FANTASIA,
+        HISTORICA, HUMOR, POLICIACA, ROMANCE,
+        SUSPENSE, TERROR, INFANTIL, JUVENIL,
+        BIOGRAFIA, AUTOAYUDA, ENSAYO, OTRO
+    }
 
     // Constructor que realiza la conversión de BookRe a BookEn
     public BookEn(Book re, int idU) {
@@ -37,13 +44,18 @@ public class BookEn implements Serializable {
         this.fechaPublicacion = re.getPublishYear();
         this.coverId = re.getCoverId();
 
-        // Conversión de listas a Strings con validación de nulos
+        // Autores
         this.autor = (re.getAuthorNames() != null && !re.getAuthorNames().isEmpty())
                 ? re.getAuthorNames().get(0) : "Desconocido";
 
-        this.tema = (re.getSubjects() != null && !re.getSubjects().isEmpty())
-                ? re.getSubjects().get(0) : "Sin tema";
+        // 🔹 NUEVO PLANTEAMIENTO DE TEMA
+        String temaDeAPI = (re.getSubjects() != null && !re.getSubjects().isEmpty())
+                ? re.getSubjects().get(0) : "";
 
+        // Convertimos el String de la API en nuestro Enum
+        this.tema = mapearTema(temaDeAPI);
+
+        // Resumen
         this.resumen = (re.getFirstSentence() != null && !re.getFirstSentence().isEmpty())
                 ? re.getFirstSentence().get(0) : "Sin resumen";
 
@@ -90,11 +102,11 @@ public class BookEn implements Serializable {
         this.autor = autor;
     }
 
-    public String getTema() {
+    public TemaLibro getTema() {
         return tema;
     }
 
-    public void setTema(String tema) {
+    public void setTema(TemaLibro tema) {
         this.tema = tema;
     }
 
@@ -120,5 +132,32 @@ public class BookEn implements Serializable {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    public static TemaLibro mapearTema(String temaExterno) {
+        if (temaExterno == null || temaExterno.isEmpty()) return TemaLibro.OTRO;
+
+        // Pasamos a minúsculas para comparar sin errores
+        String t = temaExterno.toLowerCase();
+
+        // Lógica de clasificación por palabras clave
+        if (t.contains("adventure") || t.contains("aventura")) return TemaLibro.AVENTURAS;
+        if (t.contains("science fiction") || t.contains("sci-fi") || t.contains("ciencia ficción")) return TemaLibro.CIENCIA_FICCION;
+        if (t.contains("drama") || t.contains("tragedy")) return TemaLibro.DRAMA;
+        if (t.contains("fantasy") || t.contains("fantasía") || t.contains("magic")) return TemaLibro.FANTASIA;
+        if (t.contains("history") || t.contains("histórica") || t.contains("historia")) return TemaLibro.HISTORICA;
+        if (t.contains("humor") || t.contains("comedy") || t.contains("comedia")) return TemaLibro.HUMOR;
+        if (t.contains("police") || t.contains("crime") || t.contains("policiaca") || t.contains("detective")) return TemaLibro.POLICIACA;
+        if (t.contains("romance") || t.contains("love") || t.contains("amor")) return TemaLibro.ROMANCE;
+        if (t.contains("suspense") || t.contains("thriller") || t.contains("misterio")) return TemaLibro.SUSPENSE;
+        if (t.contains("horror") || t.contains("terror") || t.contains("scary")) return TemaLibro.TERROR;
+        if (t.contains("children") || t.contains("infantil") || t.contains("kids")) return TemaLibro.INFANTIL;
+        if (t.contains("juvenile") || t.contains("young adult") || t.contains("juvenil") || t.contains("teen")) return TemaLibro.JUVENIL;
+        if (t.contains("biography") || t.contains("autobiography") || t.contains("biografía")) return TemaLibro.BIOGRAFIA;
+        if (t.contains("self-help") || t.contains("autoayuda") || t.contains("personal growth")) return TemaLibro.AUTOAYUDA;
+        if (t.contains("essay") || t.contains("ensayo") || t.contains("philosophy")) return TemaLibro.ENSAYO;
+
+        // Si no encaja en ninguna de las anteriores
+        return TemaLibro.OTRO;
     }
 }

@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <!-- CABECERA -->
     <LinearLayout
         android:id="@+id/header_layout"
         android:layout_width="match_parent"
@@ -13,8 +14,25 @@
         android:padding="8dp"
         android:elevation="4dp"
         android:orientation="horizontal"
-        android:gravity="end">
+        android:gravity="center_vertical">
 
+        <!-- ICONO PERFIL -->
+        <ImageButton
+            android:id="@+id/btnPerfil"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_person"
+            android:contentDescription="Perfil"
+            app:tint="@android:color/white" />
+
+        <!-- ESPACIADOR -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- BOTÓN CAMBIAR A PÚBLICO -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnCambiarModo"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"

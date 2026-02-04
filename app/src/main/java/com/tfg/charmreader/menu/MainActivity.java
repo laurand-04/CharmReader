@@ -2,13 +2,16 @@ package com.tfg.charmreader.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
-import com.tfg.charmreader.menu.publ.Public;
 import com.tfg.charmreader.R;
+import com.tfg.charmreader.autentication.Perfil;
+import com.tfg.charmreader.menu.publ.Public;
 import com.tfg.charmreader.menu.priv.estanteria.EstanteriaFragment;
 import com.tfg.charmreader.menu.priv.futuro.EsperaFragment;
 import com.tfg.charmreader.menu.priv.proximamente.ProximamenteFragment;
@@ -18,21 +21,27 @@ public class MainActivity extends AppCompatActivity {
 
     BottomNavigationView bottomNavigationView;
     MaterialButton btnCambiarModo;
+    ImageButton btnPerfil;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Asegúrate de haber actualizado el XML a LinearLayout como vimos antes
         setContentView(R.layout.activity_main);
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         btnCambiarModo = findViewById(R.id.btnCambiarModo);
+        btnPerfil = findViewById(R.id.btnPerfil);
 
-        // Al pulsar el botón, vamos a la parte pública
+        // Ir a modo público
         btnCambiarModo.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, Public.class);
             startActivity(intent);
-            // No hacemos finish() aquí porque queremos poder volver al privado fácilmente
+        });
+
+        // Ir al perfil
+        btnPerfil.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, Perfil.class);
+            startActivity(intent);
         });
 
         if (savedInstanceState == null) {

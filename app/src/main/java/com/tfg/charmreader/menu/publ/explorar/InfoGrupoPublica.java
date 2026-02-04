@@ -1,6 +1,7 @@
 package com.tfg.charmreader.menu.publ.explorar;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -155,34 +156,49 @@ public class InfoGrupoPublica extends AppCompatActivity {
     }
 
     private void cargarLibrosLeidos() {
+        // 1. Inicializamos la lista y el adapter de una vez (vacío al principio)
         final List<BookEn> librosDetallados = new ArrayList<>();
+        if (bookAdapter == null) {
+            bookAdapter = new BookIntAdapter(librosDetallados, b -> {
+                // Acción al pulsar el libro si lo deseas
+            });
+            rvLibros.setAdapter(bookAdapter);
+        }
+
         apiCatalogo.verCatalogo(grupo.getIdGrupo()).enqueue(new Callback<List<CatalogoLectura>>() {
             @Override
             public void onResponse(Call<List<CatalogoLectura>> call, Response<List<CatalogoLectura>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    for (CatalogoLectura item : response.body()) {
+                    List<CatalogoLectura> listaCatalogo = response.body();
+
+                    // Filtramos solo los finalizados
+                    for (CatalogoLectura item : listaCatalogo) {
                         if (item.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) {
+
+                            // Pedimos los detalles del libro
                             I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
                             apiBook.obtenerBookPorId(item.getIdBook()).enqueue(new Callback<BookEn>() {
                                 @Override
                                 public void onResponse(Call<BookEn> call, Response<BookEn> rb) {
                                     if (rb.isSuccessful() && rb.body() != null) {
+                                        // Añadimos a la lista y NOTIFICAMOS al adapter
                                         librosDetallados.add(rb.body());
-                                        if (bookAdapter == null) {
-                                            bookAdapter = new BookIntAdapter(librosDetallados, b -> {});
-                                            rvLibros.setAdapter(bookAdapter);
-                                        } else {
-                                            bookAdapter.setBooks(librosDetallados);
-                                        }
+                                        bookAdapter.notifyItemInserted(librosDetallados.size() - 1);
                                     }
                                 }
-                                @Override public void onFailure(Call<BookEn> call, Throwable t) {}
+                                @Override public void onFailure(Call<BookEn> call, Throwable t) {
+                                    Log.e("API_BOOK", "Error al obtener libro: " + t.getMessage());
+                                }
                             });
                         }
                     }
                 }
             }
-            @Override public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {
+                Toast.makeText(InfoGrupoPublica.this, "Error al cargar catálogo", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 

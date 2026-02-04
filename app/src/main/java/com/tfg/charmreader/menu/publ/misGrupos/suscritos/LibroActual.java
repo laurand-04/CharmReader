@@ -35,7 +35,7 @@ public class LibroActual extends AppCompatActivity {
             tvSubtitulo.setText(libro.getSubtitulo());
             tvAutor.setText(libro.getAutor());
             tvAnio.setText(String.valueOf(libro.getFechaPublicacion()));
-            tvTema.setText(libro.getTema());
+            tvTema.setText(libro.getTema().toString());
             tvResumen.setText(libro.getResumen());
 
             // CARGA DE IMAGEN CON URL DE OPEN LIBRARY

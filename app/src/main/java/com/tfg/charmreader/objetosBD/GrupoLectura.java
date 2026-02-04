@@ -21,6 +21,8 @@ public class GrupoLectura implements Serializable {
     private Date fechaCreacion;
     @SerializedName("frecuenciaReunion")
     private Frecuencia frecuenciaReunion;
+    @SerializedName("url")
+    private String url;
 
     // El Enum debe coincidir exactamente con los nombres de la API
     public enum Frecuencia {
@@ -28,6 +30,16 @@ public class GrupoLectura implements Serializable {
     }
 
     public GrupoLectura() {
+    }
+
+    public GrupoLectura(String nombre, String ubicacion, String descripcion, Frecuencia frecuenciaReunion, String url, int idUsuario) {
+        this.nombre = nombre;
+        this.ubicacion = ubicacion;
+        this.descripcion = descripcion;
+        this.frecuenciaReunion = frecuenciaReunion;
+        this.url = url;
+        this.fechaCreacion = new Date();
+        this.idUsuario = idUsuario;
     }
 
     // Getters y Setters
@@ -51,4 +63,16 @@ public class GrupoLectura implements Serializable {
 
     public Frecuencia getFrecuenciaReunion() { return frecuenciaReunion; }
     public void setFrecuenciaReunion(Frecuencia frecuenciaReunion) { this.frecuenciaReunion = frecuenciaReunion; }
+
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
+
+    public static Frecuencia stringToFrecuencia(String texto) {
+        if (texto == null) return Frecuencia.SEMANAL;
+        switch (texto.toLowerCase()) {
+            case "quincenal": return Frecuencia.QUINCENAL;
+            case "mensual": return Frecuencia.MENSUAL;
+            default: return Frecuencia.SEMANAL;
+        }
+    }
 }

@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiGrupoLectura;
 import com.tfg.charmreader.menu.publ.adapterReclyclerView.GrupoLecturaAdapter;
@@ -28,6 +29,7 @@ public class ExplorarFragment extends Fragment {
     private RecyclerView rvGrupos;
     private GrupoLecturaAdapter adapter;
     private List<GrupoLectura> listaGL = new ArrayList<>();
+    private FloatingActionButton fabCrear; // 1. Declarar el botón
 
     private I_ApiGrupoLectura apiGrupoLectura = API.getInstancia().create(I_ApiGrupoLectura.class);
 
@@ -36,10 +38,10 @@ public class ExplorarFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_explorar, container, false);
 
         rvGrupos = view.findViewById(R.id.rvGrupos);
+        fabCrear = view.findViewById(R.id.fabCrearGrupo); // 2. Vincular
         rvGrupos.setLayoutManager(new LinearLayoutManager(getContext()));
         SearchView searchView = view.findViewById(R.id.searchView);
 
-        // 1. Configurar el Adapter ANTES de cargar los datos
         adapter = new GrupoLecturaAdapter(new ArrayList<>(), grupo -> {
             Intent intent = new Intent(getActivity(), InfoGrupoPublica.class);
             intent.putExtra("objetoGrupo", grupo);
@@ -48,35 +50,19 @@ public class ExplorarFragment extends Fragment {
 
         rvGrupos.setAdapter(adapter);
 
-        // 2. Cargar datos
+        // 3. Listener para abrir el formulario de Nuevo Grupo
+        fabCrear.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), NuevoGrupo.class);
+            startActivity(intent);
+        });
+
         cargarGrupos();
 
-        // 3. Buscador
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (!query.isEmpty()) {
-                    // Ejecutamos en un hilo secundario para no bloquear la app
-                    new Thread(() -> {
-                        try {
-                            retrofit2.Response<GrupoLectura> response = apiGrupoLectura.buscarGrupoPorNombre(query).execute();
-
-                            // Volvemos al hilo principal para mostrar resultados o alertas
-                            if (isAdded() && getActivity() != null) {
-                                getActivity().runOnUiThread(() -> {
-                                    if (response.isSuccessful() && response.body() != null) {
-                                        Intent intent = new Intent(getActivity(), InfoGrupoPublica.class);
-                                        intent.putExtra("objetoGrupo", response.body());
-                                        startActivity(intent);
-                                    } else {
-                                        mostrarAlerta("Aviso", "No se ha encontrado el grupo");
-                                    }
-                                });
-                            }
-                        } catch (IOException e) {
-                            Log.e("ExplorarFragment", "Error en búsqueda", e);
-                        }
-                    }).start();
+                    ejecutarBusqueda(query);
                 }
                 return true;
             }
@@ -91,30 +77,45 @@ public class ExplorarFragment extends Fragment {
         return view;
     }
 
+    private void ejecutarBusqueda(String query) {
+        new Thread(() -> {
+            try {
+                retrofit2.Response<GrupoLectura> response = apiGrupoLectura.buscarGrupoPorNombre(query).execute();
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Intent intent = new Intent(getActivity(), InfoGrupoPublica.class);
+                            intent.putExtra("objetoGrupo", response.body());
+                            startActivity(intent);
+                        } else {
+                            mostrarAlerta("Aviso", "No se ha encontrado el grupo");
+                        }
+                    });
+                }
+            } catch (IOException e) {
+                Log.e("ExplorarFragment", "Error en búsqueda", e);
+            }
+        }).start();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
-        cargarGrupos();
+        cargarGrupos(); // Refresca la lista si el usuario creó un grupo y volvió
     }
 
     public void mostrarAlerta(String titulo, String contenido) {
-        // Usamos requireContext() para asegurarnos de tener un contexto válido
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle(titulo);
         builder.setMessage(contenido);
-
         builder.setPositiveButton("Entendido", (dialog, which) -> dialog.dismiss());
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        builder.show();
     }
 
     private void filtrar(String texto) {
         if (listaGL == null) return;
-
         List<GrupoLectura> filtrada = new ArrayList<>();
         for (GrupoLectura grupo : listaGL) {
-            // Comprobamos nombre o ubicación para que sea más útil
             if (grupo.getNombre().toLowerCase().contains(texto.toLowerCase()) ||
                     grupo.getUbicacion().toLowerCase().contains(texto.toLowerCase())) {
                 filtrada.add(grupo);
@@ -126,14 +127,9 @@ public class ExplorarFragment extends Fragment {
     private void cargarGrupos() {
         new Thread(() -> {
             try {
-                // 2. Ejecutamos la llamada síncrona (.execute) ya que estamos en un hilo aparte
                 retrofit2.Response<List<GrupoLectura>> response = apiGrupoLectura.obtenerGrupos().execute();
-
                 if (response.isSuccessful() && response.body() != null) {
-                    // Guardamos la lista en la variable de clase para que el buscador funcione
                     listaGL = response.body();
-
-                    // 3. VOLVEMOS al hilo principal para tocar el RecyclerView
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             if (adapter != null) {
@@ -141,12 +137,9 @@ public class ExplorarFragment extends Fragment {
                             }
                         });
                     }
-                } else {
-                    Log.e("ExplorarFragment", "Error API: " + response.code());
                 }
-
             } catch (Exception e) {
-                Log.e("ExplorarFragment", "Excepción en segundo plano: ", e);
+                Log.e("ExplorarFragment", "Error cargando grupos: ", e);
             }
         }).start();
     }

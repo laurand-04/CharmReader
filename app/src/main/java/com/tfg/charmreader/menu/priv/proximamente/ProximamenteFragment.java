@@ -20,6 +20,7 @@ import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookIntAdapter;
+import com.tfg.charmreader.menu.publ.misGrupos.creados.NuevoLibroPropuesto;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.BookEn;
 
@@ -76,38 +77,29 @@ public class ProximamenteFragment extends Fragment {
     }
 
     private void cargarLibros() {
-        // Iniciamos el hilo ANTES de llamar a cualquier utilidad de red
         new Thread(() -> {
             try {
-                // AHORA esto se ejecuta de forma segura en el hilo secundario
                 int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-
-                if (idUsuario <= 0) {
-                    Log.e("ProximamenteFragment", "ID de usuario inválido: " + idUsuario);
-                    return;
-                }
+                Log.d("DEBUG_APP", "ID Usuario obtenido: " + idUsuario);
 
                 I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
-                // .execute() es síncrono, pero como estamos en un hilo secundario, es correcto
                 retrofit2.Response<List<BookEn>> response = apiBook.obtenerBooksPorUsuario(idUsuario).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<BookEn> listaRecibida = response.body();
+                    Log.d("DEBUG_APP", "Libros recibidos: " + listaRecibida.size());
 
-                    // Para actualizar la UI (el RecyclerView), VOLVEMOS al hilo principal
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (adapter != null) {
-                                adapter.setBooks(listaRecibida);
-                            }
+                            adapter.setBooks(listaRecibida);
+                            adapter.notifyDataSetChanged(); // Asegúrate de notificar cambios
                         });
                     }
                 } else {
-                    Log.e("ProximamenteFragment", "Error API: " + response.code());
+                    Log.e("DEBUG_APP", "Error en respuesta: " + response.message());
                 }
-
             } catch (Exception e) {
-                Log.e("ProximamenteFragment", "Excepción en segundo plano: ", e);
+                Log.e("DEBUG_APP", "Error crítico", e);
             }
         }).start();
     }
