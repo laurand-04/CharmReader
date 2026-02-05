@@ -27,17 +27,19 @@ public class AdminMainActivity extends AppCompatActivity {
         btnAdminLogout = findViewById(R.id.btnAdminLogout);
 
         cardUsuarios.setOnClickListener(v -> {
-            // Aquí abrirías una actividad con un RecyclerView de todos los usuarios
-            Toast.makeText(this, "Gestión de Usuarios", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, GestionUsuarios.class);
+            startActivity(intent);
         });
 
         cardGrupos.setOnClickListener(v -> {
-            // Aquí abrirías una actividad con todos los grupos de lectura
-            Toast.makeText(this, "Gestión de Grupos", Toast.LENGTH_SHORT).show();
+            // CAMBIO: Ahora sí navegamos a la actividad de gestión
+            Intent intent = new Intent(this, GestionGrupos.class);
+            startActivity(intent);
         });
 
         cardStats.setOnClickListener(v -> {
-            Toast.makeText(this, "Cargando estadísticas globales...", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, EstadisticasAdmin.class);
+            startActivity(intent);
         });
 
         btnAdminLogout.setOnClickListener(v -> mostrarDialogoCierre());

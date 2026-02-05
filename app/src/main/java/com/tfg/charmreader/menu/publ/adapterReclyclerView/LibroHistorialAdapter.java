@@ -4,22 +4,31 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
+import com.tfg.charmreader.interfacesAPI.I_ApiValoracion;
+import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.BookEn;
 import com.tfg.charmreader.objetosBD.CatalogoLectura;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAdapter.HistorialViewHolder> {
 
     private List<BookEn> listaLibros;
     private List<CatalogoLectura> listaFechas;
     private OnItemClickListener listener;
+
+    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
 
     public interface OnItemClickListener {
         void onItemClick(BookEn libro);
@@ -40,11 +49,9 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
 
     @Override
     public void onBindViewHolder(@NonNull HistorialViewHolder holder, int position) {
-        // Sincronización por posición
         BookEn libro = listaLibros.get(position);
         CatalogoLectura cata = listaFechas.get(position);
 
-        // 1. Mostrar datos del libro
         holder.tvTitulo.setText(libro.getTitulo());
 
         String idPortada = libro.getCoverId();
@@ -56,7 +63,6 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
                     .into(holder.ivPortada);
         }
 
-        // 2. Mostrar fechas desde el objeto CatalogoLectura
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         if (cata.getFechaComienzo() != null && cata.getFechaFinalizacion() != null) {
             String rango = sdf.format(cata.getFechaComienzo()) + " - " + sdf.format(cata.getFechaFinalizacion());
@@ -64,6 +70,31 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
         } else {
             holder.tvFechas.setText("Fechas no disponibles");
         }
+
+        // --- SOLUCIÓN: Cargar Valoración y Texto numérico ---
+        apiValoracion.obtenerMediaLibro(cata.getIdGrupo(), libro.getId()).enqueue(new Callback<Double>() {
+            @Override
+            public void onResponse(Call<Double> call, Response<Double> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    float media = response.body().floatValue();
+
+                    // Actualizamos las estrellas
+                    holder.ratingBar.setRating(media);
+
+                    // Actualizamos el texto de la media (EJ: "4.5")
+                    holder.tvMediaNumerica.setText(String.format(Locale.getDefault(), "%.1f", media));
+                } else {
+                    holder.ratingBar.setRating(0f);
+                    holder.tvMediaNumerica.setText("0.0");
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Double> call, Throwable t) {
+                holder.ratingBar.setRating(0f);
+                holder.tvMediaNumerica.setText("-.-");
+            }
+        });
 
         holder.itemView.setOnClickListener(v -> listener.onItemClick(libro));
     }
@@ -75,13 +106,17 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
 
     public static class HistorialViewHolder extends RecyclerView.ViewHolder {
         ImageView ivPortada;
-        TextView tvTitulo, tvFechas;
+        TextView tvTitulo, tvFechas, tvMediaNumerica; // tvMediaNumerica añadido
+        RatingBar ratingBar;
 
         public HistorialViewHolder(@NonNull View itemView) {
             super(itemView);
             ivPortada = itemView.findViewById(R.id.ivPortadaHistorial);
             tvTitulo = itemView.findViewById(R.id.tvTituloHistorial);
             tvFechas = itemView.findViewById(R.id.tvFechasHistorial);
+            ratingBar = itemView.findViewById(R.id.ratingHistorial);
+            // IMPORTANTE: Referenciamos el TextView del valor numérico
+            tvMediaNumerica = itemView.findViewById(R.id.tvMediaNumerica);
         }
     }
 }

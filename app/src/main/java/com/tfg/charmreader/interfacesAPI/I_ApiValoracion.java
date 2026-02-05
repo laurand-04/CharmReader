@@ -16,4 +16,7 @@ public interface I_ApiValoracion {
 
     @GET("valoraciones/media-libro/{idGrupo}/{idBook}")
     Call<Double> obtenerMediaLibro(@Path("idGrupo") int idGrupo, @Path("idBook") int idBook);
+
+    @GET("valoraciones/media-grupo/{idGrupo}")
+    Call<Double> obtenerMediaGrupo(@Path("idGrupo") int idGrupo);
 }

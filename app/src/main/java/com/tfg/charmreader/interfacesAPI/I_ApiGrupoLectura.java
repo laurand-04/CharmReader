@@ -4,6 +4,7 @@ import com.tfg.charmreader.objetosBD.GrupoLectura;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -25,4 +26,7 @@ public interface I_ApiGrupoLectura {
 
     @PUT("grupo/actualizar")
     Call<GrupoLectura> actualizar(@Body GrupoLectura grupo);
+
+    @DELETE("/grupo/eliminar/{id}")
+    Call<Void> eliminarGrupo(@Path("id") int idGrupo);
 }

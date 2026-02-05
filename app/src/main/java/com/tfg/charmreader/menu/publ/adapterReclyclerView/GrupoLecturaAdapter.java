@@ -11,7 +11,6 @@ import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
 import com.tfg.charmreader.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.GrupoLectura;
-import com.tfg.charmreader.objetosBD.Valoracion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +53,7 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
         holder.tvUbicacion.setText(grupo.getUbicacion());
         holder.tvFrecuencia.setText(grupo.getFrecuenciaReunion().toString());
 
-        // --- NUEVO: Cargar Conteo de Miembros ---
+        // --- CARGAR CONTEO DE MIEMBROS ---
         apiMiembro.contarMiembros(grupo.getIdGrupo()).enqueue(new Callback<Long>() {
             @Override
             public void onResponse(Call<Long> call, Response<Long> response) {
@@ -68,22 +67,23 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
             }
         });
 
-        // --- NUEVO: Cargar Valoración Media ---
-        apiValoracion.verValoraciones(Valoracion.TipoValoracion.GRUPO, grupo.getIdGrupo()).enqueue(new Callback<List<Valoracion>>() {
+        // --- CARGAR VALORACIÓN MEDIA (Optimizado: El Backend hace el cálculo) ---
+        // Usamos el nuevo método que devuelve directamente el Double
+        apiValoracion.obtenerMediaGrupo(grupo.getIdGrupo()).enqueue(new Callback<Double>() {
             @Override
-            public void onResponse(Call<List<Valoracion>> call, Response<List<Valoracion>> response) {
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    List<Valoracion> vals = response.body();
-                    double suma = 0;
-                    for (Valoracion v : vals) suma += v.getCalificacion();
-                    double media = suma / vals.size();
-                    holder.tvValoracion.setText(String.format(Locale.getDefault(), "%.1f (%d)", media, vals.size()));
+            public void onResponse(Call<Double> call, Response<Double> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Double media = response.body();
+                    // Mostramos la media formateada.
+                    // Nota: Si quieres el conteo de votos, necesitaríamos el DTO en el backend.
+                    holder.tvValoracion.setText(String.format(Locale.getDefault(), "%.1f", media));
                 } else {
-                    holder.tvValoracion.setText("0.0 (0)");
+                    holder.tvValoracion.setText("0.0");
                 }
             }
+
             @Override
-            public void onFailure(Call<List<Valoracion>> call, Throwable t) {
+            public void onFailure(Call<Double> call, Throwable t) {
                 holder.tvValoracion.setText("-.-");
             }
         });
@@ -101,7 +101,6 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
     }
 
     public static class GroupViewHolder extends RecyclerView.ViewHolder {
-        // NUEVO: Añadidos tvMiembros y tvValoracion
         TextView tvNombre, tvDescripcion, tvUbicacion, tvFrecuencia, tvMiembros, tvValoracion;
 
         public GroupViewHolder(@NonNull View itemView) {
@@ -110,8 +109,6 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
             tvDescripcion = itemView.findViewById(R.id.tvDescripcionBreve);
             tvUbicacion = itemView.findViewById(R.id.tvUbicacionGrupo);
             tvFrecuencia = itemView.findViewById(R.id.tvFrecuenciaBadge);
-
-            // NUEVO: Referencias a los nuevos IDs del XML
             tvMiembros = itemView.findViewById(R.id.tvContadorMiembros);
             tvValoracion = itemView.findViewById(R.id.tvValoracionMedia);
         }
