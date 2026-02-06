@@ -3,7 +3,6 @@ package com.tfg.charmreader.admin;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageButton;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -13,7 +12,7 @@ import com.tfg.charmreader.autentication.LoginActivity;
 
 public class AdminMainActivity extends AppCompatActivity {
 
-    private MaterialCardView cardUsuarios, cardGrupos, cardStats;
+    private MaterialCardView cardUsuarios, cardGrupos, cardStats, cardBackup;
     private ImageButton btnAdminLogout;
 
     @Override
@@ -21,26 +20,21 @@ public class AdminMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_main);
 
+        // Enlaces con el XML
         cardUsuarios = findViewById(R.id.cardUsuarios);
         cardGrupos = findViewById(R.id.cardGrupos);
         cardStats = findViewById(R.id.cardStats);
+        cardBackup = findViewById(R.id.cardBackup); // ID que añadimos al XML
         btnAdminLogout = findViewById(R.id.btnAdminLogout);
 
-        cardUsuarios.setOnClickListener(v -> {
-            Intent intent = new Intent(this, GestionUsuarios.class);
-            startActivity(intent);
-        });
+        // Listeners de navegación
+        cardUsuarios.setOnClickListener(v -> startActivity(new Intent(this, GestionUsuarios.class)));
 
-        cardGrupos.setOnClickListener(v -> {
-            // CAMBIO: Ahora sí navegamos a la actividad de gestión
-            Intent intent = new Intent(this, GestionGrupos.class);
-            startActivity(intent);
-        });
+        cardGrupos.setOnClickListener(v -> startActivity(new Intent(this, GestionGrupos.class)));
 
-        cardStats.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EstadisticasAdmin.class);
-            startActivity(intent);
-        });
+        cardStats.setOnClickListener(v -> startActivity(new Intent(this, EstadisticasAdmin.class)));
+
+        cardBackup.setOnClickListener(v -> startActivity(new Intent(this, GestionBackup.class)));
 
         btnAdminLogout.setOnClickListener(v -> mostrarDialogoCierre());
     }
