@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
@@ -71,6 +72,9 @@ dependencies {
     //Trabajar API externa
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
+    //Pantalla de carga con mi logo
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
 
 

@@ -4,28 +4,50 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FDFDFD"
     tools:context=".menu.priv.tusLibros.TusLibrosFragment">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardSearch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="9dp"
+        app:cardBackgroundColor="@android:color/transparent"
+        android:outlineAmbientShadowColor="@color/basico"
+        >
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchViewLibros"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:iconifiedByDefault="false"
+            app:queryHint="Busca tu libro..."
+            app:searchIcon="@drawable/ic_search"
+            android:background="@color/white"
+            />
+    </androidx.cardview.widget.CardView>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerLibros"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingTop="8dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/cardSearch"
         android:paddingHorizontal="8dp"
         android:paddingBottom="80dp"
         android:clipToPadding="false" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="Añadir"
         android:layout_alignParentBottom="true"
         android:layout_alignParentEnd="true"
         android:layout_margin="20dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
         app:backgroundTint="?attr/colorPrimary"
-        app:elevation="8dp"
-        app:pressedTranslationZ="12dp"/>
+        app:elevation="8dp" />
 
 </RelativeLayout>

@@ -1,6 +1,8 @@
 package com.tfg.charmreader.autentication;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.ImageButton;
@@ -103,6 +105,11 @@ public class Perfil extends AppCompatActivity {
 
     private void realizarCerrarSesion() {
         FirebaseAuth.getInstance().signOut();
+        SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.apply();
+
         Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(Perfil.this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

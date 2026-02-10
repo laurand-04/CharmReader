@@ -13,6 +13,8 @@ public class Libro {
     private String autor;
     @SerializedName("paginas")
     private int paginas;
+    @SerializedName("url")
+    private String url;
 
     public Libro(String isbn, String nombre, String autor, int paginas) {
         this.isbn = isbn;
@@ -32,4 +34,7 @@ public class Libro {
     public void setAutor(String autor) { this.autor = autor; }
     public int getPaginas() { return paginas; }
     public void setPaginas(int paginas) { this.paginas = paginas; }
+
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
 }

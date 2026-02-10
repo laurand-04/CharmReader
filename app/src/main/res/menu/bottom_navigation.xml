@@ -1,14 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/tusLibros"
+        android:icon="@drawable/ic_tus_libros"
         android:title="Tus libros" />
     <item
         android:id="@+id/estanteria"
+        android:icon="@drawable/ic_estanteria"
         android:title="Estanteria" />
     <item
         android:id="@+id/proximamente"
+        android:icon="@drawable/ic_proximamente"
         android:title="Próximamente" />
     <item
         android:id="@+id/espera"
+        android:icon="@drawable/ic_espera"
         android:title="A la espera" />
 </menu>

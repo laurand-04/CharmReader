@@ -1,42 +1,56 @@
 package com.tfg.charmreader.autentication;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.admin.AdminMainActivity;
 import com.tfg.charmreader.menu.MainActivity;
 import com.tfg.charmreader.databinding.ActivityLoginBinding;
-
 import androidx.appcompat.app.AlertDialog;
-import android.content.DialogInterface;
-import android.util.Log;
+import androidx.core.splashscreen.SplashScreen;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
-
     private ActivityLoginBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // 1. La Splash Screen siempre es lo primero
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_login);
+
+        // 2. Comprobamos la sesión inmediatamente después del super
+        SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        boolean estaLogeado = preferences.getBoolean("logeado", false);
+        boolean esAdmin = preferences.getBoolean("esAdmin", false);
+
+        if (estaLogeado) {
+            Intent intent;
+            if (esAdmin) {
+                intent = new Intent(this, AdminMainActivity.class);
+            } else {
+                intent = new Intent(this, MainActivity.class);
+            }
+            startActivity(intent);
+            finish();
+            return; // Nos vamos, pero habiendo cumplido con el super.onCreate
+        }
+
+        // 3. Si no está logeado, cargamos la interfaz normal
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         mAuth = FirebaseAuth.getInstance();
 
         binding.loginButton.setOnClickListener(v -> login());
-
-        binding.registerTextView.setOnClickListener(v -> {
-            startActivity(new Intent(this, RegisterActivity.class));
-        });
-
+        binding.registerTextView.setOnClickListener(v ->
+                startActivity(new Intent(this, RegisterActivity.class)));
         binding.recoverTextView.setOnClickListener(v ->
                 startActivity(new Intent(this, RecuperacionActivity.class)));
     }
@@ -50,25 +64,31 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 1. COMPROBACIÓN DE MODO ADMINISTRADOR (HARDCODED PARA TFG)
-        // Puedes usar un correo específico de admin que registres en Firebase
         if (email.equals("admin") && password.equals("admin")) {
+            guardarSesion(true, email);
             startActivity(new Intent(this, AdminMainActivity.class));
             finish();
             return;
         }
 
-        // 2. LOGUEO NORMAL PARA USUARIOS
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Aquí podrías incluso preguntar a tu API si este ID de usuario
-                        // tiene ROL_ADMIN en tu base de datos SQL
+                        guardarSesion(false, email);
                         irAMainActivity();
                     } else {
                         mostrarError(task.getException());
                     }
                 });
+    }
+
+    private void guardarSesion(boolean isAdmin, String email) {
+        SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putBoolean("logeado", true);
+        editor.putBoolean("esAdmin", isAdmin);
+        editor.putString("correoUsuario", email);
+        editor.apply();
     }
 
     private void irAMainActivity() {
@@ -81,33 +101,19 @@ public class LoginActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(titulo);
         builder.setMessage(contenido);
-
-        builder.setPositiveButton("Entendido", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        builder.setPositiveButton("Entendido", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     public void mostrarError(Exception e){
         String mensajeError = "Error desconocido";
-
         if (e instanceof FirebaseAuthInvalidUserException) {
-            // Usuario no existe o está deshabilitado
             mensajeError = "Usuario no registrado o deshabilitado.";
         } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-            // Contraseña incorrecta o formato de email inválido
             mensajeError = "Credenciales inválidas, revisa el email o la contraseña.";
         } else if (e != null) {
-            mensajeError = e.getMessage(); // Mensaje de error original
+            mensajeError = e.getMessage();
         }
-
         mostrarAlerta("Error", mensajeError);
     }
-
 }
-

@@ -2,13 +2,14 @@ package com.tfg.charmreader.menu;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.ImageButton;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.button.MaterialButton;
+import com.google.android.material.imageview.ShapeableImageView;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.autentication.Perfil;
 import com.tfg.charmreader.menu.publ.Public;
@@ -19,35 +20,42 @@ import com.tfg.charmreader.menu.priv.tusLibros.TusLibrosFragment;
 
 public class MainActivity extends AppCompatActivity {
 
-    BottomNavigationView bottomNavigationView;
-    MaterialButton btnCambiarModo;
-    ImageButton btnPerfil;
+    private BottomNavigationView bottomNavigationView;
+    private View btnCambiarModo; // Cambiado a View o TextView para evitar ClassCastException
+    private ShapeableImageView btnPerfil; // Cambiado según el componente del XML moderno
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Inicializar vistas
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         btnCambiarModo = findViewById(R.id.btnCambiarModo);
         btnPerfil = findViewById(R.id.btnPerfil);
 
         // Ir a modo público
-        btnCambiarModo.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, Public.class);
-            startActivity(intent);
-        });
+        if (btnCambiarModo != null) {
+            btnCambiarModo.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, Public.class);
+                startActivity(intent);
+            });
+        }
 
         // Ir al perfil
-        btnPerfil.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, Perfil.class);
-            startActivity(intent);
-        });
+        if (btnPerfil != null) {
+            btnPerfil.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, Perfil.class);
+                startActivity(intent);
+            });
+        }
 
+        // Fragmento inicial
         if (savedInstanceState == null) {
             loadFragment(new TusLibrosFragment());
         }
 
+        // Configurar navegación inferior
         bottomNavigationView.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
             int itemId = item.getItemId();
@@ -77,6 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
         getSupportFragmentManager()
                 .beginTransaction()
+                .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out) // Animación suave
                 .replace(R.id.contenedor_fragmento, fragment)
                 .commit();
     }

@@ -23,10 +23,10 @@
 
         <activity
             android:name=".autentication.LoginActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.Starting">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -35,7 +35,9 @@
 
         <activity android:name=".autentication.RecuperacionActivity" />
 
-        <activity android:name=".menu.MainActivity" />
+        <activity
+            android:name=".menu.MainActivity"
+            android:windowSoftInputMode="adjustPan"> </activity>
 
         <activity android:name=".menu.priv.tusLibros.CargarNuevoLibro"/>
 

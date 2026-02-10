@@ -8,10 +8,40 @@
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
 
-    <style name="Theme.CharmReader" parent="Base.Theme.CharmReader" />
+    <style name="Theme.CharmReader" parent="Base.Theme.CharmReader">
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 
-    <style name="BottomNavigation">
 
+
+
+    <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:width">75dp</item>
+        <item name="android:height">35dp</item>
+        <item name="marginHorizontal">4dp</item>
+        <item name="colorSecondaryContainer">#E8DEF8</item>
+
+    </style>
+
+    <style name="BottomNavText.Active" parent="Widget.Design.BottomNavigationView">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+    <style name="BottomNavText.Inactive" parent="Widget.Design.BottomNavigationView">
+        <item name="android:textSize">12sp</item>
+        <item name="android:includeFontPadding">false</item>
+    </style>
+
+
+
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#F4F7F9</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/logo2</item>
+        <item name="postSplashScreenTheme">@style/Theme.CharmReader</item>
     </style>
 
 </resources>
