@@ -1,8 +1,10 @@
 package com.tfg.charmreader.menu.priv.adapterRecyclerView;
 
+import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +16,7 @@ import java.util.List;
 public class EstanteriasAdapter extends RecyclerView.Adapter<EstanteriasAdapter.EstanteriaViewHolder> {
 
     private List<Estanteria> estanterias;
+    private List<Estanteria> listaOriginal;
     private OnItemClickListener listener;
 
     public interface OnItemClickListener {
@@ -21,8 +24,8 @@ public class EstanteriasAdapter extends RecyclerView.Adapter<EstanteriasAdapter.
     }
 
     public EstanteriasAdapter(List<Estanteria> estanterias, OnItemClickListener listener) {
-        // Aseguramos que nunca sea null al iniciar
         this.estanterias = (estanterias != null) ? estanterias : new ArrayList<>();
+        this.listaOriginal = new ArrayList<>(this.estanterias);
         this.listener = listener;
     }
 
@@ -39,36 +42,69 @@ public class EstanteriasAdapter extends RecyclerView.Adapter<EstanteriasAdapter.
         Estanteria estanteria = estanterias.get(position);
         holder.tvTitulo.setText(estanteria.getNombre());
 
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onItemClick(estanteria);
+        // 🔥 Aplicar el color de fondo al icono circular
+        if (estanteria.getColor() != null && !estanteria.getColor().isEmpty()) {
+            try {
+                holder.ivIcono.getBackground().setColorFilter(
+                        android.graphics.Color.parseColor(estanteria.getColor()),
+                        android.graphics.PorterDuff.Mode.SRC_IN
+                );
+            } catch (Exception e) {
+                // Color por defecto si el string no es un hex válido
+                holder.ivIcono.getBackground().setColorFilter(0xFFF3E5F5, android.graphics.PorterDuff.Mode.SRC_IN);
             }
-            /*Intent intent = new Intent(v.getContext(), LibrosEstanteria.class);
-            // Pasamos el ID o nombre para saber qué libros cargar
-            intent.putExtra("idEstanteria", estanteria.getId());
-            intent.putExtra("nombreEstanteria", estanteria.getNombre());
-            v.getContext().startActivity(intent);*/
-        });
+        }
 
+        // Conteo de libros
+        int num = estanteria.getCantidadLibros();
+        holder.tvCantidad.setText(num == 1 ? "1 libro" : num + " libros");
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(estanteria);
+        });
     }
 
     @Override
     public int getItemCount() {
-        return estanterias != null ? estanterias.size() : 0;
+        return estanterias.size();
     }
 
-    // MÉTODO CORREGIDO: Reemplaza la lista completa
     public void setEstanterias(List<Estanteria> nuevasEstanterias) {
-        this.estanterias = nuevasEstanterias;
+        this.estanterias.clear();
+        if (nuevasEstanterias != null) {
+            this.estanterias.addAll(nuevasEstanterias);
+            this.listaOriginal = new ArrayList<>(nuevasEstanterias);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void filtrar(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            estanterias.clear();
+            estanterias.addAll(listaOriginal);
+        } else {
+            List<Estanteria> filtrados = new ArrayList<>();
+            String query = texto.toLowerCase().trim();
+            for (Estanteria e : listaOriginal) {
+                if (e.getNombre().toLowerCase().contains(query)) {
+                    filtrados.add(e);
+                }
+            }
+            estanterias.clear();
+            estanterias.addAll(filtrados);
+        }
         notifyDataSetChanged();
     }
 
     public static class EstanteriaViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitulo;
+        TextView tvTitulo, tvCantidad;
+        ImageView ivIcono;
 
         public EstanteriaViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tvNombreEstanteria);
+            tvCantidad = itemView.findViewById(R.id.tvCantidadLibros);
+            ivIcono = itemView.findViewById(R.id.ivIconoEstanteria);
         }
     }
 }

@@ -3,24 +3,25 @@ package com.tfg.charmreader.menu.priv.proximamente;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookIntAdapter;
-import com.tfg.charmreader.menu.publ.misGrupos.creados.NuevoLibroPropuesto;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.BookEn;
 
@@ -31,28 +32,48 @@ public class ProximamenteFragment extends Fragment {
 
     private RecyclerView rvLibros;
     private BookIntAdapter adapter;
+    private TextView tvCount;
+    private SearchView searchView;
+    private LinearLayout layoutEmpty; // 🔥 Variable para el Empty State
 
-    public ProximamenteFragment() {
-        // Required empty public constructor
-    }
+    public ProximamenteFragment() { }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_proximamente, container, false);
 
+        // 1. Inicialización de vistas
         rvLibros = view.findViewById(R.id.recyclerProximamente);
+        tvCount = view.findViewById(R.id.tvCountProximamente);
+        searchView = view.findViewById(R.id.searchViewProximamente);
+        layoutEmpty = view.findViewById(R.id.layoutEmpty); // Vinculamos el Empty State
+
         rvLibros.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // 2. Configuración del Adapter
         adapter = new BookIntAdapter(new ArrayList<>(), libro -> {
-            Intent intent = new Intent(getActivity(), ProximoLibro.class); //AQUI HAY QUE VER SI QUEREMOS AÑADIR ALGUNA FUNCIONALIDAD AL CLICK EN LIBRO
-            //intent.putExtra("Nombre", estanteria.getNombre());
+            Intent intent = new Intent(getActivity(), ProximoLibro.class);
             intent.putExtra("idLibro", libro.getId());
             startActivity(intent);
         });
-
         rvLibros.setAdapter(adapter);
 
+        // 3. Buscador funcional con el nuevo método filtrar del Adapter
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) { return false; }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (adapter != null) {
+                    adapter.filtrar(newText);
+                }
+                return true;
+            }
+        });
+
+        // 4. FAB para ir al buscador de la API Externa
         FloatingActionButton fab = view.findViewById(R.id.fab_add_Proximamente);
         fab.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), BuscadorAPIExterna.class);
@@ -80,26 +101,33 @@ public class ProximamenteFragment extends Fragment {
         new Thread(() -> {
             try {
                 int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-                Log.d("DEBUG_APP", "ID Usuario obtenido: " + idUsuario);
-
                 I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
                 retrofit2.Response<List<BookEn>> response = apiBook.obtenerBooksPorUsuario(idUsuario).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<BookEn> listaRecibida = response.body();
-                    Log.d("DEBUG_APP", "Libros recibidos: " + listaRecibida.size());
 
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            adapter.setBooks(listaRecibida);
-                            adapter.notifyDataSetChanged(); // Asegúrate de notificar cambios
+                            if (listaRecibida == null || listaRecibida.isEmpty()) {
+                                layoutEmpty.setVisibility(View.VISIBLE);
+                                rvLibros.setVisibility(View.GONE);
+                                tvCount.setText("Sin lecturas planeadas");
+                            } else {
+                                layoutEmpty.setVisibility(View.GONE);
+                                rvLibros.setVisibility(View.VISIBLE);
+                                adapter.setBooks(listaRecibida);
+
+                                // Un toque dinámico:
+                                int total = listaRecibida.size();
+                                String msg = (total == 1) ? "1 LIBRO PENDIENTE" : total + " LIBROS PENDIENTES";
+                                tvCount.setText(msg);
+                            }
                         });
                     }
-                } else {
-                    Log.e("DEBUG_APP", "Error en respuesta: " + response.message());
                 }
             } catch (Exception e) {
-                Log.e("DEBUG_APP", "Error crítico", e);
+                Log.e("DEBUG_APP", "Error crítico al cargar libros pendientes", e);
             }
         }).start();
     }

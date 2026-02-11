@@ -30,6 +30,9 @@ public class BookEn implements Serializable {
     @SerializedName("resumen")
     private String resumen;
 
+    @SerializedName("infoUrl")
+    private String infoUrl;
+
     public enum TemaLibro {
         AVENTURAS, CIENCIA_FICCION, DRAMA, FANTASIA,
         HISTORICA, HUMOR, POLICIACA, ROMANCE,
@@ -60,6 +63,8 @@ public class BookEn implements Serializable {
                 ? re.getFirstSentence().get(0) : "Sin resumen";
 
         this.idU = idU;
+
+        this.infoUrl = re.getFullOpenLibraryUrl();
     }
 
     public String getTitulo() {
@@ -133,6 +138,8 @@ public class BookEn implements Serializable {
     public void setId(int id) {
         this.id = id;
     }
+    public String getInfoUrl() { return infoUrl; }
+    public void setInfoUrl(String infoUrl) { this.infoUrl = infoUrl; }
 
     public static TemaLibro mapearTema(String temaExterno) {
         if (temaExterno == null || temaExterno.isEmpty()) return TemaLibro.OTRO;

@@ -1,16 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".menu.priv.estanteria.CargarNuevoLibroEstanteria">
+    android:background="#FDFDFD">
 
-    <!-- RecyclerView para mostrar los libros -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerCargarNuevoLibroEstanteria"
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
+        <androidx.appcompat.widget.Toolbar
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            app:contentInsetStart="0dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="20dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/btnClose"
+                    android:layout_width="45dp"
+                    android:layout_height="45dp"
+                    android:padding="12dp"
+                    android:src="@drawable/ic_arrow_back"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="@color/basico"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Añadir Libro"
+                        android:textColor="#1A1A1A"
+                        android:textSize="18sp"
+                        android:fontFamily="sans-serif-black" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selecciona de tu colección"
+                        android:textColor="#757575"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp" />
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-</RelativeLayout>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardSearchAdd"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginVertical="10dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="4dp">
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/searchViewAddLibro"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:iconifiedByDefault="false"
+                app:queryHint="Busca entre tus libros..."
+                app:searchIcon="@drawable/ic_search"
+                android:background="@color/white" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerCargarNuevoLibroEstanteria"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="8dp"
+            android:clipToPadding="false"
+            android:paddingBottom="20dp" />
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

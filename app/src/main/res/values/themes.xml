@@ -17,20 +17,17 @@
 
 
     <style name="App.Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:width">75dp</item>
-        <item name="android:height">35dp</item>
-        <item name="marginHorizontal">4dp</item>
+        <item name="android:width">60dp</item> <item name="android:height">32dp</item> <item name="marginHorizontal">4dp</item>
         <item name="colorSecondaryContainer">#E8DEF8</item>
-
     </style>
 
-    <style name="BottomNavText.Active" parent="Widget.Design.BottomNavigationView">
+    <style name="BottomNavText.Active" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:includeFontPadding">false</item>
     </style>
 
-    <style name="BottomNavText.Inactive" parent="Widget.Design.BottomNavigationView">
+    <style name="BottomNavText.Inactive" parent="TextAppearance.MaterialComponents.Caption">
         <item name="android:textSize">12sp</item>
         <item name="android:includeFontPadding">false</item>
     </style>

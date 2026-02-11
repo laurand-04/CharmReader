@@ -4,6 +4,9 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class Book {
+
+    @SerializedName("key")
+    private String key;
     @SerializedName("title")
     private String title;
 
@@ -44,5 +47,13 @@ public class Book {
             return authorNames.get(0); // Devuelve el primer nombre de la lista
         }
         return "Autor desconocido";
+    }
+
+    public String getKey() { return key; }
+    public String getFullOpenLibraryUrl() {
+        if (key != null) {
+            return "https://openlibrary.org" + key;
+        }
+        return null;
     }
 }

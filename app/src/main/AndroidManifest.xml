@@ -61,7 +61,8 @@
 
         <activity android:name=".menu.priv.futuro.FuturoLibro"/>
 
-        <activity android:name=".menu.publ.Public"/>
+        <activity android:name=".menu.publ.Public"
+            android:windowSoftInputMode="adjustPan"/>
 
         <activity android:name=".menu.publ.explorar.InfoGrupoPublica"/>
 

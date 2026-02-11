@@ -1,61 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FDFDFD">
 
-    <LinearLayout
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layoutSearchGrupos"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="4dp">
 
         <androidx.appcompat.widget.SearchView
-            android:id="@+id/searchView"
+            android:id="@+id/searchViewGrupos"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:iconifiedByDefault="false"
-            app:queryHint="Busca un grupo..." />
+            app:queryHint="Busca un grupo..."
+            android:background="@color/white" />
+    </androidx.cardview.widget.CardView>
 
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupFiltros"
-            android:layout_width="match_parent"
+    <LinearLayout
+        android:id="@+id/layoutEmptyGrupos"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_groups"
+            app:tint="#D1D1D1" />
+
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="16dp"
+            android:text="No hay grupos"
+            android:textColor="#1A1A1A"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipSemanal"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Semanal" />
-
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chipMensual"
-                style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Mensual" />
-        </com.google.android.material.chip.ChipGroup>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvGrupos"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="8dp" />
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¡Crea o únete a un club de lectura!"
+            android:textColor="#999999"
+            android:textSize="14sp" />
     </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvGrupos"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/layoutSearchGrupos"
+        android:paddingHorizontal="8dp"
+        android:clipToPadding="false"
+        android:paddingBottom="88dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabCrearGrupo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
+        android:contentDescription="Añadir"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="20dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        app:backgroundTint="?attr/colorPrimary"
-        app:elevation="6dp" />
+        app:backgroundTint="@color/basico"
+        app:elevation="8dp"/>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</RelativeLayout>

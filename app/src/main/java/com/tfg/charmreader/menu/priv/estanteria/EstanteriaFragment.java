@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiEstanteria;
+import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.EstanteriasAdapter;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.objetosBD.API;
@@ -29,6 +31,7 @@ public class EstanteriaFragment extends Fragment {
 
     private RecyclerView rvEstanterias;
     private EstanteriasAdapter adapter;
+    private SearchView searchView;
 
     public EstanteriaFragment() { }
 
@@ -40,17 +43,29 @@ public class EstanteriaFragment extends Fragment {
         rvEstanterias = view.findViewById(R.id.recyclerEstanterias);
         rvEstanterias.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Configuración del click corregida para usar el objeto directo
-        // En EstanteriaFragment.java
+        // Configuración del adaptador con la corrección del Intent
         adapter = new EstanteriasAdapter(new ArrayList<>(), estanteria -> {
-            Log.d("DEBUG_APP", "CLICK DETECTADO en: " + estanteria.getNombre()); // Si esto no sale, el problema es el Adapter
             Intent intent = new Intent(getActivity(), LibrosEstanteria.class);
             intent.putExtra("Nombre", estanteria.getNombre());
             intent.putExtra("idEstanteria", estanteria.getId());
+            // 🔥 CORRECCIÓN: Enviamos el color para que la pantalla de libros sea dinámica
+            intent.putExtra("Color", estanteria.getColor());
             startActivity(intent);
         });
 
         rvEstanterias.setAdapter(adapter);
+
+        searchView = view.findViewById(R.id.searchViewEstanterias);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) { return false; }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (adapter != null) adapter.filtrar(newText);
+                return true;
+            }
+        });
 
         FloatingActionButton fab = view.findViewById(R.id.fab_add_estanteria);
         fab.setOnClickListener(v -> {
@@ -76,46 +91,41 @@ public class EstanteriaFragment extends Fragment {
     }
 
     private void cargarEstanterias() {
-        Log.d("EstanteriaFragment", "PASO 1: Entrando en cargarEstanterias()");
-
         new Thread(() -> {
             int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
             if (idUsuario == -1) {
-                Log.e("EstanteriaFragment", "El id es -1 en cargarEstanterias");
+                Log.e("EstanteriaFragment", "ID de usuario no encontrado");
                 return;
             }
             try {
-                Log.d("EstanteriaFragment", "PASO 3: El ID de usuario en Utilidades es: " + idUsuario);
-
-                if (idUsuario <= 0) {
-                    Log.e("EstanteriaFragment", "PASO 4: ERROR - El ID es inválido. Por eso sale blanco.");
-                    return;
-                }
-
                 I_ApiEstanteria apiEstanteria = API.getInstancia().create(I_ApiEstanteria.class);
+                I_ApiLibrosDeUsuario apiLibrosUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
+
                 retrofit2.Response<List<Estanteria>> response = apiEstanteria.obtenerEstanteriasDeUsuario(idUsuario).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     List<Estanteria> listaRecibida = response.body();
-                    Log.d("EstanteriaFragment", "PASO 5: ¡Éxito! Registros recibidos: " + listaRecibida.size());
+
+                    // Obtenemos el conteo de libros de la tabla libros_de_usuario para cada estantería
+                    for (Estanteria e : listaRecibida) {
+                        retrofit2.Response<Integer> resConteo = apiLibrosUsuario.contarLibrosEnEstanteria(e.getId()).execute();
+                        if (resConteo.isSuccessful() && resConteo.body() != null) {
+                            e.setCantidadLibros(resConteo.body());
+                        }
+                    }
 
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (isAdded() && adapter != null) { // <--- Seguridad extra
+                            if (adapter != null) {
                                 adapter.setEstanterias(listaRecibida);
                             }
-                            if (listaRecibida.isEmpty()) {
-                                Log.w("EstanteriaFragment", "PASO 6: La lista está vacía en la base de datos.");
-                            }
-                            adapter.setEstanterias(listaRecibida);
                         });
                     }
                 } else {
-                    Log.e("EstanteriaFragment", "PASO 5: Error en la API. Código: " + response.code());
+                    Log.e("EstanteriaFragment", "Error en la respuesta de la API: " + response.code());
                 }
-
             } catch (Exception e) {
-                Log.e("EstanteriaFragment", "PASO EXTRA: Hubo una excepción grave: ", e);
+                Log.e("EstanteriaFragment", "Excepción al cargar estanterías", e);
             }
         }).start();
     }

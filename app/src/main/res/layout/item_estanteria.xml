@@ -1,20 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:layout_marginBottom="4dp"
-    android:background="@android:color/white"
-    android:elevation="2dp">
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/white">
 
-    <TextView
-        android:id="@+id/tvNombreEstanteria"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Nombre de la estantería"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#000000" />
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground">
 
-</LinearLayout>
+        <ImageView
+            android:id="@+id/ivIconoEstanteria"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_circle_light"
+            android:padding="10dp"
+            android:src="@drawable/ic_libro"
+            app:tint="@color/basico" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvNombreEstanteria"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Favoritos"
+                android:textColor="#1A1A1A"
+                android:textSize="18sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/tvCantidadLibros"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="0 libros"
+                android:textColor="#757575"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_flecha"
+            app:tint="#D1D1D1" />
+
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

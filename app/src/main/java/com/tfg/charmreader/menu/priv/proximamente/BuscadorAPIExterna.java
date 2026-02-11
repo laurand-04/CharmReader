@@ -1,14 +1,18 @@
 package com.tfg.charmreader.menu.priv.proximamente;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log; // Añadido para debugging
-import android.widget.EditText;
+import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,108 +33,85 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-import android.widget.Toast; // Para avisar al usuario
-
 public class BuscadorAPIExterna extends AppCompatActivity {
 
-    private EditText etQuery;
+    private SearchView searchView;
     private RecyclerView recyclerView;
+    private ProgressBar progressBar;
     private BookExtAdapter adapter;
+
+    // Lógica para el retardo de búsqueda (Debounce)
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable = null;
 
-    private I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
+    private final I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_buscador_api_externa);
 
-        etQuery = findViewById(R.id.etQuery);
+        // 1. Estética de la barra de estado (StatusBar Blanca)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
+        // 2. Inicialización de vistas
+        searchView = findViewById(R.id.searchViewAPI);
         recyclerView = findViewById(R.id.recyclerViewBook);
+        progressBar = findViewById(R.id.progressBar);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // --- CAMBIO CLAVE: Implementamos la interfaz aquí ---
-        adapter = new BookExtAdapter(new ArrayList<>(), new BookExtAdapter.OnBookClickListener() {
-            @Override
-            public void onBookClick(Book book) {
-                Log.d("OPEN_LIBRARY_DATA", "========== INICIO INFO LIBRO ==========");
-                Log.d("OPEN_LIBRARY_DATA", "Título: " + book.getTitle());
-                Log.d("OPEN_LIBRARY_DATA", "Subtítulo: " + book.getSubtitle());
-                Log.d("OPEN_LIBRARY_DATA", "Año Publicación: " + book.getPublishYear());
-                Log.d("OPEN_LIBRARY_DATA", "ID Portada: " + (book.getCoverId() != null ? book.getCoverId() : "N/A"));
+        // 3. Configuración del botón Atrás (estilo Perfil)
+        findViewById(R.id.btnBackBuscador).setOnClickListener(v -> finish());
 
-// Información que viene en listas (usando tus métodos de conversión)
-                Log.d("OPEN_LIBRARY_DATA", "Autores (String): " + book.getFirstAuthor());
-                Log.d("OPEN_LIBRARY_DATA", "Temas (String): " + book.getSubjects());
-                Log.d("OPEN_LIBRARY_DATA", "Resumen/Primera Frase: " + book.getFirstSentence());
-                Log.d("OPEN_LIBRARY_DATA", "=========== FIN INFO LIBRO ===========");
-                guardarLibro(book);
-            }
+        // 4. Configuración del Adaptador (API Externa)
+        adapter = new BookExtAdapter(new ArrayList<>(), book -> {
+            Log.d("OPEN_LIBRARY_DATA", "Seleccionado: " + book.getTitle());
+            guardarLibro(book);
         });
-
         recyclerView.setAdapter(adapter);
 
-        // ... resto de tu código del TextWatcher (se mantiene igual) ...
-        etQuery.addTextChangedListener(new TextWatcher() {
+        // 5. Configuración del Buscador (Logic Debounce 800ms)
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public boolean onQueryTextSubmit(String query) {
+                if (query.trim().length() >= 3) {
+                    buscarLibro(query.trim());
+                }
+                return true;
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public boolean onQueryTextChange(String newText) {
+                // Cancelar cualquier búsqueda programada si el usuario sigue escribiendo
                 if (searchRunnable != null) {
                     searchHandler.removeCallbacks(searchRunnable);
                 }
-            }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                String query = s.toString().trim();
+                String query = newText.trim();
                 if (query.length() >= 3) {
+                    // Programamos la ejecución para dentro de 800ms
                     searchRunnable = () -> buscarLibro(query);
                     searchHandler.postDelayed(searchRunnable, 800);
+                } else {
+                    progressBar.setVisibility(View.GONE);
                 }
+                return true;
             }
         });
     }
 
-    // --- NUEVO MÉTODO: Aquí guardas la info ---
-    private void guardarLibro(Book book) {
-        // LOG DE PRUEBA: Si aquí sale null, el problema es la clase Book
-        Log.d("FLUJO_DATOS", "ID Portada en objeto Book original: " + book.getCoverId());
-        new Thread(() -> {
-            try {
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-                // Asegúrate de que este método exista en tu clase Book y transforme las listas a String
-                BookEn bookEn = new BookEn(book, idUsuario);
-                // LOG DE PRUEBA: Si aquí sale null, el problema es el constructor de BookEn
-                Log.d("FLUJO_DATOS", "ID Portada en objeto BookEn: " + bookEn.getCoverId());
-
-                Response<BookEn> response = apiBook.anadirBook(bookEn).execute();
-
-                if (response.isSuccessful()) {
-                    Log.d("DB_SUCCESS", "Libro guardado: " + response.code());
-                    runOnUiThread(() -> {
-                        Toast.makeText(BuscadorAPIExterna.this, "Guardado: " + bookEn.getTitulo(), Toast.LENGTH_SHORT).show();
-                        setResult(Activity.RESULT_OK);
-                        finish();
-                    });
-                } else {
-                    Log.e("DB_ERROR", "Error en servidor: " + response.code());
-                }
-            } catch (Exception e) {
-                Log.e("Error BuscadorAPIExterna", "Error en guardarLibro: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }).start();
-    }
-
     private void buscarLibro(String query) {
-        // ... tu código de Retrofit (se mantiene igual) ...
+        // Mostramos el ProgressBar horizontal justo debajo del buscador
+        progressBar.setVisibility(View.VISIBLE);
+
         APIexterna.getLibroService().buscarLibroPorTitulo(query).enqueue(new Callback<BookResponse>() {
             @Override
             public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
+                progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null) {
                     List<Book> lista = response.body().getBooks();
                     if (lista != null) {
@@ -138,10 +119,41 @@ public class BuscadorAPIExterna extends AppCompatActivity {
                     }
                 }
             }
+
             @Override
             public void onFailure(Call<BookResponse> call, Throwable t) {
-                Log.e("API_DEBUG", "Error: " + t.getMessage());
+                progressBar.setVisibility(View.GONE);
+                Log.e("API_DEBUG", "Error en OpenLibrary: " + t.getMessage());
+                Toast.makeText(BuscadorAPIExterna.this, "Error de conexión con OpenLibrary", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void guardarLibro(Book book) {
+        progressBar.setVisibility(View.VISIBLE);
+        new Thread(() -> {
+            try {
+                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
+                // Transformamos el objeto de la API externa a nuestro objeto de BD interna
+                BookEn bookEn = new BookEn(book, idUsuario);
+
+                Response<BookEn> response = apiBook.anadirBook(bookEn).execute();
+
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (response.isSuccessful()) {
+                        Toast.makeText(BuscadorAPIExterna.this, "Añadido a Deseos: " + bookEn.getTitulo(), Toast.LENGTH_SHORT).show();
+                        setResult(Activity.RESULT_OK);
+                        finish();
+                    } else {
+                        Log.e("DB_ERROR", "Error: " + response.code());
+                        Toast.makeText(BuscadorAPIExterna.this, "Error al guardar en tu lista", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> progressBar.setVisibility(View.GONE));
+                Log.e("Error_Buscador", "Excepción: " + e.getMessage());
+            }
+        }).start();
     }
 }

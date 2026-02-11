@@ -12,6 +12,7 @@ import com.tfg.charmreader.R;
 import com.tfg.charmreader.objetosBD.LibrosSinEstrenar;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -19,8 +20,8 @@ import java.util.Locale;
 public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstrenarAdapter.LibroViewHolder> {
 
     private List<LibrosSinEstrenar> libros;
+    private List<LibrosSinEstrenar> listaOriginal; // 🔥 Para el filtrado
     private OnItemClickListener listener;
-    // Formateador para mostrar la fecha de forma amigable (ej: 28/01/2026)
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     public interface OnItemClickListener {
@@ -28,14 +29,14 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
     }
 
     public LibrosSinEstrenarAdapter(List<LibrosSinEstrenar> libros, OnItemClickListener listener) {
-        this.libros = libros;
+        this.libros = (libros != null) ? libros : new ArrayList<>();
+        this.listaOriginal = new ArrayList<>(this.libros);
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public LibroViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // CAMBIO 1: Inflamos el nuevo layout item_libro_futuro
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_libro_futuro, parent, false);
         return new LibroViewHolder(itemView);
@@ -53,14 +54,11 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         if (libro.getFechaPublicacion() != null) {
             holder.tvFecha.setText(dateFormat.format(libro.getFechaPublicacion()));
 
-            // --- LÓGICA DE COLORES ---
             Date hoy = new Date();
             if (libro.getFechaPublicacion().before(hoy)) {
-                // La fecha ya pasó -> Verde
-                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#4CAF50")); // Verde
             } else {
-                // La fecha es futura -> Rojo
-                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#F44336"));
+                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#F44336")); // Rojo
             }
         } else {
             holder.tvFecha.setText("Sin fecha");
@@ -77,8 +75,39 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         return libros != null ? libros.size() : 0;
     }
 
+    // 🔥 MÉTODO PARA FILTRAR
+    public void filtrar(String texto) {
+        if (texto == null || texto.isEmpty()) {
+            libros.clear();
+            libros.addAll(listaOriginal);
+        } else {
+            List<LibrosSinEstrenar> filtrados = new ArrayList<>();
+            String query = texto.toLowerCase().trim();
+            for (LibrosSinEstrenar libro : listaOriginal) {
+                // Filtramos por título (que está dentro del ID) o por autor
+                String titulo = (libro.getId() != null) ? libro.getId().getNombre().toLowerCase() : "";
+                String autor = (libro.getAutor() != null) ? libro.getAutor().toLowerCase() : "";
+
+                if (titulo.contains(query) || autor.contains(query)) {
+                    filtrados.add(libro);
+                }
+            }
+            libros.clear();
+            libros.addAll(filtrados);
+        }
+        notifyDataSetChanged();
+    }
+
+    public void setLibros(List<LibrosSinEstrenar> nuevosLibros) {
+        this.libros.clear();
+        if (nuevosLibros != null) {
+            this.libros.addAll(nuevosLibros);
+            this.listaOriginal = new ArrayList<>(nuevosLibros); // Actualizar lista de referencia
+        }
+        notifyDataSetChanged();
+    }
+
     public static class LibroViewHolder extends RecyclerView.ViewHolder {
-        // CAMBIO 3: Añadimos tvFecha que existe en el nuevo XML
         TextView tvTitulo, tvAutor, tvFecha;
 
         public LibroViewHolder(@NonNull View itemView) {
@@ -87,13 +116,5 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
             tvAutor = itemView.findViewById(R.id.tvAutorLibro);
             tvFecha = itemView.findViewById(R.id.tvFechaLanzamiento);
         }
-    }
-
-    public void setLibros(List<LibrosSinEstrenar> nuevosLibros) {
-        this.libros.clear();
-        if (nuevosLibros != null) {
-            this.libros.addAll(nuevosLibros);
-        }
-        notifyDataSetChanged();
     }
 }

@@ -2,14 +2,18 @@ package com.tfg.charmreader.menu.priv.estanteria;
 
 import android.app.Activity;
 import android.content.DialogInterface;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.databinding.ActivityNuevaEstanteriaBinding;
 import com.tfg.charmreader.interfacesAPI.I_ApiEstanteria;
@@ -21,10 +25,12 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class CargarNuevaEstanteria extends AppCompatActivity {
-    //private FirebaseAuth mAuth;
     private ActivityNuevaEstanteriaBinding binding;
-    FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+    private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private final I_ApiEstanteria apiEstanteria = API.getInstancia().create(I_ApiEstanteria.class);
+
+    // Color por defecto (el lila de tu app)
+    private String colorSeleccionado = "#F3E5F5";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,29 +38,65 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
         binding = ActivityNuevaEstanteriaBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        //mAuth = FirebaseAuth.getInstance();
-        if (firebaseUser == null) return;
+        if (firebaseUser == null) {
+            finish();
+            return;
+        }
 
-        binding.Guardar.setOnClickListener(v -> guardar());
+        configurarSelectorColores();
+
+        // Actualizamos los IDs a los nuevos del XML (btnGuardar)
+        binding.btnGuardar.setOnClickListener(v -> guardar());
+    }
+
+    private void configurarSelectorColores() {
+        // Asignamos listeners a cada View de color
+        View.OnClickListener colorListener = v -> {
+            // Resetear escalas (efecto visual de selección)
+            resetearEscalasColores();
+            v.setScaleX(1.3f);
+            v.setScaleY(1.3f);
+
+            // Cambiar el color del preview de arriba
+            if (v.getId() == R.id.color1) colorSeleccionado = "#F3E5F5";
+            if (v.getId() == R.id.color2) colorSeleccionado = "#E3F2FD";
+            if (v.getId() == R.id.color3) colorSeleccionado = "#E8F5E9";
+            if (v.getId() == R.id.color4) colorSeleccionado = "#FFF3E0";
+            if (v.getId() == R.id.color5) colorSeleccionado = "#FFEBEE";
+
+            binding.ivIconoPreview.getBackground().setColorFilter(
+                    android.graphics.Color.parseColor(colorSeleccionado),
+                    PorterDuff.Mode.SRC_IN
+            );
+        };
+
+        binding.color1.setOnClickListener(colorListener);
+        binding.color2.setOnClickListener(colorListener);
+        binding.color3.setOnClickListener(colorListener);
+        binding.color4.setOnClickListener(colorListener);
+        binding.color5.setOnClickListener(colorListener);
+    }
+
+    private void resetearEscalasColores() {
+        binding.color1.setScaleX(1f); binding.color1.setScaleY(1f);
+        binding.color2.setScaleX(1f); binding.color2.setScaleY(1f);
+        binding.color3.setScaleX(1f); binding.color3.setScaleY(1f);
+        binding.color4.setScaleX(1f); binding.color4.setScaleY(1f);
+        binding.color5.setScaleX(1f); binding.color5.setScaleY(1f);
     }
 
     private void guardar() {
-        String titulo = binding.Titulo.getText().toString().trim();
+        // Usamos etTitulo (TextInputEditText) en lugar del Titulo antiguo
+        String titulo = binding.etTitulo.getText().toString().trim();
         if (titulo.isEmpty()){
-            mostrarAlerta("Alerta", "Debe introducir un título");
+            binding.tilTitulo.setError("Introduce un nombre");
             return;
-        }
-        /*int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-        if (idUsuario != -1) {
-            ejecutarGuardadoEstanteria(idUsuario, titulo);
         } else {
-            mostrarAlerta("Error", "No se pudo obtener el ID del usuario");
-        }*/
-        // CREAMOS UN HILO PARA LA OPERACIÓN DE RED
+            binding.tilTitulo.setError(null);
+        }
+
         new Thread(() -> {
             int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-
-            // VOLVEMOS AL HILO PRINCIPAL PARA TOCAR LA UI O LANZAR EL GUARDADO
             runOnUiThread(() -> {
                 if (idUsuario != -1) {
                     ejecutarGuardadoEstanteria(idUsuario, titulo);
@@ -65,46 +107,29 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
         }).start();
     }
 
-    private void ejecutarGuardadoEstanteria(int id, String titulo) {
-        Estanteria nueva = new Estanteria(id, titulo);
+    private void ejecutarGuardadoEstanteria(int idUsuario, String titulo) {
+        Estanteria nueva = new Estanteria(idUsuario, titulo, colorSeleccionado);
+
         apiEstanteria.anadirEstanteria(nueva).enqueue(new Callback<Estanteria>() {
             @Override
             public void onResponse(Call<Estanteria> call, Response<Estanteria> response) {
                 if (response.isSuccessful()) {
-                    Log.d("API_SUCCESS", "Guardado correctamente: " + response.body().toString());
                     setResult(Activity.RESULT_OK);
                     finish();
-                } else {
-                    // Esto te dirá por qué el servidor rechazó la petición (Error 400, 404, 500...)
-                    try {
-                        Log.e("API_ERROR", "Cuerpo del error: " + response.errorBody().string());
-                    } catch (Exception e) { e.printStackTrace(); }
-                    mostrarAlerta("Error " + response.code(), "El servidor rechazó los datos");
                 }
             }
-
             @Override
             public void onFailure(Call<Estanteria> call, Throwable t) {
-                // Esto te dirá si ni siquiera pudo llegar al servidor (Error de red, URL mal escrita, etc.)
-                Log.e("API_FAILURE", "Error de conexión: " + t.getMessage());
-                mostrarAlerta("Error de Red", "No se pudo conectar con el servidor");
+                Log.e("API", "Error al guardar");
             }
         });
     }
 
     public void mostrarAlerta(String titulo, String contenido) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(titulo);
-        builder.setMessage(contenido);
-
-        builder.setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        new AlertDialog.Builder(this)
+                .setTitle(titulo)
+                .setMessage(contenido)
+                .setPositiveButton("Aceptar", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }

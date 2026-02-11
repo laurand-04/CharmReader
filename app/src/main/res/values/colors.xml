@@ -5,4 +5,8 @@
     <color name="fondo_gris_suave">#F8F9FA</color>
     <color name="primary_color">#6200EE</color>
     <color name="basico">#664fa4</color>
+    <color name="azul">#1976D2</color>
+    <color name="verde">#388E3C</color>
+    <color name="naranja">#F57C00</color>
+    <color name="rosa">#C2185B</color>
 </resources>

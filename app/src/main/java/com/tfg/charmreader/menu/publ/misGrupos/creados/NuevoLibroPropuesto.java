@@ -50,7 +50,7 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_buscador_api_externa);
 
-        etQuery = findViewById(R.id.etQuery);
+        etQuery = findViewById(R.id.searchViewAPI);
         recyclerView = findViewById(R.id.recyclerViewBook);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 

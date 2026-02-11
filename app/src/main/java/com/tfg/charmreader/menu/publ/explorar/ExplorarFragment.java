@@ -6,6 +6,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
@@ -28,20 +29,25 @@ public class ExplorarFragment extends Fragment {
 
     private RecyclerView rvGrupos;
     private GrupoLecturaAdapter adapter;
-    private List<GrupoLectura> listaGL = new ArrayList<>();
-    private FloatingActionButton fabCrear; // 1. Declarar el botón
+    private FloatingActionButton fabCrear;
+    private LinearLayout layoutEmpty; // Para mostrar si no hay grupos
 
     private I_ApiGrupoLectura apiGrupoLectura = API.getInstancia().create(I_ApiGrupoLectura.class);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Asegúrate de que el XML se llame fragment_explorar o fragment_mis_grupos según corresponda
         View view = inflater.inflate(R.layout.fragment_explorar, container, false);
 
+        // 1. Vinculación de vistas con los IDs del XML limpio
         rvGrupos = view.findViewById(R.id.rvGrupos);
-        fabCrear = view.findViewById(R.id.fabCrearGrupo); // 2. Vincular
-        rvGrupos.setLayoutManager(new LinearLayoutManager(getContext()));
-        SearchView searchView = view.findViewById(R.id.searchView);
+        fabCrear = view.findViewById(R.id.fabCrearGrupo);
+        layoutEmpty = view.findViewById(R.id.layoutEmptyGrupos);
+        SearchView searchView = view.findViewById(R.id.searchViewGrupos);
 
+        rvGrupos.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // 2. Configuración del Adaptador con el listener de clic
         adapter = new GrupoLecturaAdapter(new ArrayList<>(), grupo -> {
             Intent intent = new Intent(getActivity(), InfoGrupoPublica.class);
             intent.putExtra("objetoGrupo", grupo);
@@ -50,7 +56,7 @@ public class ExplorarFragment extends Fragment {
 
         rvGrupos.setAdapter(adapter);
 
-        // 3. Listener para abrir el formulario de Nuevo Grupo
+        // 3. Botón flotante para nuevo grupo
         fabCrear.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), NuevoGrupo.class);
             startActivity(intent);
@@ -58,6 +64,7 @@ public class ExplorarFragment extends Fragment {
 
         cargarGrupos();
 
+        // 4. Lógica del buscador (usando el método filtrar del adaptador)
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -69,7 +76,10 @@ public class ExplorarFragment extends Fragment {
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                filtrar(newText);
+                // Usamos la lógica de filtrado que ya tiene el adaptador
+                if (adapter != null) {
+                    adapter.filtrar(newText);
+                }
                 return true;
             }
         });
@@ -101,46 +111,43 @@ public class ExplorarFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        cargarGrupos(); // Refresca la lista si el usuario creó un grupo y volvió
-    }
-
-    public void mostrarAlerta(String titulo, String contenido) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle(titulo);
-        builder.setMessage(contenido);
-        builder.setPositiveButton("Entendido", (dialog, which) -> dialog.dismiss());
-        builder.show();
-    }
-
-    private void filtrar(String texto) {
-        if (listaGL == null) return;
-        List<GrupoLectura> filtrada = new ArrayList<>();
-        for (GrupoLectura grupo : listaGL) {
-            if (grupo.getNombre().toLowerCase().contains(texto.toLowerCase()) ||
-                    grupo.getUbicacion().toLowerCase().contains(texto.toLowerCase())) {
-                filtrada.add(grupo);
-            }
-        }
-        adapter.setGrupoLectura(filtrada);
+        cargarGrupos();
     }
 
     private void cargarGrupos() {
         new Thread(() -> {
             try {
                 retrofit2.Response<List<GrupoLectura>> response = apiGrupoLectura.obtenerGrupos().execute();
-                if (response.isSuccessful() && response.body() != null) {
-                    listaGL = response.body();
-                    if (isAdded() && getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            if (adapter != null) {
-                                adapter.setGrupoLectura(listaGL);
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (response.isSuccessful() && response.body() != null) {
+                            List<GrupoLectura> lista = response.body();
+
+                            // Gestionar visibilidad del layout vacío
+                            if (lista.isEmpty()) {
+                                layoutEmpty.setVisibility(View.VISIBLE);
+                                rvGrupos.setVisibility(View.GONE);
+                            } else {
+                                layoutEmpty.setVisibility(View.GONE);
+                                rvGrupos.setVisibility(View.VISIBLE);
+                                adapter.setGrupoLectura(lista);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             } catch (Exception e) {
                 Log.e("ExplorarFragment", "Error cargando grupos: ", e);
             }
         }).start();
+    }
+
+    public void mostrarAlerta(String titulo, String contenido) {
+        if (getContext() != null) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+            builder.setTitle(titulo);
+            builder.setMessage(contenido);
+            builder.setPositiveButton("Entendido", (dialog, which) -> dialog.dismiss());
+            builder.show();
+        }
     }
 }
