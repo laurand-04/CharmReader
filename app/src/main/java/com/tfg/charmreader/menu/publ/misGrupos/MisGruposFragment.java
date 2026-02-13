@@ -2,16 +2,13 @@ package com.tfg.charmreader.menu.publ.misGrupos;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.android.material.tabs.TabLayout;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
@@ -22,10 +19,8 @@ import com.tfg.charmreader.menu.publ.misGrupos.creados.ManejoGrupo;
 import com.tfg.charmreader.menu.publ.misGrupos.suscritos.InfoGrupoPrivada;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.GrupoLectura;
-
 import java.util.ArrayList;
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -37,7 +32,7 @@ public class MisGruposFragment extends Fragment {
     private TabLayout tabLayout;
     private List<GrupoLectura> listaSuscritos = new ArrayList<>();
     private List<GrupoLectura> listaCreados = new ArrayList<>();
-    private List<GrupoLectura> listaActual = new ArrayList<>(); // La que se muestra
+    private List<GrupoLectura> listaActual = new ArrayList<>();
 
     private I_ApiGrupoLectura apiGrupo = API.getInstancia().create(I_ApiGrupoLectura.class);
     private I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
@@ -51,17 +46,10 @@ public class MisGruposFragment extends Fragment {
         configurarTabs();
         configurarBuscador(view);
 
-        // FIX: Llamada asíncrona para evitar el crash
-        Utilidades.obtenerIdUsuarioDesdeAPI(new Utilidades.IdUsuarioCallback() {
-            @Override
-            public void onIdCargado(int id) {
-                idUsuario = id;
-                Log.d("INFO en MisGruposFragment", "onCreateView - onIdCargado___ID de usuario recibido: " + idUsuario);
-
-                if (idUsuario > 0 && isAdded()) {
-                    // Ahora que sí tenemos el ID, cargamos los datos por primera vez
-                    cargarDatos();
-                }
+        Utilidades.obtenerIdUsuarioDesdeAPI(id -> {
+            idUsuario = id;
+            if (idUsuario > 0 && isAdded()) {
+                cargarDatos();
             }
         });
 
@@ -73,16 +61,11 @@ public class MisGruposFragment extends Fragment {
         tabLayout = v.findViewById(R.id.tabLayoutMisGrupos);
         rvMisGrupos.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Configuramos el click dinámico según la pestaña
         adapter = new GrupoLecturaAdapter(new ArrayList<>(), grupo -> {
             Intent intent;
-
-            // Verificamos qué pestaña está seleccionada actualmente
             if (tabLayout.getSelectedTabPosition() == 0) {
-                // Pestaña "Suscrito" -> Información del grupo
                 intent = new Intent(getActivity(), InfoGrupoPrivada.class);
             } else {
-                // Pestaña "Creados" -> Gestión del grupo (ManejoGrupo)
                 intent = new Intent(getActivity(), ManejoGrupo.class);
             }
             intent.putExtra("objetoGrupo", grupo);
@@ -93,17 +76,15 @@ public class MisGruposFragment extends Fragment {
     }
 
     private void configurarTabs() {
-        tabLayout.addTab(tabLayout.newTab().setText("Suscrito").setIcon(R.drawable.ic_check_circle));
-        tabLayout.addTab(tabLayout.newTab().setText("Creados").setIcon(R.drawable.ic_admin));
+        if (tabLayout.getTabCount() == 0) {
+            tabLayout.addTab(tabLayout.newTab().setText("Suscritos"));
+            tabLayout.addTab(tabLayout.newTab().setText("Creados"));
+        }
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    mostrarLista(listaSuscritos);
-                } else {
-                    mostrarLista(listaCreados);
-                }
+                mostrarLista(tab.getPosition() == 0 ? listaSuscritos : listaCreados);
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
@@ -111,9 +92,8 @@ public class MisGruposFragment extends Fragment {
     }
 
     private void cargarDatos() {
-        if (idUsuario <= 0) return; // Seguridad extra
+        if (idUsuario <= 0) return;
 
-        // 1. Grupos SUSCRITOS
         apiMiembro.obtenerGruposDondeEsMiembro(idUsuario).enqueue(new Callback<List<GrupoLectura>>() {
             @Override
             public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
@@ -125,7 +105,6 @@ public class MisGruposFragment extends Fragment {
             @Override public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {}
         });
 
-        // 2. Grupos CREADOS (Usa el endpoint que probamos en Postman)
         apiGrupo.obtenerGruposPorAdmin(idUsuario).enqueue(new Callback<List<GrupoLectura>>() {
             @Override
             public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
@@ -139,16 +118,8 @@ public class MisGruposFragment extends Fragment {
     }
 
     private void mostrarLista(List<GrupoLectura> lista) {
-        listaActual = lista;
-        adapter.setGrupoLectura(lista);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (idUsuario > 0) {
-            cargarDatos();
-        }
+        listaActual = (lista != null) ? lista : new ArrayList<>();
+        adapter.setGrupoLectura(listaActual);
     }
 
     private void configurarBuscador(View v) {
@@ -172,5 +143,11 @@ public class MisGruposFragment extends Fragment {
             }
         }
         adapter.setGrupoLectura(filtrada);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (idUsuario > 0) cargarDatos();
     }
 }

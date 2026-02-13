@@ -3,15 +3,19 @@ package com.tfg.charmreader.autentication;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
-import android.widget.Button;
-import android.widget.ImageButton;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.R;
@@ -19,19 +23,27 @@ import com.tfg.charmreader.Utilidades;
 
 public class Perfil extends AppCompatActivity {
 
-    private ImageButton btnVolver;
+    private ImageView btnVolver;
     private TextView tvNombreUsuario, tvEmailUsuario;
-    private Button btnCerrarSesion, btnCambiarPassword;
+    private MaterialButton btnCerrarSesion, btnCambiarPassword;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Estética CharmReader: Barra de estado blanca
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_perfil);
 
         vincularVistas();
         cargarDatosUsuario();
         configurarListeners();
 
+        // Control del botón atrás físico
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -59,6 +71,7 @@ public class Perfil extends AppCompatActivity {
                 @Override
                 public void onIdCargado(int idUsuario) {
                     runOnUiThread(() -> {
+                        // Priorizar DisplayName si existe, sino usar ID
                         if (user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
                             tvNombreUsuario.setText(user.getDisplayName());
                         } else {
@@ -71,9 +84,9 @@ public class Perfil extends AppCompatActivity {
     }
 
     private void configurarListeners() {
-        btnVolver.setOnClickListener(v -> finish()); // Lanza el dispatcher de atrás
+        // Al pulsar atrás en la cabecera, lanzamos el dispatcher de atrás para la animación
+        btnVolver.setOnClickListener(v -> getOnBackPressedDispatcher().onBackPressed());
 
-        // Lógica para cambiar contraseña enviando correo
         btnCambiarPassword.setOnClickListener(v -> {
             FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
             if (user != null && user.getEmail() != null) {
@@ -82,10 +95,9 @@ public class Perfil extends AppCompatActivity {
         });
 
         btnCerrarSesion.setOnClickListener(v -> {
-            new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            new MaterialAlertDialogBuilder(this)
                     .setTitle("Cerrar sesión")
                     .setMessage("¿Estás seguro de que deseas salir de tu cuenta?")
-                    .setCancelable(true)
                     .setNegativeButton("CANCELAR", (dialog, which) -> dialog.dismiss())
                     .setPositiveButton("CERRAR SESIÓN", (dialog, which) -> realizarCerrarSesion())
                     .show();
@@ -96,22 +108,20 @@ public class Perfil extends AppCompatActivity {
         FirebaseAuth.getInstance().sendPasswordResetEmail(email)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        Toast.makeText(this, "Se ha enviado un correo a " + email + " para cambiar tu contraseña", Toast.LENGTH_LONG).show();
+                        Toast.makeText(this, "Correo enviado a " + email, Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, "Error al enviar el correo: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
     private void realizarCerrarSesion() {
         FirebaseAuth.getInstance().signOut();
+        // Limpiar preferencias de sesión
         SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.clear();
-        editor.apply();
+        preferences.edit().clear().apply();
 
-        Toast.makeText(this, "Sesión cerrada correctamente", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(Perfil.this, LoginActivity.class);
+        Intent intent = new Intent(Perfil.this, com.tfg.charmreader.autentication.LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();

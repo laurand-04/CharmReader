@@ -17,7 +17,6 @@ public class UsuarioAdapter extends RecyclerView.Adapter<UsuarioAdapter.UsuarioV
     private List<Usuario> listaUsuarios;
     private OnUsuarioDeleteListener deleteListener;
 
-    // Interfaz para comunicar el clic de borrado con la Actividad
     public interface OnUsuarioDeleteListener {
         void onUsuarioDelete(Usuario usuario);
     }
@@ -38,14 +37,15 @@ public class UsuarioAdapter extends RecyclerView.Adapter<UsuarioAdapter.UsuarioV
     public void onBindViewHolder(@NonNull UsuarioViewHolder holder, int position) {
         Usuario usuario = listaUsuarios.get(position);
 
+        // Ajustamos los textos según los datos del objeto Usuario
+        // Si el usuario no tiene nombre en la BD, podrías poner el email arriba
+        holder.tvNombre.setText("Usuario ID: " + usuario.getId());
         holder.tvEmail.setText(usuario.getCorreo());
-        holder.tvId.setText("ID Sistema: " + usuario.getId());
 
         holder.btnBorrar.setOnClickListener(v -> {
-            // Diálogo de confirmación antes de llamar al listener
             new MaterialAlertDialogBuilder(v.getContext())
                     .setTitle("Eliminar Usuario")
-                    .setMessage("¿Estás seguro de que deseas eliminar permanentemente a " + usuario.getCorreo() + "?")
+                    .setMessage("¿Estás seguro de que deseas eliminar a " + usuario.getCorreo() + "?")
                     .setNegativeButton("CANCELAR", null)
                     .setPositiveButton("ELIMINAR", (dialog, which) -> {
                         if (deleteListener != null) {
@@ -62,14 +62,15 @@ public class UsuarioAdapter extends RecyclerView.Adapter<UsuarioAdapter.UsuarioV
     }
 
     public static class UsuarioViewHolder extends RecyclerView.ViewHolder {
-        TextView tvEmail, tvId;
+        TextView tvNombre, tvEmail; // Variables renombradas para coincidir
         ImageButton btnBorrar;
 
         public UsuarioViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvEmail = itemView.findViewById(R.id.tvEmailAdmin);
-            tvId = itemView.findViewById(R.id.tvIdAdmin);
-            btnBorrar = itemView.findViewById(R.id.btnBorrarUsuario);
+            // Sincronización de IDs con el XML
+            tvNombre = itemView.findViewById(R.id.tvNombreUsuarioAdmin);
+            tvEmail = itemView.findViewById(R.id.tvEmailUsuarioAdmin);
+            btnBorrar = itemView.findViewById(R.id.btnEliminarUsuario);
         }
     }
 }

@@ -1,17 +1,22 @@
 package com.tfg.charmreader.menu.publ.misGrupos.suscritos;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
-import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -33,11 +38,15 @@ import retrofit2.Response;
 public class InfoGrupoPrivada extends AppCompatActivity {
 
     private TextView tvLibroActual, tvAutorActual, tvFechaSesion, tvHoraSesion, tvCapitulosSesion;
-    private ImageView ivPortadaActual;
-    private MaterialCardView cardLecturaActual;
+    private TextView tvNombreCabecera, tvUbicacionCabecera;
+    private ImageView ivPortadaActual, ivFotoGrupo, btnBack;
+
+    // CORRECCIÓN: Usamos CardView (androidx) para que coincida con el XML
+    private CardView cardLecturaActual;
+
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
-    private FloatingActionButton fabReseña;
+    private FloatingActionButton fabResena;
 
     private GrupoLectura grupo;
     private BookEn libroActualObj;
@@ -48,45 +57,85 @@ public class InfoGrupoPrivada extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_info_grupo_privada);
 
-        // 1. Inicializar vistas
+        inicializarVistas();
+
+        grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
+
+        if (grupo != null) {
+            cargarDatosCabecera();
+            cargarLecturaActual(grupo.getIdGrupo());
+            cargarProximaSesion(grupo.getIdGrupo());
+        }
+
+        configurarListeners();
+        configurarViewPager();
+    }
+
+    private void inicializarVistas() {
         tvLibroActual = findViewById(R.id.tvLibroActual);
         tvAutorActual = findViewById(R.id.tvAutorActual);
         tvFechaSesion = findViewById(R.id.tvFechaSesion);
         tvHoraSesion = findViewById(R.id.tvHoraSesion);
         tvCapitulosSesion = findViewById(R.id.tvCapitulosSesion);
         ivPortadaActual = findViewById(R.id.ivPortadaActual);
+
+        // Vistas actualizadas a CardView
         cardLecturaActual = findViewById(R.id.cardLecturaActual);
+
         tabLayout = findViewById(R.id.tabsLecturas);
         viewPager = findViewById(R.id.viewPagerLecturas);
-        fabReseña = findViewById(R.id.fabResenaGrupo);
+        fabResena = findViewById(R.id.fabResenaGrupo);
 
-        grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
+        // Vistas de cabecera
+        tvNombreCabecera = findViewById(R.id.tvNombreGrupoPrivada);
+        tvUbicacionCabecera = findViewById(R.id.tvUbicacionGrupoPrivada);
+        ivFotoGrupo = findViewById(R.id.ivFotoGrupoPrivada);
+        btnBack = findViewById(R.id.btnBackPrivada);
+    }
 
-        if (grupo != null) {
-            cargarLecturaActual(grupo.getIdGrupo());
-            cargarProximaSesion(grupo.getIdGrupo());
+    private void cargarDatosCabecera() {
+        tvNombreCabecera.setText(grupo.getNombre());
+        tvUbicacionCabecera.setText(grupo.getUbicacion());
+
+        // Usamos grupo.getImagen() o grupo.getUrl() según tu objeto
+        String imagenUrl = grupo.getUrl();
+        if (imagenUrl != null && !imagenUrl.isEmpty()) {
+            Glide.with(this)
+                    .load(imagenUrl)
+                    .placeholder(R.drawable.ic_people)
+                    .centerCrop()
+                    .into(ivFotoGrupo);
         }
+    }
+
+    private void configurarListeners() {
+        btnBack.setOnClickListener(v -> finish());
 
         cardLecturaActual.setOnClickListener(v -> {
             if (libroActualObj != null) {
-                Intent intent = new Intent(this, com.tfg.charmreader.menu.publ.misGrupos.suscritos.LibroActual.class);
+                Intent intent = new Intent(this, LibroActual.class);
                 intent.putExtra("libroSeleccionado", libroActualObj);
                 startActivity(intent);
             }
         });
 
-        fabReseña.setOnClickListener(v -> {
+        // NAVEGACIÓN A LA RESEÑA DEL GRUPO
+        fabResena.setOnClickListener(v -> {
             if (grupo != null) {
                 Intent intent = new Intent(this, ValoracionGrupo.class);
                 intent.putExtra("idGrupo", grupo.getIdGrupo());
-                intent.putExtra("idLibro", -1); // Siempre -1 para que sea valoración de GRUPO
+                intent.putExtra("idLibro", -1); // Indica que es reseña de grupo
                 startActivity(intent);
             }
         });
-
-        configurarViewPager();
     }
 
     private void cargarLecturaActual(int idGrupo) {
@@ -133,20 +182,9 @@ public class InfoGrupoPrivada extends AppCompatActivity {
         ViewPagerAdapter adapter = new ViewPagerAdapter(this);
         viewPager.setAdapter(adapter);
 
-        // Mediator para los nombres de las pestañas
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             tab.setText(position == 0 ? "Propuestas" : "Historial");
         }).attach();
-
-        // Opcional: Si quieres que el botón cambie de color o icono según la pestaña
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                // Aquí podrías ocultar el botón si en Historial no quisieras que apareciera,
-                // pero como tú quieres que esté en ambos para valorar el grupo, lo dejamos así.
-            }
-        });
     }
 
     private static class ViewPagerAdapter extends FragmentStateAdapter {

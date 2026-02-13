@@ -1,14 +1,18 @@
 package com.tfg.charmreader.menu.publ.misGrupos.creados;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiGrupoLectura;
@@ -23,7 +27,8 @@ public class EditarGrupo extends AppCompatActivity {
 
     private TextInputEditText etNombre, etUbicacion, etDesc;
     private AutoCompleteTextView spinnerFrecuencia;
-    private Button btnGuardar;
+    private MaterialButton btnGuardar;
+    private ImageView btnBack;
 
     private GrupoLectura grupo;
 
@@ -37,6 +42,13 @@ public class EditarGrupo extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Barra de estado blanca
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_editar_grupo);
 
         grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
@@ -50,6 +62,7 @@ public class EditarGrupo extends AppCompatActivity {
         rellenarCampos();
 
         btnGuardar.setOnClickListener(v -> actualizarGrupo());
+        btnBack.setOnClickListener(v -> finish());
     }
 
     private void inicializarVistas() {
@@ -58,6 +71,7 @@ public class EditarGrupo extends AppCompatActivity {
         etDesc = findViewById(R.id.etDescEdicion);
         spinnerFrecuencia = findViewById(R.id.spinnerFrecuencia);
         btnGuardar = findViewById(R.id.btnGuardarEdicion);
+        btnBack = findViewById(R.id.btnBackEditar);
     }
 
     private void configurarSelector() {
@@ -75,15 +89,11 @@ public class EditarGrupo extends AppCompatActivity {
         etDesc.setText(grupo.getDescripcion());
 
         if (grupo.getFrecuenciaReunion() != null) {
-            spinnerFrecuencia.setText(
-                    grupo.getFrecuenciaReunion().name(),
-                    false
-            );
+            spinnerFrecuencia.setText(grupo.getFrecuenciaReunion().name(), false);
         }
     }
 
     private void actualizarGrupo() {
-
         String nombre = etNombre.getText().toString().trim();
         String ubicacion = etUbicacion.getText().toString().trim();
         String descripcion = etDesc.getText().toString().trim();
@@ -94,58 +104,40 @@ public class EditarGrupo extends AppCompatActivity {
             return;
         }
 
-        // 🔄 Actualizamos el objeto local
+        btnGuardar.setEnabled(false);
+
         grupo.setNombre(nombre);
         grupo.setUbicacion(ubicacion);
         grupo.setDescripcion(descripcion);
 
         try {
-            grupo.setFrecuenciaReunion(
-                    GrupoLectura.Frecuencia.valueOf(frecuenciaSeleccionada)
-            );
+            grupo.setFrecuenciaReunion(GrupoLectura.Frecuencia.valueOf(frecuenciaSeleccionada));
         } catch (IllegalArgumentException e) {
-            Toast.makeText(this, "Frecuencia no válida", Toast.LENGTH_SHORT).show();
+            btnGuardar.setEnabled(true);
+            Toast.makeText(this, "Selecciona una frecuencia válida", Toast.LENGTH_SHORT).show();
             return;
         }
 
         apiGrupo.actualizar(grupo).enqueue(new Callback<GrupoLectura>() {
             @Override
-            public void onResponse(Call<GrupoLectura> call,
-                                   Response<GrupoLectura> response) {
-
+            public void onResponse(Call<GrupoLectura> call, Response<GrupoLectura> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(EditarGrupo.this, "¡Grupo actualizado!", Toast.LENGTH_SHORT).show();
 
-                    GrupoLectura grupoActualizado = response.body();
-
-                    Toast.makeText(
-                            EditarGrupo.this,
-                            "¡Grupo actualizado!",
-                            Toast.LENGTH_SHORT
-                    ).show();
-
-                    // 🔥 DEVOLVEMOS EL OBJETO ACTUALIZADO
                     Intent data = new Intent();
-                    data.putExtra("grupoActualizado", grupoActualizado);
+                    data.putExtra("grupoActualizado", response.body());
                     setResult(RESULT_OK, data);
-
                     finish();
-
                 } else {
-                    Toast.makeText(
-                            EditarGrupo.this,
-                            "Error: " + response.code(),
-                            Toast.LENGTH_SHORT
-                    ).show();
+                    btnGuardar.setEnabled(true);
+                    Toast.makeText(EditarGrupo.this, "Error: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<GrupoLectura> call, Throwable t) {
-                Toast.makeText(
-                        EditarGrupo.this,
-                        "Fallo de red: " + t.getMessage(),
-                        Toast.LENGTH_SHORT
-                ).show();
+                btnGuardar.setEnabled(true);
+                Toast.makeText(EditarGrupo.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });
     }

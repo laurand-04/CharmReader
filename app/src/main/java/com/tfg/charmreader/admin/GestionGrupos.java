@@ -1,7 +1,11 @@
 package com.tfg.charmreader.admin;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -21,22 +25,36 @@ public class GestionGrupos extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private GrupoAdapter adapter;
+    private ImageView btnBack;
     private List<GrupoLectura> listaGruposLocal = new ArrayList<>();
     private I_ApiGrupoLectura apiGrupo = API.getInstancia().create(I_ApiGrupoLectura.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_gestion_grupos); // Asegúrate de crear este XML (es igual al de usuarios)
 
-        recyclerView = findViewById(R.id.rvGruposAdmin);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        // Barra de estado blanca (Estilo Dashboard)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
 
+        setContentView(R.layout.activity_gestion_grupos);
+
+        vincularVistas();
         cargarGrupos();
     }
 
+    private void vincularVistas() {
+        recyclerView = findViewById(R.id.rvGruposAdmin);
+        btnBack = findViewById(R.id.btnBackGestionGrupos);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        btnBack.setOnClickListener(v -> finish());
+    }
+
     private void cargarGrupos() {
-        // Llamada a tu endpoint GET /grupos/listar (debes tenerlo en tu API)
         apiGrupo.obtenerGrupos().enqueue(new Callback<List<GrupoLectura>>() {
             @Override
             public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
@@ -54,13 +72,12 @@ public class GestionGrupos extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {
                 Log.e("API_ERROR", t.getMessage());
-                Toast.makeText(GestionGrupos.this, "Error de conexión", Toast.LENGTH_SHORT).show();
+                Toast.makeText(GestionGrupos.this, "Error de red al conectar", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void eliminarGrupoEnAPI(GrupoLectura grupo) {
-        // Llamada al endpoint DELETE /grupos/eliminar/{id} que creamos en Spring Boot
         apiGrupo.eliminarGrupo(grupo.getIdGrupo()).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
@@ -69,16 +86,16 @@ public class GestionGrupos extends AppCompatActivity {
                     if (pos != -1) {
                         listaGruposLocal.remove(pos);
                         adapter.notifyItemRemoved(pos);
-                        Toast.makeText(GestionGrupos.this, "Grupo eliminado con éxito", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(GestionGrupos.this, "Grupo eliminado permanentemente", Toast.LENGTH_SHORT).show();
                     }
                 } else {
-                    Toast.makeText(GestionGrupos.this, "Error al eliminar el grupo", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(GestionGrupos.this, "Error: No se pudo eliminar", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(GestionGrupos.this, "Fallo en la red", Toast.LENGTH_SHORT).show();
+                Toast.makeText(GestionGrupos.this, "Fallo crítico en la red", Toast.LENGTH_SHORT).show();
             }
         });
     }

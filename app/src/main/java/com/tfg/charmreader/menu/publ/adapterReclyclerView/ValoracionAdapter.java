@@ -3,7 +3,6 @@ package com.tfg.charmreader.menu.publ.adapterReclyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RatingBar;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,6 +11,7 @@ import com.tfg.charmreader.objetosBD.Valoracion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class ValoracionAdapter extends RecyclerView.Adapter<ValoracionAdapter.ValoracionViewHolder> {
 
@@ -39,10 +39,12 @@ public class ValoracionAdapter extends RecyclerView.Adapter<ValoracionAdapter.Va
     public void onBindViewHolder(@NonNull ValoracionViewHolder holder, int position) {
         Valoracion valoracion = valoraciones.get(position);
 
-        // Seteamos los datos
-        holder.ratingBar.setRating((float) valoracion.getCalificacion());
-        holder.tvDescripcion.setText(valoracion.getDescripcion());
+        // Seteamos los datos usando TUS métodos originales
         holder.tvIdUsuario.setText("Usuario #" + valoracion.getIdUsuario());
+        holder.tvDescripcion.setText(valoracion.getDescripcion());
+
+        // Seteamos la nota numérica formateada
+        holder.tvNotaNumerica.setText(String.format(Locale.getDefault(), "%.1f", (float) valoracion.getCalificacion()));
 
         // Lógica de clic consistente con tus otros adapters
         holder.itemView.setOnClickListener(v -> {
@@ -58,14 +60,14 @@ public class ValoracionAdapter extends RecyclerView.Adapter<ValoracionAdapter.Va
     }
 
     public static class ValoracionViewHolder extends RecyclerView.ViewHolder {
-        RatingBar ratingBar;
-        TextView tvDescripcion, tvIdUsuario;
+        TextView tvDescripcion, tvIdUsuario, tvNotaNumerica;
 
         public ValoracionViewHolder(@NonNull View itemView) {
             super(itemView);
-            ratingBar = itemView.findViewById(R.id.ratingItem);
+            // Mapeo de tus IDs originales
             tvDescripcion = itemView.findViewById(R.id.tvTextoComentario);
             tvIdUsuario = itemView.findViewById(R.id.tvIdUsuarioComentario);
+            tvNotaNumerica = itemView.findViewById(R.id.tvNotaNumerica);
         }
     }
 

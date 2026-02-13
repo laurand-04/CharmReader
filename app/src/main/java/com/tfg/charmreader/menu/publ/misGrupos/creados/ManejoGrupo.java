@@ -1,9 +1,12 @@
 package com.tfg.charmreader.menu.publ.misGrupos.creados;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -16,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
@@ -37,9 +41,10 @@ import retrofit2.Response;
 public class ManejoGrupo extends AppCompatActivity {
 
     private GrupoLectura grupo;
-    private TextView tvTitulo, tvSubs, tvUbicacion;
+    private TextView tvTitulo, tvSubs;
     private LinearLayout btnCabecera;
     private ImageButton btnEditar;
+    private ImageView btnBack, ivAvatarGrupo; // ivAvatarGrupo añadido
     private ViewPager2 viewPager;
     private TabLayout tabLayout;
     private FloatingActionButton fabAñadir, fabFinalizar;
@@ -55,17 +60,16 @@ public class ManejoGrupo extends AppCompatActivity {
                 }
             });
 
-    private final ActivityResultLauncher<Intent> nuevoLibroLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    configurarViewPager();
-                    Toast.makeText(this, "Lista de propuestas actualizada", Toast.LENGTH_SHORT).show();
-                }
-            });
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Estilo de barra de estado blanca
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_manejo_grupo);
 
         grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
@@ -77,18 +81,13 @@ public class ManejoGrupo extends AppCompatActivity {
         actualizarInterfazCabecera();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refrescarDatosGrupoDesdeAPI();
-    }
-
     private void vincularVistas() {
         btnCabecera = findViewById(R.id.btnCabeceraGrupo);
         tvTitulo = findViewById(R.id.tvTituloManejo);
         tvSubs = findViewById(R.id.tvSubsManejo);
-        tvUbicacion = findViewById(R.id.tvUbicacionManejo);
         btnEditar = findViewById(R.id.ivEditarGrupo);
+        btnBack = findViewById(R.id.btnBackManejo);
+        ivAvatarGrupo = findViewById(R.id.ivAvatarGrupo); // Inicialización vital
         tabLayout = findViewById(R.id.tabsManejo);
         viewPager = findViewById(R.id.viewPagerManejo);
         fabAñadir = findViewById(R.id.fabAñadirLectura);
@@ -96,7 +95,10 @@ public class ManejoGrupo extends AppCompatActivity {
     }
 
     private void configurarListeners() {
+        btnBack.setOnClickListener(v -> finish());
+
         btnCabecera.setOnClickListener(v -> {
+            // Suponiendo que 'Suscritos' es la actividad de lista de miembros
             Intent intent = new Intent(this, Suscritos.class);
             intent.putExtra("idGrupo", grupo.getIdGrupo());
             startActivity(intent);
@@ -111,43 +113,32 @@ public class ManejoGrupo extends AppCompatActivity {
         fabAñadir.setOnClickListener(v -> {
             Intent intent = new Intent(this, NuevoLibroPropuesto.class);
             intent.putExtra("idGrupo", grupo.getIdGrupo());
-            nuevoLibroLauncher.launch(intent);
+            startActivity(intent);
         });
 
         fabFinalizar.setOnClickListener(v -> {
             new MaterialAlertDialogBuilder(this)
                     .setTitle("⚖️ Dictaminar Ganador")
-                    .setMessage("¿Deseas cerrar las votaciones oficialmente?\n\n" +
-                            "Esta acción moverá el libro más votado a 'Actual' y archivará la lectura presente en el 'Historial'.")
+                    .setMessage("¿Deseas cerrar las votaciones oficialmente?")
                     .setPositiveButton("Dictaminar", (dialog, which) -> ejecutarCierreVotacion())
                     .setNegativeButton("Cancelar", null)
-                    .show(); // Material ya aplica redondeo automáticamente
+                    .show();
         });
     }
 
     private void ejecutarCierreVotacion() {
-        // Mostramos un mensaje de espera
-        Toast.makeText(this, "Procesando veredicto...", Toast.LENGTH_SHORT).show();
-
         apiCatalogo.cerrarVotaciones(grupo.getIdGrupo()).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if (response.isSuccessful()) {
-                    // Sonido o vibración corta aquí daría un toque genial
-                    Toast.makeText(ManejoGrupo.this, "Votación cerrada. ¡Nueva lectura establecida!", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ManejoGrupo.this, "¡Nueva lectura establecida!", Toast.LENGTH_LONG).show();
                     recreate();
                 } else {
-                    new MaterialAlertDialogBuilder(ManejoGrupo.this)
-                            .setTitle("Aviso")
-                            .setMessage("No se han encontrado votos suficientes para declarar un ganador.")
-                            .setPositiveButton("Entendido", null)
-                            .show();
+                    Toast.makeText(ManejoGrupo.this, "No hay votos suficientes", Toast.LENGTH_SHORT).show();
                 }
             }
-
-            @Override
-            public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(ManejoGrupo.this, "Error de conexión con el tribunal", Toast.LENGTH_SHORT).show();
+            @Override public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(ManejoGrupo.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -167,7 +158,21 @@ public class ManejoGrupo extends AppCompatActivity {
 
     private void actualizarInterfazCabecera() {
         tvTitulo.setText(grupo.getNombre());
-        tvUbicacion.setText(grupo.getUbicacion());
+
+        // Asegúrate de que grupo.getUrl() devuelva la URL de la imagen
+        String urlImagen = grupo.getUrl();
+
+        if (urlImagen != null && !urlImagen.isEmpty()) {
+            Glide.with(this)
+                    .load(urlImagen)
+                    .placeholder(R.drawable.ic_people)
+                    .error(R.drawable.ic_people)
+                    .centerCrop()
+                    .into(ivAvatarGrupo);
+        } else {
+            ivAvatarGrupo.setImageResource(R.drawable.ic_people);
+        }
+
         cargarContadorMiembros();
     }
 
@@ -194,7 +199,6 @@ public class ManejoGrupo extends AppCompatActivity {
             }
         }).attach();
 
-        // 🔹 Mostrar/Ocultar botones flotantes según la pestaña
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -216,6 +220,7 @@ public class ManejoGrupo extends AppCompatActivity {
             this.idGrupo = idGrupo;
         }
         @NonNull @Override public Fragment createFragment(int position) {
+            // Este fragmento debe manejar la lógica de mostrar libros según el estado (Propuesta, Actual, Historial)
             return FragmentListaLibrosManejo.newInstance(idGrupo, position);
         }
         @Override public int getItemCount() { return 3; }

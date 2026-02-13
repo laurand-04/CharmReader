@@ -1,11 +1,15 @@
 package com.tfg.charmreader.menu.publ.misGrupos.suscritos;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.Button;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
@@ -21,7 +25,8 @@ public class ValoracionLibroNueva extends AppCompatActivity {
 
     private RatingBar ratingBar;
     private TextInputEditText etReseña;
-    private Button btnEnviar;
+    private MaterialButton btnEnviar;
+    private ImageView btnBack;
 
     private int idLibro, idGrupo;
     private I_ApiValoracion apiValoracion;
@@ -29,17 +34,30 @@ public class ValoracionLibroNueva extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Barra de estado blanca con iconos oscuros
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_valoracion_libro_nueva);
 
-        ratingBar = findViewById(R.id.ratingValoracion);
-        etReseña = findViewById(R.id.etReseña);
-        btnEnviar = findViewById(R.id.btnEnviarValoracion);
-        apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
+        inicializarVistas();
 
         idLibro = getIntent().getIntExtra("idLibro", -1);
         idGrupo = getIntent().getIntExtra("idGrupo", -1);
 
         btnEnviar.setOnClickListener(v -> prepararEnvio());
+        btnBack.setOnClickListener(v -> finish());
+    }
+
+    private void inicializarVistas() {
+        ratingBar = findViewById(R.id.ratingValoracion);
+        etReseña = findViewById(R.id.etReseña);
+        btnEnviar = findViewById(R.id.btnEnviarValoracion);
+        btnBack = findViewById(R.id.btnBackValoracionLibro);
+        apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
     }
 
     private void prepararEnvio() {
@@ -49,14 +67,15 @@ public class ValoracionLibroNueva extends AppCompatActivity {
             return;
         }
 
-        // 🔹 CAMBIO AQUÍ: Ahora usamos Utilidades.IdUsuarioCallback
+        btnEnviar.setEnabled(false); // Evitar spam de clics
+
         Utilidades.obtenerIdUsuarioDesdeAPI(new Utilidades.IdUsuarioCallback() {
             @Override
             public void onIdCargado(int idUsuario) {
                 if (idUsuario != -1) {
                     enviarValoracionFinal(idUsuario, estrellas);
                 } else {
-                    // Esto se ejecuta si falla la red o el usuario no existe
+                    btnEnviar.setEnabled(true);
                     Toast.makeText(ValoracionLibroNueva.this, "Error: No se pudo identificar al usuario", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -81,6 +100,7 @@ public class ValoracionLibroNueva extends AppCompatActivity {
                     Toast.makeText(ValoracionLibroNueva.this, "¡Reseña publicada!", Toast.LENGTH_SHORT).show();
                     finish();
                 } else {
+                    btnEnviar.setEnabled(true);
                     Log.e("RETROFIT_ERROR", "Código: " + response.code());
                     Toast.makeText(ValoracionLibroNueva.this, "Error del servidor: " + response.code(), Toast.LENGTH_SHORT).show();
                 }
@@ -88,6 +108,7 @@ public class ValoracionLibroNueva extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<Valoracion> call, Throwable t) {
+                btnEnviar.setEnabled(true);
                 Toast.makeText(ValoracionLibroNueva.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });

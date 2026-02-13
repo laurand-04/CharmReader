@@ -1,8 +1,12 @@
 package com.tfg.charmreader.menu.priv.futuro;
 
 import android.app.DatePickerDialog;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -28,6 +32,7 @@ import retrofit2.Response;
 public class NuevoFuturoLibro extends AppCompatActivity {
     private TextInputEditText etTitulo, etAutor, etFecha;
     private MaterialButton btnGuardar;
+    private ImageView btnBack;
     private I_ApiLibrosSinEstrenar apiService;
     private Date fechaSeleccionada;
 
@@ -36,14 +41,27 @@ public class NuevoFuturoLibro extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nuevo_futuro_libro);
 
+        // Barra de estado blanca con iconos oscuros
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         apiService = API.getInstancia().create(I_ApiLibrosSinEstrenar.class);
+
+        vincularVistas();
+
+        btnBack.setOnClickListener(v -> finish());
+        etFecha.setOnClickListener(v -> mostrarDatePicker());
+        btnGuardar.setOnClickListener(v -> guardarLibro());
+    }
+
+    private void vincularVistas() {
         etTitulo = findViewById(R.id.etTitulo);
         etAutor = findViewById(R.id.etAutor);
         etFecha = findViewById(R.id.etFecha);
         btnGuardar = findViewById(R.id.btnGuardar);
-
-        etFecha.setOnClickListener(v -> mostrarDatePicker());
-        btnGuardar.setOnClickListener(v -> guardarLibro());
+        btnBack = findViewById(R.id.btnBackNuevoFuturo);
     }
 
     private void mostrarDatePicker() {
@@ -65,23 +83,23 @@ public class NuevoFuturoLibro extends AppCompatActivity {
         String autor = etAutor.getText().toString().trim();
 
         if (titulo.isEmpty() || autor.isEmpty() || fechaSeleccionada == null) {
-            Toast.makeText(this, "Datos incompletos", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Por favor, rellena todos los datos", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // SOLUCIÓN AL CRASH: Ejecutar la obtención del ID en un hilo aparte
+        btnGuardar.setEnabled(false);
+        btnGuardar.setText("GUARDANDO...");
+
         new Thread(() -> {
             try {
-                Log.d("DEBUG_GUARDAR", "Obteniendo ID de usuario en hilo secundario...");
                 int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-                Log.d("DEBUG_GUARDAR", "ID obtenido: " + idUsuario);
-
-                // Una vez tenemos el ID, volvemos al hilo principal para Retrofit (que ya gestiona sus propios hilos)
                 runOnUiThread(() -> enviarServidor(idUsuario, titulo, autor));
-
             } catch (Exception e) {
-                Log.e("DEBUG_GUARDAR", "Error en hilo: " + e.getMessage());
-                runOnUiThread(() -> Toast.makeText(this, "Error obteniendo usuario", Toast.LENGTH_SHORT).show());
+                Log.e("DEBUG_GUARDAR", "Error: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Error obteniendo usuario", Toast.LENGTH_SHORT).show();
+                    restaurarBoton();
+                });
             }
         }).start();
     }
@@ -97,18 +115,24 @@ public class NuevoFuturoLibro extends AppCompatActivity {
             @Override
             public void onResponse(Call<LibrosSinEstrenar> call, Response<LibrosSinEstrenar> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(NuevoFuturoLibro.this, "¡Guardado!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(NuevoFuturoLibro.this, "¡Lanzamiento guardado!", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
                 } else {
-                    Log.e("DEBUG_GUARDAR", "Error API: " + response.code());
+                    restaurarBoton();
                 }
             }
 
             @Override
             public void onFailure(Call<LibrosSinEstrenar> call, Throwable t) {
-                Log.e("DEBUG_GUARDAR", "Fallo red: " + t.getMessage());
+                restaurarBoton();
+                Toast.makeText(NuevoFuturoLibro.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void restaurarBoton() {
+        btnGuardar.setEnabled(true);
+        btnGuardar.setText("GUARDAR LIBRO");
     }
 }

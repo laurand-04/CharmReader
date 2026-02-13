@@ -4,90 +4,109 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="#FDFDFD"
+    android:fitsSystemWindows="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
-        app:elevation="0dp">
+        app:elevation="4dp">
 
-        <LinearLayout
-            android:id="@+id/btnCabeceraGrupo"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="?attr/selectableItemBackground"
-            android:gravity="center_vertical">
+            android:paddingVertical="12dp"
+            android:paddingHorizontal="8dp">
+
+            <ImageView
+                android:id="@+id/btnBackManejo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:tint="#444444" />
 
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="56dp"
-                android:layout_height="56dp"
-                app:cardCornerRadius="28dp"
+                android:id="@+id/cardAvatarManejo"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginStart="4dp"
+                app:cardCornerRadius="25dp"
                 app:cardElevation="0dp"
-                app:strokeWidth="1dp"
-                app:strokeColor="#EEEEEE">
+                app:layout_constraintStart_toEndOf="@id/btnBackManejo"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent">
                 <ImageView
                     android:id="@+id/ivAvatarGrupo"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/ic_libro" />
+                    android:src="@drawable/ic_people" />
             </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
+                android:id="@+id/btnCabeceraGrupo"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
                 android:orientation="vertical"
-                android:layout_marginStart="16dp">
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/ivEditarGrupo"
+                app:layout_constraintStart_toEndOf="@id/cardAvatarManejo"
+                app:layout_constraintTop_toTopOf="parent">
+
                 <TextView
                     android:id="@+id/tvTituloManejo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="18sp"
+                    android:text="Nombre del Grupo"
+                    android:textColor="#1A1A1A"
+                    android:textSize="17sp"
                     android:textStyle="bold"
-                    android:textColor="#212121"
                     android:maxLines="1"
-                    android:ellipsize="end"/>
+                    android:ellipsize="end" />
+
                 <TextView
                     android:id="@+id/tvSubsManejo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#388E3C"
-                    android:textSize="13sp"
-                    android:textStyle="bold"/>
-                <TextView
-                    android:id="@+id/tvUbicacionManejo"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="#757575"
+                    android:text="0 suscriptores"
+                    android:textColor="@color/basico"
                     android:textSize="12sp"
-                    android:maxLines="1"
-                    android:ellipsize="end"
-                    android:layout_marginTop="2dp"/>
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <ImageButton
                 android:id="@+id/ivEditarGrupo"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="10dp"
+                android:padding="8dp"
                 android:src="@android:drawable/ic_menu_manage"
-                app:tint="#1976D2" />
-        </LinearLayout>
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:tint="@color/basico" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/tabsManejo"
             android:layout_width="match_parent"
-            android:layout_height="48dp"
-            app:tabIndicatorColor="#1976D2"
-            app:tabSelectedTextColor="#1976D2"
-            app:tabMode="fixed"/>
+            android:layout_height="wrap_content"
+            app:tabIndicatorColor="@color/basico"
+            app:tabSelectedTextColor="@color/basico"
+            app:tabTextColor="#999999"
+            app:tabIndicatorFullWidth="false"
+            app:tabIndicatorHeight="3dp"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
@@ -102,7 +121,7 @@
         android:layout_gravity="bottom|end"
         android:orientation="vertical"
         android:gravity="end"
-        android:layout_margin="16dp">
+        android:layout_margin="24dp">
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabFinalizarVotacion"
@@ -112,21 +131,17 @@
             app:srcCompat="@drawable/ic_gavel"
             app:backgroundTint="#424242"
             app:tint="@android:color/white"
-            app:elevation="2dp"
-            app:pressedTranslationZ="0dp"
-            app:borderWidth="0dp"
-            android:contentDescription="Finalizar votaciones" />
+            app:fabSize="mini"
+            app:elevation="4dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fabAñadirLectura"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@android:drawable/ic_input_add"
-            app:backgroundTint="#1976D2"
+            app:backgroundTint="@color/basico"
             app:tint="@android:color/white"
-            app:elevation="2dp"
-            app:pressedTranslationZ="0dp"
-            app:borderWidth="0dp" />
+            app:elevation="8dp" />
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,7 +1,11 @@
 package com.tfg.charmreader.menu.priv.futuro;
 
 import android.app.DatePickerDialog;
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
@@ -22,6 +26,7 @@ public class FuturoLibro extends AppCompatActivity {
 
     private TextInputEditText etTitulo, etAutor, etFecha;
     private MaterialButton btnActualizar;
+    private ImageView btnBack;
     private LibrosSinEstrenar libroRecibido;
     private Date fechaEditada;
     private I_ApiLibrosSinEstrenar apiService;
@@ -32,20 +37,28 @@ public class FuturoLibro extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_futuro_libro);
 
-        // Inicializar
+        // Barra de estado moderna
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
+        // Inicializar vistas
         apiService = API.getInstancia().create(I_ApiLibrosSinEstrenar.class);
         etTitulo = findViewById(R.id.etDetalleTitulo);
         etAutor = findViewById(R.id.etDetalleAutor);
         etFecha = findViewById(R.id.etDetalleFecha);
         btnActualizar = findViewById(R.id.btnActualizar);
+        btnBack = findViewById(R.id.btnBackDetalleFuturo);
 
-        // Obtener el objeto enviado desde el RecyclerView
         libroRecibido = (LibrosSinEstrenar) getIntent().getSerializableExtra("libro_seleccionado");
 
         if (libroRecibido != null) {
             cargarDatos();
         }
 
+        // Listeners
+        btnBack.setOnClickListener(v -> finish());
         etFecha.setOnClickListener(v -> mostrarCalendario());
         btnActualizar.setOnClickListener(v -> actualizarLibro());
     }
@@ -75,26 +88,39 @@ public class FuturoLibro extends AppCompatActivity {
     }
 
     private void actualizarLibro() {
-        // Actualizamos los valores en el objeto
-        libroRecibido.setAutor(etAutor.getText().toString());
+        String nuevoTitulo = etTitulo.getText().toString().trim();
+        String nuevoAutor = etAutor.getText().toString().trim();
+
+        if (nuevoTitulo.isEmpty() || nuevoAutor.isEmpty() || fechaEditada == null) {
+            Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        btnActualizar.setEnabled(false);
+        btnActualizar.setText("GUARDANDO...");
+
+        libroRecibido.setAutor(nuevoAutor);
         libroRecibido.setFechaPublicacion(fechaEditada);
-        // Nota: Si el nombre cambió y es parte del ID, esto podría crear un registro nuevo en lugar de actualizar.
-        libroRecibido.getId().setNombre(etTitulo.getText().toString());
+        libroRecibido.getId().setNombre(nuevoTitulo);
 
         apiService.guardarLibrosSinEstrenar(libroRecibido).enqueue(new Callback<LibrosSinEstrenar>() {
             @Override
             public void onResponse(Call<LibrosSinEstrenar> call, Response<LibrosSinEstrenar> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(FuturoLibro.this, "Cambios guardados", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FuturoLibro.this, "Lanzamiento actualizado", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
                 } else {
-                    Toast.makeText(FuturoLibro.this, "Error 400: Revisa los datos", Toast.LENGTH_SHORT).show();
+                    btnActualizar.setEnabled(true);
+                    btnActualizar.setText("GUARDAR CAMBIOS");
+                    Toast.makeText(FuturoLibro.this, "Error al actualizar", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<LibrosSinEstrenar> call, Throwable t) {
+                btnActualizar.setEnabled(true);
+                btnActualizar.setText("GUARDAR CAMBIOS");
                 Toast.makeText(FuturoLibro.this, "Error de conexión", Toast.LENGTH_SHORT).show();
             }
         });

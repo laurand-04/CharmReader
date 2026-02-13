@@ -4,12 +4,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.google.android.material.button.MaterialButton;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiVotacion;
 import com.tfg.charmreader.objetosBD.BookEn;
@@ -63,22 +63,17 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
         holder.tvTitulo.setText(libro.getTitulo());
         holder.autor.setText(libro.getAutor());
 
-        // 1. Consultar el conteo de votos
         actualizarConteoVotos(holder, libro.getId());
-
-        // 2. Consultar si el usuario ya ha votado
         comprobarEstadoBoton(holder, libro.getId());
 
-        // --- CORRECCIÓN DE IMAGEN ---
         String idPortada = libro.getCoverId();
         if (idPortada != null && !idPortada.isEmpty() && !idPortada.equals("null")) {
-            // Construimos la URL igual que en BookIntAdapter
             String urlImagen = "https://covers.openlibrary.org/b/id/" + idPortada + "-M.jpg";
 
             Glide.with(holder.itemView.getContext())
                     .load(urlImagen)
                     .placeholder(R.drawable.ic_libro)
-                    .error(android.R.drawable.stat_notify_error)
+                    .centerCrop() // Para que rellene el hueco igual que en historial
                     .into(holder.portada);
         } else {
             holder.portada.setImageResource(R.drawable.ic_libro);
@@ -97,8 +92,7 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
                         holder.tvVotos.setText("Votos: " + response.body() + "/" + totalMiembrosGrupo);
                     }
                 }
-                @Override
-                public void onFailure(Call<Long> call, Throwable t) {}
+                @Override public void onFailure(Call<Long> call, Throwable t) {}
             });
         }
     }
@@ -112,19 +106,16 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
                         boolean yaVotado = response.body();
 
                         holder.btnVotar.post(() -> {
-                            holder.btnVotar.setText(yaVotado ? "RETIRAR VOTO" : "VOTAR");
+                            holder.btnVotar.setText(yaVotado ? "RETIRAR" : "VOTAR");
                             if (yaVotado) {
                                 holder.btnVotar.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_red_dark));
                             } else {
-                                holder.btnVotar.setTextColor(holder.itemView.getContext().getColor(android.R.color.holo_blue_dark));
+                                holder.btnVotar.setTextColor(holder.itemView.getContext().getColor(R.color.basico));
                             }
                         });
                     }
                 }
-                @Override
-                public void onFailure(Call<Boolean> call, Throwable t) {
-                    Log.e("VOTO_DEBUG", "Error: " + t.getMessage());
-                }
+                @Override public void onFailure(Call<Boolean> call, Throwable t) {}
             });
         }
     }
@@ -135,7 +126,7 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
     public static class LibroViewHolder extends RecyclerView.ViewHolder {
         ImageView portada;
         TextView tvTitulo, autor, tvVotos;
-        Button btnVotar;
+        MaterialButton btnVotar;
 
         public LibroViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -144,15 +135,6 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
             autor = itemView.findViewById(R.id.tvAutorPropuesta);
             tvVotos = itemView.findViewById(R.id.tvVotos);
             btnVotar = itemView.findViewById(R.id.btnVotar);
-        }
-    }
-
-    public void refrescarItem(int idLibro) {
-        for (int i = 0; i < libros.size(); i++) {
-            if (libros.get(i).getId() == idLibro) {
-                notifyItemChanged(i);
-                break;
-            }
         }
     }
 }

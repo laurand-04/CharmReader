@@ -1,9 +1,13 @@
 package com.tfg.charmreader.admin;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.tfg.charmreader.R;
@@ -25,77 +29,78 @@ import retrofit2.Response;
 
 public class GestionBackup extends AppCompatActivity {
 
+    private ImageView btnBack;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Ajusta el nombre del layout si es buckup o backup
+
+        // Estética Admin
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            getWindow().setStatusBarColor(Color.WHITE);
+        }
+
         setContentView(R.layout.activity_gestion_buckup);
 
-        // BOTÓN EXPORTAR - Ahora llama a la interfaz API
-        findViewById(R.id.btnDescargar).setOnClickListener(v -> {
-            I_ApiBackup api = API.getInstancia().create(I_ApiBackup.class);
-            api.descargarBackup().enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        // Guardar el archivo en un hilo secundario para no congelar la pantalla
-                        new Thread(() -> {
-                            boolean resultado = guardarArchivoEnDescargas(response.body());
-                            runOnUiThread(() -> {
-                                if (resultado) {
-                                    Toast.makeText(GestionBackup.this, "Copia guardada en la carpeta Descargas", Toast.LENGTH_LONG).show();
-                                } else {
-                                    Toast.makeText(GestionBackup.this, "Error al guardar el archivo en el dispositivo", Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        }).start();
-                    } else {
-                        Toast.makeText(GestionBackup.this, "Error del servidor: " + response.code(), Toast.LENGTH_SHORT).show();
-                    }
-                }
+        btnBack = findViewById(R.id.btnBackBackup);
+        btnBack.setOnClickListener(v -> finish());
 
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    Toast.makeText(GestionBackup.this, "Fallo de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
+        // CONFIGURACIÓN DE LOS BOTONES (Usando IDs del XML rediseñado)
+        findViewById(R.id.btnDescargar).setOnClickListener(v -> ejecutarExportacion());
+        findViewById(R.id.btnSubir).setOnClickListener(v -> abrirSelectorArchivo());
+    }
 
-        // BOTÓN IMPORTAR
-        findViewById(R.id.btnSubir).setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-            intent.setType("*/*");
-            startActivityForResult(intent, 101);
+    private void ejecutarExportacion() {
+        Toast.makeText(this, "Iniciando descarga de copia...", Toast.LENGTH_SHORT).show();
+        I_ApiBackup api = API.getInstancia().create(I_ApiBackup.class);
+        api.descargarBackup().enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    new Thread(() -> {
+                        boolean resultado = guardarArchivoEnDescargas(response.body());
+                        runOnUiThread(() -> {
+                            if (resultado) {
+                                Toast.makeText(GestionBackup.this, "Copia guardada en la carpeta Descargas", Toast.LENGTH_LONG).show();
+                            } else {
+                                Toast.makeText(GestionBackup.this, "Error al escribir el archivo", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }).start();
+                }
+            }
+            @Override public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(GestionBackup.this, "Error de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    // Método para escribir los datos descargados en la carpeta pública de Descargas
+    private void abrirSelectorArchivo() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("text/comma-separated-values|text/csv|application/csv");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "Selecciona el backup CSV"), 101);
+    }
+
     private boolean guardarArchivoEnDescargas(ResponseBody body) {
         try {
             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(path, "backup_biblioteca.csv");
+            File file = new File(path, "charmreader_backup_" + System.currentTimeMillis() + ".csv");
 
-            InputStream inputStream = null;
-            OutputStream outputStream = null;
+            InputStream inputStream = body.byteStream();
+            OutputStream outputStream = new FileOutputStream(file);
 
-            try {
-                byte[] fileReader = new byte[4096];
-                inputStream = body.byteStream();
-                outputStream = new FileOutputStream(file);
-
-                while (true) {
-                    int read = inputStream.read(fileReader);
-                    if (read == -1) break;
-                    outputStream.write(fileReader, 0, read);
-                }
-                outputStream.flush();
-                return true;
-            } finally {
-                if (inputStream != null) inputStream.close();
-                if (outputStream != null) outputStream.close();
+            byte[] buffer = new byte[4096];
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
             }
+            outputStream.flush();
+            outputStream.close();
+            inputStream.close();
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
             return false;
         }
     }
@@ -111,12 +116,8 @@ public class GestionBackup extends AppCompatActivity {
     private void subirArchivoAlServidor(Uri uri) {
         try {
             File file = copyUriToFile(uri);
-            if (file == null || !file.exists()) {
-                Toast.makeText(this, "No se pudo preparar el archivo", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (file == null) return;
 
-            // Usamos "text/csv" que es el MIME type correcto
             RequestBody requestFile = RequestBody.create(MediaType.parse("text/csv"), file);
             MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
@@ -125,44 +126,31 @@ public class GestionBackup extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                     if (response.isSuccessful()) {
-                        Toast.makeText(GestionBackup.this, "¡Base de datos restaurada!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(GestionBackup.this, "¡Sistema restaurado correctamente!", Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(GestionBackup.this, "Error: El servidor rechazó el archivo", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(GestionBackup.this, "Error: El servidor no pudo procesar el CSV", Toast.LENGTH_SHORT).show();
                     }
                 }
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    Toast.makeText(GestionBackup.this, "Fallo de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                @Override public void onFailure(Call<ResponseBody> call, Throwable t) {
+                    Toast.makeText(GestionBackup.this, "Error de red", Toast.LENGTH_SHORT).show();
                 }
             });
-
         } catch (Exception e) {
-            e.printStackTrace(); // <--- MIRA EL LOGCAT SI FALLA
-            Toast.makeText(this, "Error al procesar archivo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
     private File copyUriToFile(Uri uri) throws Exception {
         InputStream inputStream = getContentResolver().openInputStream(uri);
-        if (inputStream == null) return null;
-
-        // Creamos el archivo temporal en la caché interna de la app
-        File tempFile = new File(getCacheDir(), "upload_backup.csv");
-
-        // Si ya existe uno de una subida anterior, lo borramos para que no haya conflictos
-        if (tempFile.exists()) tempFile.delete();
-
+        File tempFile = new File(getCacheDir(), "temp_backup.csv");
         FileOutputStream outputStream = new FileOutputStream(tempFile);
         byte[] buffer = new byte[1024];
         int read;
         while ((read = inputStream.read(buffer)) != -1) {
             outputStream.write(buffer, 0, read);
         }
-
-        outputStream.flush();
         outputStream.close();
         inputStream.close();
-
         return tempFile;
     }
 }
