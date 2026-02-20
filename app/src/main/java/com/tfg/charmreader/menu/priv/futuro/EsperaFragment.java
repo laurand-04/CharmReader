@@ -1,7 +1,9 @@
 package com.tfg.charmreader.menu.priv.futuro;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosSinEstrenar;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.LibrosSinEstrenarAdapter;
 import com.tfg.charmreader.objetosBD.API;
@@ -104,32 +105,29 @@ public class EsperaFragment extends Fragment {
     }
 
     private void cargarLibros() {
+        // 1. Obtenemos el ID guardado localmente (sin red, sin errores)
+        if (getContext() == null) return;
+        SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario <= 0) {
+            Log.e("EsperaFragment", "ID de usuario no válido");
+            return;
+        }
+
+        // 2. Solo usamos el hilo para la petición pesada
         new Thread(() -> {
             try {
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-                if (idUsuario <= 0) return;
-
                 I_ApiLibrosSinEstrenar api = API.getInstancia().create(I_ApiLibrosSinEstrenar.class);
                 Response<ArrayList<LibrosSinEstrenar>> response = api.getLibrosSinEstrenarPorUsuario(idUsuario).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     ArrayList<LibrosSinEstrenar> listaRecibida = response.body();
 
+                    // 3. Volvemos al hilo de UI de forma segura
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (listaRecibida.isEmpty()) {
-                                layoutEmpty.setVisibility(View.VISIBLE);
-                                rvLibros.setVisibility(View.GONE);
-                                tvCount.setText("Sin lanzamientos pendientes");
-                            } else {
-                                layoutEmpty.setVisibility(View.GONE);
-                                rvLibros.setVisibility(View.VISIBLE);
-                                adapter.setLibros(listaRecibida);
-
-                                int total = listaRecibida.size();
-                                String msg = (total == 1) ? "1 LANZAMIENTO PENDIENTE" : total + " LANZAMIENTOS PENDIENTES";
-                                tvCount.setText(msg);
-                            }
+                            actualizarInterfaz(listaRecibida);
                         });
                     }
                 }
@@ -137,5 +135,21 @@ public class EsperaFragment extends Fragment {
                 Log.e("ERROR EsperaFragment", "Error en cargarLibros", e);
             }
         }).start();
+    }
+
+    private void actualizarInterfaz(ArrayList<LibrosSinEstrenar> lista) {
+        if (lista.isEmpty()) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            rvLibros.setVisibility(View.GONE);
+            tvCount.setText("Sin lanzamientos pendientes");
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            rvLibros.setVisibility(View.VISIBLE);
+            adapter.setLibros(lista);
+
+            int total = lista.size();
+            String msg = (total == 1) ? "1 LANZAMIENTO PENDIENTE" : total + " LANZAMIENTOS PENDIENTES";
+            tvCount.setText(msg);
+        }
     }
 }

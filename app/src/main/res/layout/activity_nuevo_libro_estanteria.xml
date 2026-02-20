@@ -12,6 +12,7 @@
         android:background="@android:color/transparent"
         android:fitsSystemWindows="true"
         app:elevation="0dp">
+
         <androidx.appcompat.widget.Toolbar
             android:layout_width="match_parent"
             android:layout_height="80dp"
@@ -87,17 +88,54 @@
                 android:layout_height="wrap_content"
                 app:iconifiedByDefault="false"
                 app:queryHint="Busca entre tus libros..."
-                app:searchIcon="@drawable/ic_search"
                 android:background="@color/white" />
         </androidx.cardview.widget.CardView>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerCargarNuevoLibroEstanteria"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="8dp"
-            android:clipToPadding="false"
-            android:paddingBottom="20dp" />
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/layoutEmptyAddLibro"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_libro"
+                    app:tint="#D1D1D1" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="¡Nada por aquí!"
+                    android:textColor="#1A1A1A"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="No hay libros fuera de estanterías"
+                    android:textColor="#999999"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerCargarNuevoLibroEstanteria"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="8dp"
+                android:clipToPadding="false"
+                android:paddingBottom="20dp" />
+        </FrameLayout>
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -28,7 +31,11 @@ public class FragmentListaLibrosManejo extends Fragment {
     private RecyclerView rvLibros;
     private final List<BookEn> listaLibros = new ArrayList<>();
 
-    // Flag para evitar peticiones duplicadas simultáneas
+    // Vistas para el Empty State
+    private LinearLayout layoutEmpty;
+    private ImageView ivEmptyIcon;
+    private TextView tvEmptyTitle, tvEmptySubtitle;
+
     private boolean cargando = false;
 
     private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
@@ -55,7 +62,15 @@ public class FragmentListaLibrosManejo extends Fragment {
         idGrupo = getArguments().getInt("idGrupo");
         tipoLista = getArguments().getInt("tipoLista");
 
-        rvLibros = view.findViewById(R.id.rvLibrosManejo);
+        // 🔥 CORRECCIÓN DE ID: Debe ser rvListaManejo como en tu XML
+        rvLibros = view.findViewById(R.id.rvListaManejo);
+
+        // Vincular vistas del Empty State
+        layoutEmpty = view.findViewById(R.id.layoutEmptyManejo);
+        ivEmptyIcon = view.findViewById(R.id.ivEmptyIconManejo);
+        tvEmptyTitle = view.findViewById(R.id.tvEmptyTitleManejo);
+        tvEmptySubtitle = view.findViewById(R.id.tvEmptySubtitleManejo);
+
         rvLibros.setLayoutManager(new LinearLayoutManager(getContext()));
 
         LibroPropuestoAdministradorAdapter adapter = new LibroPropuestoAdministradorAdapter(
@@ -71,7 +86,6 @@ public class FragmentListaLibrosManejo extends Fragment {
         );
 
         rvLibros.setAdapter(adapter);
-        // No llamamos a cargarDatos aquí porque onResume se encarga de la primera carga
     }
 
     @Override
@@ -91,11 +105,13 @@ public class FragmentListaLibrosManejo extends Fragment {
                     filtrarYCargarLibros(response.body());
                 } else {
                     cargando = false;
+                    mostrarEstadoVacio(true);
                 }
             }
             @Override
             public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {
                 cargando = false;
+                mostrarEstadoVacio(true);
             }
         });
     }
@@ -103,10 +119,10 @@ public class FragmentListaLibrosManejo extends Fragment {
     private void filtrarYCargarLibros(List<CatalogoLectura> catalogo) {
         listaLibros.clear();
 
-        // Filtramos primero los IDs que necesitamos para saber cuántas peticiones haremos
         List<Integer> idsAFiltrar = new ArrayList<>();
         for (CatalogoLectura item : catalogo) {
             boolean cumpleFiltro = false;
+            // Usamos item.getEstado() comparado con tu Enum o enteros según tu lógica de BD
             if (tipoLista == 0 && item.getEstado() == CatalogoLectura.EstadoLectura.PROPUESTO) cumpleFiltro = true;
             else if (tipoLista == 1 && item.getEstado() == CatalogoLectura.EstadoLectura.ACTUAL) cumpleFiltro = true;
             else if (tipoLista == 2 && item.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) cumpleFiltro = true;
@@ -118,7 +134,7 @@ public class FragmentListaLibrosManejo extends Fragment {
 
         if (idsAFiltrar.isEmpty()) {
             cargando = false;
-            if (rvLibros.getAdapter() != null) rvLibros.getAdapter().notifyDataSetChanged();
+            mostrarEstadoVacio(true);
             return;
         }
 
@@ -132,21 +148,66 @@ public class FragmentListaLibrosManejo extends Fragment {
                         listaLibros.add(r.body());
                     }
 
-                    // Solo notificamos y liberamos el flag cuando termina la última petición
                     if (completados[0] == idsAFiltrar.size()) {
                         cargando = false;
-                        if (rvLibros.getAdapter() != null) {
-                            rvLibros.getAdapter().notifyDataSetChanged();
-                        }
+                        finalizarCarga();
                     }
                 }
 
                 @Override
                 public void onFailure(Call<BookEn> call, Throwable t) {
                     completados[0]++;
-                    if (completados[0] == idsAFiltrar.size()) cargando = false;
+                    if (completados[0] == idsAFiltrar.size()) {
+                        cargando = false;
+                        finalizarCarga();
+                    }
                 }
             });
+        }
+    }
+
+    private void finalizarCarga() {
+        if (isAdded()) {
+            requireActivity().runOnUiThread(() -> {
+                if (listaLibros.isEmpty()) {
+                    mostrarEstadoVacio(true);
+                } else {
+                    mostrarEstadoVacio(false);
+                    if (rvLibros.getAdapter() != null) {
+                        rvLibros.getAdapter().notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+    }
+
+    private void mostrarEstadoVacio(boolean vacio) {
+        if (!isAdded()) return;
+
+        if (vacio) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            rvLibros.setVisibility(View.GONE);
+
+            switch (tipoLista) {
+                case 0: // Propuestas
+                    ivEmptyIcon.setImageResource(R.drawable.ic_libro);
+                    tvEmptyTitle.setText("¡Lluvia de ideas!");
+                    tvEmptySubtitle.setText("No has propuesto libros todavía. Pulsa el botón + para animar el grupo.");
+                    break;
+                case 1: // Actual
+                    ivEmptyIcon.setImageResource(R.drawable.ic_people);
+                    tvEmptyTitle.setText("Tiempo de descanso");
+                    tvEmptySubtitle.setText("El grupo no está leyendo nada ahora mismo. ¿Es hora de votar una propuesta?");
+                    break;
+                case 2: // Finalizadas
+                    ivEmptyIcon.setImageResource(R.drawable.ic_gavel);
+                    tvEmptyTitle.setText("Camino por recorrer");
+                    tvEmptySubtitle.setText("Aún no habéis terminado vuestra primera lectura oficial. ¡El historial os espera!");
+                    break;
+            }
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            rvLibros.setVisibility(View.VISIBLE);
         }
     }
 }

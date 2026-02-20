@@ -2,12 +2,15 @@ package com.tfg.charmreader.autentication;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.WindowManager;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.databinding.ActivityRegisterBinding;
 import com.tfg.charmreader.interfacesAPI.I_ApiUsuario;
 import com.tfg.charmreader.objetosBD.API;
@@ -32,7 +35,7 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // BOTÓN VOLVER - Usamos directamente el binding para asegurar que conecte
+        // BOTÓN VOLVER
         binding.btnVolver.setOnClickListener(v -> {
             Log.d("DEBUG_REG", "Botón volver pulsado");
             finish();
@@ -62,10 +65,16 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // Crear usuario en Firebase
+        // 1. Crear usuario en Firebase
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+
+                        // 2. Enviar correo de verificación
+                        enviarCorreoVerificacion(user);
+
+                        // 3. Guardar en SQL
                         guardarUsuarioEnServidor(email);
                     } else {
                         mostrarError(task.getException());
@@ -73,36 +82,103 @@ public class RegisterActivity extends AppCompatActivity {
                 });
     }
 
+    private void enviarCorreoVerificacion(FirebaseUser user) {
+        if (user != null) {
+            user.sendEmailVerification()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            Log.d("DEBUG_REG", "Correo de verificación enviado correctamente.");
+                        } else {
+                            Log.e("DEBUG_REG", "Error al enviar correo: " + task.getException().getMessage());
+                        }
+                    });
+        }
+    }
+
     private void guardarUsuarioEnServidor(String email) {
-        // Ejecutamos en un hilo secundario la lógica de red síncrona
         new Thread(() -> {
             try {
-                // 1. Crear el objeto Usuario (el ID suele ser autoincremental en el servidor)
+                // Crear el objeto Usuario para tu BD SQL
                 Usuario nuevoUsuario = new Usuario(0, email);
 
-                // 2. Guardar en la API
+                // Guardar en la API
                 Response<Usuario> respGuardar = apiUsuario.guardarUsuario(nuevoUsuario).execute();
 
                 if (respGuardar.isSuccessful()) {
                     runOnUiThread(() ->
-                            mostrarAlerta("Éxito", "Cuenta creada correctamente", () -> finish())
+                            mostrarAlertaVerificacionPendiente(email)
                     );
                 } else {
-                    Log.e("API_ERROR", "Error al guardar: " + respGuardar.code());
+                    Log.e("API_ERROR", "Error al guardar en SQL: " + respGuardar.code());
                     runOnUiThread(() ->
-                            mostrarAlerta("Error", "Firebase OK, pero no se pudo sincronizar con la BD local")
+                            mostrarAlerta("Error", "Usuario creado en Firebase, pero hubo un problema con la base de datos local.")
                     );
                 }
             } catch (Exception e) {
                 Log.e("API_ERROR", "Excepción: " + e.getMessage());
                 runOnUiThread(() ->
-                        mostrarAlerta("Error", "Error de conexión: " + e.getMessage())
+                        mostrarAlerta("Error", "Error de conexión al guardar los datos.")
                 );
             }
         }).start();
     }
 
-    // Método para mostrar alerta con acción al cerrar (ej. cerrar activity)
+    private void mostrarAlertaVerificacionPendiente(String email) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Acceso Restringido");
+        builder.setMessage("Hemos enviado un enlace a: " + email + "\n\nDebes verificar tu cuenta en tu correo para poder continuar. Una vez lo hagas, pulsa 'YA HE VERIFICADO'.");
+        builder.setCancelable(false);
+
+        // BOTÓN DE COMPROBACIÓN
+        builder.setPositiveButton("YA HE VERIFICADO", null);
+
+        // BOTÓN DE REENVÍO
+        builder.setNeutralButton("REENVIAR CORREO", (dialog, which) -> {
+            enviarCorreoVerificacion(mAuth.getCurrentUser());
+            mostrarAlerta("Enviado", "Se ha reenviado el enlace.");
+        });
+
+        // BOTÓN PARA SALIR
+        builder.setNegativeButton("CANCELAR REGISTRO", (dialog, which) -> {
+            mAuth.signOut();
+            finish();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        // Lógica personalizada para el botón positivo
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            if (mAuth.getCurrentUser() != null) {
+                mAuth.getCurrentUser().reload().addOnCompleteListener(task -> {
+
+                    String emailUsuario = mAuth.getCurrentUser().getEmail();
+
+                    if (mAuth.getCurrentUser().isEmailVerified()) {
+                        // Llamamos a la API para enviar correo de bienvenida
+                        apiUsuario.enviarCorreoBienvenida(emailUsuario).enqueue(new Callback<Void>() {
+                            @Override
+                            public void onResponse(Call<Void> call, Response<Void> response) {
+                                dialog.dismiss();
+                                mostrarAlerta("¡Todo listo!", "Bienvenido a CharmReader. Ya puedes iniciar sesión.", () -> finish());
+                            }
+
+                            @Override
+                            public void onFailure(Call<Void> call, Throwable t) {
+                                // Si falla el correo de bienvenida, cerramos igual porque ya está verificado en Firebase
+                                dialog.dismiss();
+                                finish();
+                            }
+                        });
+                    } else {
+                        dialog.setMessage("⚠️ No detectamos la verificación.\n\nPor favor, haz clic en el enlace que enviamos a " + emailUsuario + " y vuelve a intentarlo.");
+                    }
+                });
+            }
+        });
+    }
+
+    // MÉTODOS DE ALERTA SOBRECARGADOS
     public void mostrarAlerta(String titulo, String contenido, Runnable accionAlCerrar) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(titulo);
@@ -115,7 +191,6 @@ public class RegisterActivity extends AppCompatActivity {
         builder.show();
     }
 
-    // Método para alerta simple
     public void mostrarAlerta(String titulo, String contenido) {
         mostrarAlerta(titulo, contenido, null);
     }

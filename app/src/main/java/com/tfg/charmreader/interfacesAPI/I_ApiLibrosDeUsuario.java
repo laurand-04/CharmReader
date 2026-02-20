@@ -21,8 +21,8 @@ public interface I_ApiLibrosDeUsuario {
     @GET("/libros_de_usuarios/usuario/{idUsuario}/libro/{idLibro}")
     Call<LibrosDeUsuario> getLibrodeUsuario(@Path("idUsuario") int idUsuario, @Path("idLibro") int idLibro);
 
-    @GET("/libros_de_usuarios/estanteria/{idEstanteria}")
-    Call<List<LibrosDeUsuario>> obtenerLibrosDeEstanteria(@Path("idEstanteria") int idEstanteria);
+    @GET("/libros_de_usuarios/estanteria/{idEstanteria}/usuario/{idUsuario}")
+    Call<List<LibrosDeUsuario>> obtenerLibrosDeEstanteria(@Path("idEstanteria") int idEstanteria, @Path("idUsuario")int idUsuario);
 
     @GET("/libros_de_usuarios/contarPorEstanteria/{idEstanteria}")
     Call<Integer> contarLibrosEnEstanteria(@Path("idEstanteria") int idEstanteria);

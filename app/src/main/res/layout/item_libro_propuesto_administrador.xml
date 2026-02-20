@@ -7,55 +7,58 @@
     android:layout_marginHorizontal="12dp"
     android:layout_marginVertical="6dp"
     app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardElevation="15dp"
+    app:cardBackgroundColor="@android:color/white"
+    app:strokeWidth="0dp"> <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical">
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/ivPortadaLibro"
+        android:layout_width="50dp"
+        android:layout_height="70dp"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_libro"
+        android:layout_marginEnd="16dp"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"/>
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="12dp">
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivPortadaLibro"
-            android:layout_width="60dp"
-            android:layout_height="90dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_libro"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"/>
-
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvTituloLibro"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:layout_marginStart="16dp"
-            android:layout_gravity="center_vertical">
+            android:text="Título del libro"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#212121" />
 
-            <TextView
-                android:id="@+id/tvTituloLibro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#212121"/>
+        <TextView
+            android:id="@+id/tvAutorLibro"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Autor del libro"
+            android:textSize="14sp"
+            android:textColor="#757575"
+            android:layout_marginTop="2dp" />
 
-            <TextView
-                android:id="@+id/tvAutorLibro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="#757575"
-                android:layout_marginTop="2dp"/>
+        <TextView
+            android:id="@+id/tvVotosLibro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="#1976D2"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:text="0 votos" /> </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvVotosLibro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="#1976D2"
-                android:textSize="13sp"
-                android:textStyle="bold"/>
-        </LinearLayout>
-
-    </LinearLayout>
+</LinearLayout>
 </com.google.android.material.card.MaterialCardView>

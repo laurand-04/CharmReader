@@ -15,8 +15,7 @@
         app:cardCornerRadius="24dp"
         app:cardElevation="9dp"
         app:cardBackgroundColor="@android:color/transparent"
-        android:outlineAmbientShadowColor="@color/basico"
-        >
+        android:outlineAmbientShadowColor="@color/basico">
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchViewLibros"
@@ -25,14 +24,42 @@
             app:iconifiedByDefault="false"
             app:queryHint="Busca tu libro..."
             app:searchIcon="@drawable/ic_search"
-            android:background="@color/white"
-            />
+            android:background="@color/white" />
     </androidx.cardview.widget.CardView>
+
+    <LinearLayout
+        android:id="@+id/layoutEmptyTusLibros"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:src="@drawable/ic_libro"
+            app:tint="#D1D1D1" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Tu biblioteca está vacía"
+            android:textColor="#1A1A1A"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sube tus archivos EPUB para empezar"
+            android:textColor="#999999"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerLibros"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/cardSearch"
         android:paddingHorizontal="8dp"
         android:paddingBottom="80dp"
@@ -47,7 +74,7 @@
         android:layout_margin="20dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        app:backgroundTint="?attr/colorPrimary"
+        app:backgroundTint="@color/basico"
         app:elevation="8dp" />
 
 </RelativeLayout>

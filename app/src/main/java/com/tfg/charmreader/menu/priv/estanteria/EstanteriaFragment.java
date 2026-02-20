@@ -1,12 +1,15 @@
 package com.tfg.charmreader.menu.priv.estanteria;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiEstanteria;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.EstanteriasAdapter;
@@ -32,6 +34,7 @@ public class EstanteriaFragment extends Fragment {
     private RecyclerView rvEstanterias;
     private EstanteriasAdapter adapter;
     private SearchView searchView;
+    private LinearLayout layoutEmpty;
 
     public EstanteriaFragment() { }
 
@@ -41,21 +44,22 @@ public class EstanteriaFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_estanteria, container, false);
 
         rvEstanterias = view.findViewById(R.id.recyclerEstanterias);
+        layoutEmpty = view.findViewById(R.id.layoutEmptyEstanteria);
+        searchView = view.findViewById(R.id.searchViewEstanterias);
+        FloatingActionButton fab = view.findViewById(R.id.fab_add_estanteria);
+
         rvEstanterias.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // Configuración del adaptador con la corrección del Intent
         adapter = new EstanteriasAdapter(new ArrayList<>(), estanteria -> {
             Intent intent = new Intent(getActivity(), LibrosEstanteria.class);
             intent.putExtra("Nombre", estanteria.getNombre());
             intent.putExtra("idEstanteria", estanteria.getId());
-            // 🔥 CORRECCIÓN: Enviamos el color para que la pantalla de libros sea dinámica
             intent.putExtra("Color", estanteria.getColor());
             startActivity(intent);
         });
 
         rvEstanterias.setAdapter(adapter);
 
-        searchView = view.findViewById(R.id.searchViewEstanterias);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) { return false; }
@@ -67,7 +71,6 @@ public class EstanteriaFragment extends Fragment {
             }
         });
 
-        FloatingActionButton fab = view.findViewById(R.id.fab_add_estanteria);
         fab.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), CargarNuevaEstanteria.class);
             startActivityForResult(intent, 123);
@@ -91,12 +94,19 @@ public class EstanteriaFragment extends Fragment {
     }
 
     private void cargarEstanterias() {
+        // 1. En Fragmentos, el contexto se obtiene con requireContext() o getContext()
+        if (getContext() == null) return;
+
+        SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1) {
+            Log.e("EstanteriaFragment", "ID no encontrado");
+            mostrarEstadoVacio(true);
+            return;
+        }
+
         new Thread(() -> {
-            int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-            if (idUsuario == -1) {
-                Log.e("EstanteriaFragment", "ID de usuario no encontrado");
-                return;
-            }
             try {
                 I_ApiEstanteria apiEstanteria = API.getInstancia().create(I_ApiEstanteria.class);
                 I_ApiLibrosDeUsuario apiLibrosUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
@@ -106,7 +116,11 @@ public class EstanteriaFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     List<Estanteria> listaRecibida = response.body();
 
-                    // Obtenemos el conteo de libros de la tabla libros_de_usuario para cada estantería
+                    if (listaRecibida.isEmpty()) {
+                        mostrarEstadoVacio(true);
+                        return;
+                    }
+
                     for (Estanteria e : listaRecibida) {
                         retrofit2.Response<Integer> resConteo = apiLibrosUsuario.contarLibrosEnEstanteria(e.getId()).execute();
                         if (resConteo.isSuccessful() && resConteo.body() != null) {
@@ -114,19 +128,35 @@ public class EstanteriaFragment extends Fragment {
                         }
                     }
 
+                    // 2. Usamos getActivity().runOnUiThread porque estamos en un Fragment
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (adapter != null) {
-                                adapter.setEstanterias(listaRecibida);
-                            }
+                            mostrarEstadoVacio(false);
+                            adapter.setEstanterias(listaRecibida);
                         });
                     }
                 } else {
-                    Log.e("EstanteriaFragment", "Error en la respuesta de la API: " + response.code());
+                    mostrarEstadoVacio(true);
                 }
             } catch (Exception e) {
-                Log.e("EstanteriaFragment", "Excepción al cargar estanterías", e);
+                Log.e("EstanteriaFragment", "Error", e);
+                mostrarEstadoVacio(true);
             }
         }).start();
+    }
+
+    private void mostrarEstadoVacio(boolean estaVacio) {
+        // En Fragmentos siempre comprobar isAdded() antes de tocar la UI desde un hilo
+        if (isAdded() && getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                if (estaVacio) {
+                    layoutEmpty.setVisibility(View.VISIBLE);
+                    rvEstanterias.setVisibility(View.GONE);
+                } else {
+                    layoutEmpty.setVisibility(View.GONE);
+                    rvEstanterias.setVisibility(View.VISIBLE);
+                }
+            });
+        }
     }
 }

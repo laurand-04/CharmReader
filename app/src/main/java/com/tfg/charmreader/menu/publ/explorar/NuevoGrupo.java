@@ -1,27 +1,31 @@
 package com.tfg.charmreader.menu.publ.explorar;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiGrupoLectura;
 import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
 import com.tfg.charmreader.interfacesAPI.I_ImgBB;
@@ -54,7 +58,6 @@ public class NuevoGrupo extends AppCompatActivity {
     private MaterialCardView cardImagen;
 
     private Uri uriImagenSeleccionada;
-    // Tu API KEY integrada
     private final String IMG_BB_KEY = "474a16c3fe5579608f57dfa163e81875";
 
     private final I_ApiGrupoLectura apiGrupo = API.getInstancia().create(I_ApiGrupoLectura.class);
@@ -74,17 +77,20 @@ public class NuevoGrupo extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_nuevo_grupo);
+
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             getWindow().setStatusBarColor(Color.WHITE);
         }
 
+        setContentView(R.layout.activity_nuevo_grupo);
+
         vincularVistas();
         configurarFrecuencia();
+        configurarSalidaSegura();
 
-        btnBack.setOnClickListener(v -> finish());
         cardImagen.setOnClickListener(v -> abrirGaleria());
         btnGuardarGrupo.setOnClickListener(v -> validarYSubir());
     }
@@ -98,6 +104,28 @@ public class NuevoGrupo extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBackNuevoGrupo);
         ivPreview = findViewById(R.id.ivPreviewGrupo);
         cardImagen = findViewById(R.id.cardSeleccionarImagen);
+    }
+
+    private void configurarSalidaSegura() {
+        btnBack.setOnClickListener(v -> comprobarYSalir());
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() { comprobarYSalir(); }
+        });
+    }
+
+    private void comprobarYSalir() {
+        String nombre = etNombreGrupo.getText().toString().trim();
+        if (!nombre.isEmpty() || uriImagenSeleccionada != null) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("¿Descartar grupo?")
+                    .setMessage("Si sales ahora, perderás la información introducida.")
+                    .setNegativeButton("Seguir editando", null)
+                    .setPositiveButton("Descartar", (dialog, which) -> finish())
+                    .show();
+        } else {
+            finish();
+        }
     }
 
     private void abrirGaleria() {
@@ -127,85 +155,73 @@ public class NuevoGrupo extends AppCompatActivity {
         if (uriImagenSeleccionada != null) {
             subirImagenAImgBB(uriImagenSeleccionada);
         } else {
-            // URL por defecto si el usuario no elige foto
             procederACrearGrupo("https://i.ibb.co/vzZ6vKz/default-group.png");
         }
     }
 
     private void subirImagenAImgBB(Uri uri) {
-        try {
-            // Crear archivo temporal desde la URI
-            File file = new File(getCacheDir(), "upload_image.jpg");
-            InputStream is = getContentResolver().openInputStream(uri);
-            FileOutputStream fos = new FileOutputStream(file);
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = is.read(buffer)) != -1) fos.write(buffer, 0, read);
-            fos.close();
-            is.close();
+        new Thread(() -> {
+            try {
+                File file = new File(getCacheDir(), "upload_image.jpg");
+                InputStream is = getContentResolver().openInputStream(uri);
+                FileOutputStream fos = new FileOutputStream(file);
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = is.read(buffer)) != -1) fos.write(buffer, 0, read);
+                fos.close();
+                is.close();
 
-            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-            MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
+                RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+                MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
 
-            // Retrofit específico para ImgBB
-            Retrofit retrofitImg = new Retrofit.Builder()
-                    .baseUrl("https://api.imgbb.com/")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
+                I_ImgBB apiImg = new Retrofit.Builder()
+                        .baseUrl("https://api.imgbb.com/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
+                        .create(I_ImgBB.class);
 
-            I_ImgBB apiImg = retrofitImg.create(I_ImgBB.class);
-            apiImg.uploadImage(IMG_BB_KEY, body).enqueue(new Callback<ResponseBody>() {
-                @Override
-                public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                    try {
-                        if (response.isSuccessful() && response.body() != null) {
-                            JSONObject json = new JSONObject(response.body().string());
-                            String urlFinal = json.getJSONObject("data").getString("url");
-                            procederACrearGrupo(urlFinal);
-                        } else {
-                            restaurarBoton();
-                            Toast.makeText(NuevoGrupo.this, "Error en el servidor de imágenes", Toast.LENGTH_SHORT).show();
-                        }
-                    } catch (Exception e) {
-                        restaurarBoton();
+                apiImg.uploadImage(IMG_BB_KEY, body).enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                        try {
+                            if (response.isSuccessful() && response.body() != null) {
+                                JSONObject json = new JSONObject(response.body().string());
+                                String urlFinal = json.getJSONObject("data").getString("url");
+                                procederACrearGrupo(urlFinal);
+                            } else { restaurarBoton(); }
+                        } catch (Exception e) { restaurarBoton(); }
                     }
-                }
-
-                @Override
-                public void onFailure(Call<ResponseBody> call, Throwable t) {
-                    restaurarBoton();
-                    Toast.makeText(NuevoGrupo.this, "Fallo de conexión", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-        } catch (Exception e) {
-            restaurarBoton();
-            Toast.makeText(this, "Error al procesar la imagen", Toast.LENGTH_SHORT).show();
-        }
+                    @Override public void onFailure(Call<ResponseBody> call, Throwable t) { restaurarBoton(); }
+                });
+            } catch (Exception e) { restaurarBoton(); }
+        }).start();
     }
 
     private void procederACrearGrupo(String urlImagen) {
+        // 🔥 OBTENER ID LOCALMENTE
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1) {
+            restaurarBoton();
+            Toast.makeText(this, "Error de sesión", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String nombre = etNombreGrupo.getText().toString().trim();
         String ubicacion = etUbicacionGrupo.getText().toString().trim();
         String desc = etDescripcionGrupo.getText().toString().trim();
-        String frecuenciaTxt = autoCompleteFrecuencia.getText().toString();
-        GrupoLectura.Frecuencia frecuenciaEnum = GrupoLectura.stringToFrecuencia(frecuenciaTxt);
+        GrupoLectura.Frecuencia frecuenciaEnum = GrupoLectura.stringToFrecuencia(autoCompleteFrecuencia.getText().toString());
 
-        Utilidades.obtenerIdUsuarioDesdeAPI(idUsuario -> {
-            if (idUsuario == -1) { restaurarBoton(); return; }
-
-            GrupoLectura nuevo = new GrupoLectura(nombre, ubicacion, desc, frecuenciaEnum, urlImagen, idUsuario);
-            apiGrupo.crearGrupo(nuevo).enqueue(new Callback<GrupoLectura>() {
-                @Override
-                public void onResponse(Call<GrupoLectura> call, Response<GrupoLectura> response) {
-                    if (response.isSuccessful()) {
-                        autoSuscribirCreador(response.body().getIdGrupo(), idUsuario);
-                    } else { restaurarBoton(); }
-                }
-
-                @Override
-                public void onFailure(Call<GrupoLectura> call, Throwable t) { restaurarBoton(); }
-            });
+        GrupoLectura nuevo = new GrupoLectura(nombre, ubicacion, desc, frecuenciaEnum, urlImagen, idUsuario);
+        apiGrupo.crearGrupo(nuevo).enqueue(new Callback<GrupoLectura>() {
+            @Override
+            public void onResponse(Call<GrupoLectura> call, Response<GrupoLectura> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    autoSuscribirCreador(response.body().getIdGrupo(), idUsuario);
+                } else { restaurarBoton(); }
+            }
+            @Override public void onFailure(Call<GrupoLectura> call, Throwable t) { restaurarBoton(); }
         });
     }
 
@@ -215,10 +231,10 @@ public class NuevoGrupo extends AppCompatActivity {
             @Override
             public void onResponse(Call<Miembro> call, Response<Miembro> response) {
                 Toast.makeText(NuevoGrupo.this, "¡Grupo creado con éxito!", Toast.LENGTH_LONG).show();
+                setResult(RESULT_OK);
                 finish();
             }
-            @Override
-            public void onFailure(Call<Miembro> call, Throwable t) { finish(); }
+            @Override public void onFailure(Call<Miembro> call, Throwable t) { finish(); }
         });
     }
 

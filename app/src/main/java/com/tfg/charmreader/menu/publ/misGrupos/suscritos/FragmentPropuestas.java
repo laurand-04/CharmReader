@@ -1,11 +1,14 @@
 package com.tfg.charmreader.menu.publ.misGrupos.suscritos;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,59 +39,75 @@ public class FragmentPropuestas extends Fragment {
 
     private RecyclerView recyclerView;
     private LibroPropuestoAdapter adapter;
+    private LinearLayout layoutEmpty;
     private List<BookEn> listaLibros = new ArrayList<>();
     private GrupoLectura grupo;
 
-    // El ID del usuario deberías obtenerlo de tu sesión/SharedPreferences
-    private int idUsuarioLogueado = 1;
+    private int idUsuarioLogueado;
 
-    private I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
-    private I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
-    private I_ApiVotacion apiVotacion = API.getInstancia().create(I_ApiVotacion.class);
+    private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
+    private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
+    private final I_ApiVotacion apiVotacion = API.getInstancia().create(I_ApiVotacion.class);
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_propuestas, container, false);
 
+        // 1. Obtener ID de usuario localmente (Instantáneo)
+        if (getContext() != null) {
+            SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+            idUsuarioLogueado = prefs.getInt("idUsuario", -1);
+        }
+
         recyclerView = view.findViewById(R.id.rvPropuestas);
+        layoutEmpty = view.findViewById(R.id.layoutEmptyPropuestas);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         if (getActivity() != null && getActivity().getIntent().hasExtra("objetoGrupo")) {
             grupo = (GrupoLectura) getActivity().getIntent().getSerializableExtra("objetoGrupo");
         }
 
-        if (grupo != null) {
+        // 2. Si tenemos ID y Grupo, cargamos directamente
+        if (idUsuarioLogueado != -1 && grupo != null) {
             cargarLibrosPropuestos(grupo.getIdGrupo());
+        } else {
+            mostrarEstadoVacio(true);
         }
 
         return view;
     }
 
     private void cargarLibrosPropuestos(int idGrupo) {
-        // 1. Obtener total de miembros
+        // Obtener total de miembros para calcular porcentajes de votos
         apiMiembro.contarMiembros(idGrupo).enqueue(new Callback<Long>() {
             @Override
             public void onResponse(Call<Long> call, Response<Long> responseMiembros) {
                 if (responseMiembros.isSuccessful() && responseMiembros.body() != null) {
                     int totalMiembros = responseMiembros.body().intValue();
 
-                    // 2. Obtener libros propuestos
+                    // Obtener libros en estado 'PROPUESTO'
                     apiCatalogo.obtenerLibroPropuestas(idGrupo).enqueue(new Callback<List<BookEn>>() {
                         @Override
                         public void onResponse(Call<List<BookEn>> call, Response<List<BookEn>> responseLibros) {
-                            if (responseLibros.isSuccessful() && responseLibros.body() != null) {
+                            if (isAdded() && responseLibros.isSuccessful() && responseLibros.body() != null) {
                                 listaLibros = responseLibros.body();
-                                configurarAdapter(totalMiembros);
+
+                                if (listaLibros.isEmpty()) {
+                                    mostrarEstadoVacio(true);
+                                } else {
+                                    mostrarEstadoVacio(false);
+                                    configurarAdapter(totalMiembros);
+                                }
+                            } else {
+                                mostrarEstadoVacio(true);
                             }
                         }
-                        @Override
-                        public void onFailure(Call<List<BookEn>> call, Throwable t) { Log.e("API", t.getMessage()); }
+                        @Override public void onFailure(Call<List<BookEn>> call, Throwable t) { mostrarEstadoVacio(true); }
                     });
                 }
             }
-            @Override
-            public void onFailure(Call<Long> call, Throwable t) { Log.e("API", t.getMessage()); }
+            @Override public void onFailure(Call<Long> call, Throwable t) { mostrarEstadoVacio(true); }
         });
     }
 
@@ -96,8 +115,7 @@ public class FragmentPropuestas extends Fragment {
         adapter = new LibroPropuestoAdapter(listaLibros, totalMiembros, new LibroPropuestoAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(BookEn libro) {
-                // IR A DETALLE DEL LIBRO
-                Intent i = new Intent(getContext(), LibroActual.class); // Cambia a tu clase de detalle
+                Intent i = new Intent(getContext(), LibroActual.class);
                 i.putExtra("libroSeleccionado", libro);
                 startActivity(i);
             }
@@ -108,7 +126,6 @@ public class FragmentPropuestas extends Fragment {
             }
         });
 
-        // Pasamos la API de votación al adapter para que él mismo gestione el texto del botón
         adapter.setVotacionApi(apiVotacion, idUsuarioLogueado, grupo.getIdGrupo());
         recyclerView.setAdapter(adapter);
     }
@@ -120,16 +137,24 @@ public class FragmentPropuestas extends Fragment {
             @Override
             public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
                 if (response.isSuccessful()) {
-                    // ESTO ES VITAL: Al recargar, el adapter vuelve a preguntar el estado
-                    // y el botón cambiará de texto.
+                    // Refrescamos la lista para ver el cambio en el contador de votos
                     cargarLibrosPropuestos(grupo.getIdGrupo());
-                    Toast.makeText(getContext(), "Acción realizada", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Voto actualizado", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<Map<String, String>> call, Throwable t) {
-                Toast.makeText(getContext(), "Error al conectar", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error al votar", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void mostrarEstadoVacio(boolean estaVacio) {
+        if (isAdded() && getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                layoutEmpty.setVisibility(estaVacio ? View.VISIBLE : View.GONE);
+                recyclerView.setVisibility(estaVacio ? View.GONE : View.VISIBLE);
+            });
+        }
     }
 }

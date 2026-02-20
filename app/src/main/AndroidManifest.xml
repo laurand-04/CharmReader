@@ -23,6 +23,7 @@
 
         <activity
             android:name=".autentication.LoginActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:theme="@style/Theme.App.Starting">
             <intent-filter>
@@ -31,9 +32,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".autentication.RegisterActivity" />
+        <activity android:name=".autentication.RegisterActivity"
+            android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".autentication.RecuperacionActivity" />
+        <activity android:name=".autentication.RecuperacionActivity"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity
             android:name=".menu.MainActivity"
@@ -47,17 +50,21 @@
 
         <activity android:name=".menu.priv.tusLibros.Visor_n"/>
 
-        <activity android:name=".menu.priv.estanteria.CargarNuevaEstanteria"/>
+        <activity android:name=".menu.priv.estanteria.CargarNuevaEstanteria"
+            android:windowSoftInputMode="adjustPan"
+            android:theme="@style/Theme.Transparent"/>
 
         <activity android:name=".menu.priv.estanteria.CargarNuevoLibroEstanteria"/>
 
         <activity android:name=".menu.priv.estanteria.LibrosEstanteria"/>
 
-        <activity android:name=".menu.priv.estanteria.ValoracionLibro"/>
+        <activity android:name=".menu.priv.estanteria.ValoracionLibro"
+            android:theme="@style/Theme.Transparent"/>
 
         <activity android:name=".menu.priv.proximamente.BuscadorAPIExterna"/>
 
-        <activity android:name=".menu.priv.proximamente.ProximoLibro"/>
+        <activity android:name=".menu.priv.proximamente.ProximoLibro"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity android:name=".menu.priv.futuro.FuturoLibro"/>
 
@@ -72,19 +79,24 @@
 
         <activity android:name=".menu.publ.misGrupos.suscritos.LibroActual"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionLibroNueva"/>
+        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionLibroNueva"
+            android:theme="@style/Theme.Transparent"/>
 
         <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionesLibro"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionGrupo"/>
+        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionGrupo"
+            android:theme="@style/Theme.Transparent"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity android:name=".menu.publ.misGrupos.creados.Suscritos"/>
 
-        <activity android:name=".menu.publ.misGrupos.creados.EditarGrupo"/>
+        <activity android:name=".menu.publ.misGrupos.creados.EditarGrupo"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity android:name=".menu.publ.misGrupos.creados.NuevoLibroPropuesto"/>
 
-        <activity android:name=".menu.publ.explorar.NuevoGrupo"/>
+        <activity android:name=".menu.publ.explorar.NuevoGrupo"
+            android:windowSoftInputMode="adjustResize"/>
 
         <activity android:name=".autentication.Perfil"/>
 

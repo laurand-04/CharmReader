@@ -89,13 +89,57 @@
             android:visibility="gone"
             android:progressTint="@color/basico" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerViewBook"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:paddingHorizontal="8dp"
-            android:clipToPadding="false"
-            android:paddingBottom="20dp" />
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:id="@+id/layoutEmptyBuscador"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="40dp"
+                android:visibility="visible">
+
+                <ImageView
+                    android:id="@+id/ivEmptyIconBuscador"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="#D1D1D1" />
+
+                <TextView
+                    android:id="@+id/tvEmptyTitleBuscador"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:text="Encuentra tu próxima lectura"
+                    android:textColor="#1A1A1A"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textAlignment="center" />
+
+                <TextView
+                    android:id="@+id/tvEmptySubtitleBuscador"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Busca libros por título o autor en la biblioteca global de OpenLibrary."
+                    android:textColor="#999999"
+                    android:textSize="14sp"
+                    android:textAlignment="center" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewBook"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="8dp"
+                android:clipToPadding="false"
+                android:paddingBottom="20dp"
+                android:visibility="gone" />
+        </FrameLayout>
 
     </LinearLayout>
 

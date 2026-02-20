@@ -1,7 +1,9 @@
 package com.tfg.charmreader.menu.priv.proximamente;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookIntAdapter;
 import com.tfg.charmreader.objetosBD.API;
@@ -34,7 +35,7 @@ public class ProximamenteFragment extends Fragment {
     private BookIntAdapter adapter;
     private TextView tvCount;
     private SearchView searchView;
-    private LinearLayout layoutEmpty; // 🔥 Variable para el Empty State
+    private LinearLayout layoutEmpty;
 
     public ProximamenteFragment() { }
 
@@ -47,7 +48,7 @@ public class ProximamenteFragment extends Fragment {
         rvLibros = view.findViewById(R.id.recyclerProximamente);
         tvCount = view.findViewById(R.id.tvCountProximamente);
         searchView = view.findViewById(R.id.searchViewProximamente);
-        layoutEmpty = view.findViewById(R.id.layoutEmpty); // Vinculamos el Empty State
+        layoutEmpty = view.findViewById(R.id.layoutEmpty);
 
         rvLibros.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -59,7 +60,7 @@ public class ProximamenteFragment extends Fragment {
         });
         rvLibros.setAdapter(adapter);
 
-        // 3. Buscador funcional con el nuevo método filtrar del Adapter
+        // 3. Buscador funcional
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) { return false; }
@@ -98,9 +99,19 @@ public class ProximamenteFragment extends Fragment {
     }
 
     private void cargarLibros() {
+        // 1. Obtener el ID de SharedPreferences (Instantáneo y seguro)
+        if (getContext() == null) return;
+        SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1) {
+            Log.e("ProximamenteFragment", "ID de usuario no encontrado localmente");
+            return;
+        }
+
+        // 2. Usar hilo solo para la petición de red
         new Thread(() -> {
             try {
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
                 I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
                 retrofit2.Response<List<BookEn>> response = apiBook.obtenerBooksPorUsuario(idUsuario).execute();
 
@@ -109,7 +120,7 @@ public class ProximamenteFragment extends Fragment {
 
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
-                            if (listaRecibida == null || listaRecibida.isEmpty()) {
+                            if (listaRecibida.isEmpty()) {
                                 layoutEmpty.setVisibility(View.VISIBLE);
                                 rvLibros.setVisibility(View.GONE);
                                 tvCount.setText("Sin lecturas planeadas");
@@ -118,7 +129,6 @@ public class ProximamenteFragment extends Fragment {
                                 rvLibros.setVisibility(View.VISIBLE);
                                 adapter.setBooks(listaRecibida);
 
-                                // Un toque dinámico:
                                 int total = listaRecibida.size();
                                 String msg = (total == 1) ? "1 LIBRO PENDIENTE" : total + " LIBROS PENDIENTES";
                                 tvCount.setText(msg);

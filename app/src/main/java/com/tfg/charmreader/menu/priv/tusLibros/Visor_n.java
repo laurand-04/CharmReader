@@ -1,5 +1,7 @@
 package com.tfg.charmreader.menu.priv.tusLibros;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,8 +14,6 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
@@ -37,28 +37,37 @@ public class Visor_n extends AppCompatActivity {
     private GestureDetector gestureDetector;
     private boolean apiCargada = false;
     private boolean epubCargado = false;
+    private int idUsuario; // 🔥 Variable local para no consultar SharedPreferences constantemente
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_visor_n);
 
+        // 1. Obtener ID de usuario localmente al iniciar
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Error de sesión", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         // Vincular vistas
         webViewContent = findViewById(R.id.webViewContent);
         pbVisor = findViewById(R.id.pbVisor);
 
         webViewContent.getSettings().setJavaScriptEnabled(true);
-        webViewContent.setAlpha(0f); // Empezamos invisibles para evitar saltos
+        webViewContent.setAlpha(0f);
 
         webViewContent.setWebViewClient(new android.webkit.WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                // Si hay scroll que recuperar, iniciamos el proceso de posicionamiento
                 if (scrollGuardado > 0f) {
                     aplicarScroll();
                 } else {
-                    // Si el scroll es 0, mostramos el contenido inmediatamente
                     mostrarContenidoFinal();
                 }
             }
@@ -66,12 +75,14 @@ public class Visor_n extends AppCompatActivity {
 
         configurarGestos();
 
-        Uri epubUri = Uri.parse(getIntent().getStringExtra("URL_LIBRO"));
-        if (epubUri != null) {
+        String urlLibro = getIntent().getStringExtra("URL_LIBRO");
+        if (urlLibro != null) {
+            Uri epubUri = Uri.parse(urlLibro);
             cargarProgresoDesdeAPI();
             readEpub(epubUri);
         } else {
             Toast.makeText(this, "No se proporcionó EPUB", Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
@@ -151,7 +162,7 @@ public class Visor_n extends AppCompatActivity {
         new Thread(() -> {
             try {
                 int idLibro = getIntent().getIntExtra("idL", -1);
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
+                // 🔥 Ya no usamos Utilidades.obtenerIdUsuarioDesdeAPI(), usamos la variable local
                 Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
                         .getLibrodeUsuario(idUsuario, idLibro).execute();
 
@@ -178,7 +189,6 @@ public class Visor_n extends AppCompatActivity {
     private void showChapter(int index) {
         if (index < 0 || index >= chapters.size()) return;
         try {
-            // Cada vez que cargamos un capítulo, activamos el "velo"
             pbVisor.setVisibility(View.VISIBLE);
             webViewContent.setAlpha(0f);
 
@@ -199,7 +209,7 @@ public class Visor_n extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
+                // 🔥 Usamos el idUsuario que cargamos en el onCreate
                 if (idUsuario == -1 || idLibro == -1) return;
 
                 Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
@@ -234,14 +244,11 @@ public class Visor_n extends AppCompatActivity {
             @Override
             public void run() {
                 float contentHeight = webViewContent.getContentHeight() * webViewContent.getScale();
-                // Verificamos que el contenido ya esté renderizado
                 if (contentHeight > webViewContent.getHeight() || intentos > 10) {
                     int maxScroll = (int) (contentHeight - webViewContent.getHeight());
                     int targetY = (int) (maxScroll * scrollGuardado);
 
                     webViewContent.scrollTo(0, targetY);
-                    Log.d("SCROLL", "Aplicado a: " + targetY);
-
                     scrollGuardado = 0f;
                     mostrarContenidoFinal();
                 } else {
@@ -253,7 +260,6 @@ public class Visor_n extends AppCompatActivity {
     }
 
     private void mostrarContenidoFinal() {
-        // Quitamos el círculo y mostramos el texto con un fundido suave
         pbVisor.setVisibility(View.GONE);
         webViewContent.animate().alpha(1f).setDuration(400).start();
     }

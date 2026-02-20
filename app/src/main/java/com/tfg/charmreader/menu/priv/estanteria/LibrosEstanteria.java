@@ -1,12 +1,15 @@
 package com.tfg.charmreader.menu.priv.estanteria;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -20,6 +23,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.tfg.charmreader.R;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibro;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.LibrosAdapter;
@@ -42,22 +46,22 @@ public class LibrosEstanteria extends AppCompatActivity {
     private ActivityResultLauncher<Intent> launcherCargarLibro;
     private List<LibrosDeUsuario> listaLibrosUsuarioGlobal;
     private TextView tvCantidad;
+    private LinearLayout layoutEmpty;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_libros_estanteria);
 
-        // 1. Inicialización APIs
         apiLibrosDeUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
         apiLibro = API.getInstancia().create(I_ApiLibro.class);
 
-        // 2. Enlazar vistas de la nueva cabecera
         TextView tvTitulo = findViewById(R.id.tvTituloEstanteria);
         tvCantidad = findViewById(R.id.tvCantidadLibrosEstanteria);
         ShapeableImageView btnBack = findViewById(R.id.btnBack);
         View viewColor = findViewById(R.id.viewEstanteriaColor);
         MaterialCardView statusColorContainer = findViewById(R.id.statusColorContainer);
+        layoutEmpty = findViewById(R.id.layoutEmptyLibrosEstanteria);
 
         SearchView searchView = findViewById(R.id.searchViewLibrosEst);
         FloatingActionButton fab = findViewById(R.id.fab_add_librosEstanteria);
@@ -65,7 +69,6 @@ public class LibrosEstanteria extends AppCompatActivity {
         rvLibros = findViewById(R.id.recyclerLibrosEstanteria);
         rvLibros.setLayoutManager(new LinearLayoutManager(this));
 
-        // 3. Obtener datos del Intent
         idEstanteria = getIntent().getIntExtra("idEstanteria", -1);
         String nombreEstanteria = getIntent().getStringExtra("Nombre");
         String colorPastelRecibido = getIntent().getStringExtra("Color");
@@ -74,26 +77,17 @@ public class LibrosEstanteria extends AppCompatActivity {
             tvTitulo.setText(nombreEstanteria);
         }
 
-        // 4. Lógica de Navegación
         btnBack.setOnClickListener(v -> finish());
 
-        // 5. Aplicar Color de Acento (Dinámico)
         if (colorPastelRecibido != null && !colorPastelRecibido.isEmpty()) {
             int colorFuerte = obtenerColorFuerte(colorPastelRecibido);
-
-            // Aplicar al círculo de la derecha
             viewColor.getBackground().setColorFilter(colorFuerte, PorterDuff.Mode.SRC_IN);
-
-            // Aplicar a los bordes (strokes) de la Toolbar
             statusColorContainer.setStrokeColor(ColorStateList.valueOf(colorFuerte));
             btnBack.setStrokeColor(ColorStateList.valueOf(colorFuerte));
-
-            // Aplicar al texto de cantidad y al FAB
             tvCantidad.setTextColor(colorFuerte);
             fab.setBackgroundTintList(ColorStateList.valueOf(colorFuerte));
         }
 
-        // 6. Buscador
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) { return false; }
@@ -104,7 +98,6 @@ public class LibrosEstanteria extends AppCompatActivity {
             }
         });
 
-        // 7. Launcher para refrescar
         launcherCargarLibro = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -136,22 +129,17 @@ public class LibrosEstanteria extends AppCompatActivity {
 
     private void cargarDatos(int idEstanteriaConsultar) {
         if (idEstanteriaConsultar == -1) return;
-
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuarioActual = prefs.getInt("idUsuario", -1);
         new Thread(() -> {
             try {
-                Response<List<LibrosDeUsuario>> response = apiLibrosDeUsuario.obtenerLibrosDeEstanteria(idEstanteriaConsultar).execute();
+                Response<List<LibrosDeUsuario>> response = apiLibrosDeUsuario.obtenerLibrosDeEstanteria(idEstanteriaConsultar, idUsuarioActual).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     this.listaLibrosUsuarioGlobal = response.body();
-                    int totalLibros = listaLibrosUsuarioGlobal.size();
-                    String stringCantidad = (totalLibros == 1) ? "1 libro" : totalLibros + " libros";
 
                     if (this.listaLibrosUsuarioGlobal.isEmpty()) {
-                        runOnUiThread(() -> {
-                            tvCantidad.setText("0 libros");
-                            adapter = new LibrosAdapter(new ArrayList<>(), null);
-                            rvLibros.setAdapter(adapter);
-                        });
+                        runOnUiThread(() -> mostrarEstadoVacio(true));
                         return;
                     }
 
@@ -166,7 +154,10 @@ public class LibrosEstanteria extends AppCompatActivity {
                         List<Libro> listaLibrosFinal = responseLibros.body();
 
                         runOnUiThread(() -> {
-                            tvCantidad.setText(stringCantidad);
+                            mostrarEstadoVacio(false);
+                            int total = listaLibrosFinal.size();
+                            tvCantidad.setText((total == 1) ? "1 libro" : total + " libros");
+
                             adapter = new LibrosAdapter(listaLibrosFinal, libro -> {
                                 if (listaLibrosUsuarioGlobal != null) {
                                     for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
@@ -184,10 +175,24 @@ public class LibrosEstanteria extends AppCompatActivity {
                             rvLibros.setAdapter(adapter);
                         });
                     }
+                } else {
+                    runOnUiThread(() -> mostrarEstadoVacio(true));
                 }
             } catch (IOException e) {
                 Log.e("LibrosEstanteria", "Error de red: " + e.getMessage());
+                runOnUiThread(() -> mostrarEstadoVacio(true));
             }
         }).start();
+    }
+
+    private void mostrarEstadoVacio(boolean estaVacio) {
+        if (estaVacio) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            rvLibros.setVisibility(View.GONE);
+            tvCantidad.setText("0 libros");
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            rvLibros.setVisibility(View.VISIBLE);
+        }
     }
 }

@@ -4,15 +4,23 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
+
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseUser;
+import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.admin.AdminMainActivity;
 import com.tfg.charmreader.menu.MainActivity;
 import com.tfg.charmreader.databinding.ActivityLoginBinding;
+import com.tfg.charmreader.objetosBD.Usuario;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.splashscreen.SplashScreen;
+
+import java.io.IOException;
+
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
@@ -20,29 +28,18 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // 1. La Splash Screen siempre es lo primero
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-
         super.onCreate(savedInstanceState);
 
-        // 2. Comprobamos la sesión inmediatamente después del super
         SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         boolean estaLogeado = preferences.getBoolean("logeado", false);
         boolean esAdmin = preferences.getBoolean("esAdmin", false);
 
         if (estaLogeado) {
-            Intent intent;
-            if (esAdmin) {
-                intent = new Intent(this, AdminMainActivity.class);
-            } else {
-                intent = new Intent(this, MainActivity.class);
-            }
-            startActivity(intent);
-            finish();
-            return; // Nos vamos, pero habiendo cumplido con el super.onCreate
+            abrirPantallaCorrespondiente(esAdmin);
+            return;
         }
 
-        // 3. Si no está logeado, cargamos la interfaz normal
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -66,33 +63,91 @@ public class LoginActivity extends AppCompatActivity {
 
         if (email.equals("admin") && password.equals("admin")) {
             guardarSesion(true, email);
-            startActivity(new Intent(this, AdminMainActivity.class));
-            finish();
             return;
         }
 
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        guardarSesion(false, email);
-                        irAMainActivity();
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null && user.isEmailVerified()) {
+                            guardarSesion(false, email);
+                        } else {
+                            mostrarAlertaBloqueanteVerificacion(user, email);
+                        }
                     } else {
                         mostrarError(task.getException());
                     }
                 });
     }
 
-    private void guardarSesion(boolean isAdmin, String email) {
-        SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putBoolean("logeado", true);
-        editor.putBoolean("esAdmin", isAdmin);
-        editor.putString("correoUsuario", email);
-        editor.apply();
+    private void mostrarAlertaBloqueanteVerificacion(FirebaseUser user, String email) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Cuenta no verificada");
+        builder.setMessage("Tu correo aún no ha sido confirmado. Por favor, pulsa el enlace que enviamos a: " + email);
+        builder.setCancelable(false);
+        builder.setPositiveButton("YA HE VERIFICADO", null);
+        builder.setNeutralButton("REENVIAR CORREO", (dialog, which) -> {
+            if (user != null) user.sendEmailVerification();
+        });
+        builder.setNegativeButton("CANCELAR", (dialog, which) -> {
+            mAuth.signOut();
+            dialog.dismiss();
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            user.reload().addOnCompleteListener(task -> {
+                if (user.isEmailVerified()) {
+                    dialog.dismiss();
+                    guardarSesion(false, email);
+                } else {
+                    mostrarAlerta("Error", "Sigues sin verificar el correo.");
+                }
+            });
+        });
     }
 
-    private void irAMainActivity() {
-        Intent intent = new Intent(this, MainActivity.class);
+    private void guardarSesion(boolean isAdmin, String email) {
+        binding.loginButton.setEnabled(false);
+
+        new Thread(() -> {
+            SharedPreferences preferences = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = preferences.edit();
+
+            editor.putBoolean("logeado", true);
+            editor.putBoolean("esAdmin", isAdmin);
+            editor.putString("correoUsuario", email);
+
+            if (!isAdmin) {
+                try {
+                    Response<Usuario> response = Utilidades.apiUsuario.getIdUsuarioPorCorreo(email).execute();
+                    if (response.isSuccessful() && response.body() != null) {
+                        int idUsuarioSQL = response.body().getId();
+                        editor.putInt("idUsuario", idUsuarioSQL);
+                        Log.d("DEBUG_LOGIN", "ID SQL guardado: " + idUsuarioSQL);
+                    }
+                } catch (IOException e) {
+                    Log.e("API_ERROR", "Error de red al obtener ID", e);
+                }
+            }
+
+            editor.apply();
+
+            // 🔥 IMPORTANTE: Navegar después de guardar
+            runOnUiThread(() -> abrirPantallaCorrespondiente(isAdmin));
+        }).start();
+    }
+
+    private void abrirPantallaCorrespondiente(boolean esAdmin) {
+        Intent intent;
+        if (esAdmin) {
+            intent = new Intent(this, AdminMainActivity.class);
+        } else {
+            intent = new Intent(this, MainActivity.class);
+        }
         startActivity(intent);
         finish();
     }
@@ -106,14 +161,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void mostrarError(Exception e){
-        String mensajeError = "Error desconocido";
-        if (e instanceof FirebaseAuthInvalidUserException) {
-            mensajeError = "Usuario no registrado o deshabilitado.";
-        } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-            mensajeError = "Credenciales inválidas, revisa el email o la contraseña.";
-        } else if (e != null) {
-            mensajeError = e.getMessage();
-        }
+        String mensajeError = e != null ? e.getMessage() : "Error desconocido";
         mostrarAlerta("Error", mensajeError);
     }
 }

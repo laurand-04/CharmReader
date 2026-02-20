@@ -4,26 +4,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F4F7F9"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:paddingHorizontal="32dp">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_marginTop="24dp"
-                android:src="@mipmap/logo2" />
-        </LinearLayout>
+        android:paddingHorizontal="32dp"
+        android:paddingBottom="100dp"> <ImageView
+        android:layout_width="160dp"
+        android:layout_height="160dp"
+        android:layout_marginTop="24dp"
+        android:src="@mipmap/logo2" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -46,8 +40,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Correo electrónico"
-            app:startIconDrawable="@drawable/ic_person">
-
+            app:startIconDrawable="@drawable/ic_person"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/emailEditText"
                 android:layout_width="match_parent"
@@ -62,8 +59,11 @@
             android:layout_marginTop="16dp"
             android:hint="Contraseña"
             app:endIconMode="password_toggle"
-            app:startIconDrawable="@android:drawable/ic_lock_idle_lock">
-
+            app:startIconDrawable="@android:drawable/ic_lock_idle_lock"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp">
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/passwordEditText"
                 android:layout_width="match_parent"
@@ -85,10 +85,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:padding="8dp"
             android:text="¿Olvidaste tu contraseña?"
             android:textColor="#3498DB"
             android:textStyle="bold" />
-
 
         <View
             android:layout_width="match_parent"
@@ -101,6 +101,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:padding="8dp"
             android:text="¿No tienes cuenta? Regístrate"
             android:textColor="#2C3E50"
             android:textSize="14sp" />

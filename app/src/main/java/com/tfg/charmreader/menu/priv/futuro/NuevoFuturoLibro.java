@@ -1,10 +1,11 @@
 package com.tfg.charmreader.menu.priv.futuro;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -14,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosSinEstrenar;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.CCLibrosSinEstrenar;
@@ -87,21 +87,20 @@ public class NuevoFuturoLibro extends AppCompatActivity {
             return;
         }
 
+        // 1. Obtener el ID desde SharedPreferences (Instantáneo)
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1) {
+            Toast.makeText(this, "Error de sesión. Por favor, logueate de nuevo.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         btnGuardar.setEnabled(false);
         btnGuardar.setText("GUARDANDO...");
 
-        new Thread(() -> {
-            try {
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-                runOnUiThread(() -> enviarServidor(idUsuario, titulo, autor));
-            } catch (Exception e) {
-                Log.e("DEBUG_GUARDAR", "Error: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Error obteniendo usuario", Toast.LENGTH_SHORT).show();
-                    restaurarBoton();
-                });
-            }
-        }).start();
+        // 2. Enviar directamente al servidor (Retrofit ya gestiona el hilo secundario en enqueue)
+        enviarServidor(idUsuario, titulo, autor);
     }
 
     private void enviarServidor(int idUsuario, String titulo, String autor) {
@@ -120,6 +119,7 @@ public class NuevoFuturoLibro extends AppCompatActivity {
                     finish();
                 } else {
                     restaurarBoton();
+                    Toast.makeText(NuevoFuturoLibro.this, "Error al guardar en el servidor", Toast.LENGTH_SHORT).show();
                 }
             }
 

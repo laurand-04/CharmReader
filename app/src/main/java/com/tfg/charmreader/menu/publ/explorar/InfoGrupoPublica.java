@@ -1,10 +1,13 @@
 package com.tfg.charmreader.menu.publ.explorar;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,7 +19,6 @@ import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.tabs.TabLayout;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
@@ -48,6 +50,13 @@ public class InfoGrupoPublica extends AppCompatActivity {
     private ValoracionAdapter valoracionAdapter;
     private MaterialButton btnAccionUnirse, btnAccionAbandonar;
 
+    private LinearLayout layoutEmpty;
+    private ImageView ivEmptyIcon;
+    private TextView tvEmptyTitle, tvEmptySubtitle;
+
+    private final List<BookEn> listaLibrosGlobal = new ArrayList<>();
+    private List<Valoracion> listaResenasGlobal = new ArrayList<>();
+
     private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
     private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
     private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
@@ -71,10 +80,22 @@ public class InfoGrupoPublica extends AppCompatActivity {
             return;
         }
 
+        // 🔥 OBTENER ID LOCALMENTE (Instantáneo)
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        idUsuarioLogueado = prefs.getInt("idUsuario", -1);
+
+        if (idUsuarioLogueado == -1) {
+            Toast.makeText(this, "Error de sesión", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         inicializarVistas();
         configurarTabs();
         cargarDatosGrupo();
-        obtenerIdUsuarioAsincrono();
+
+        // Iniciamos la carga de datos del grupo directamente
+        continuarCargando();
     }
 
     private void inicializarVistas() {
@@ -83,25 +104,19 @@ public class InfoGrupoPublica extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvDescDetalle);
         ivFotoGrupo = findViewById(R.id.ivDetalleGrupoFoto);
         btnBack = findViewById(R.id.btnBackInfoPublica);
-
         btnAccionUnirse = findViewById(R.id.btnAccionUnirse);
         btnAccionAbandonar = findViewById(R.id.btnAccionAbandonar);
-
         tabLayout = findViewById(R.id.tabLayout);
         rvLibros = findViewById(R.id.rvLibrosLeidos);
         rvComentarios = findViewById(R.id.rvComentariosGrupo);
+        layoutEmpty = findViewById(R.id.layoutEmptyGrupo);
+        ivEmptyIcon = findViewById(R.id.ivEmptyIcon);
+        tvEmptyTitle = findViewById(R.id.tvEmptyTitle);
+        tvEmptySubtitle = findViewById(R.id.tvEmptySubtitle);
 
         rvLibros.setLayoutManager(new LinearLayoutManager(this));
         rvComentarios.setLayoutManager(new LinearLayoutManager(this));
-
         btnBack.setOnClickListener(v -> finish());
-    }
-
-    private void obtenerIdUsuarioAsincrono() {
-        Utilidades.obtenerIdUsuarioDesdeAPI(idUsuario -> {
-            idUsuarioLogueado = idUsuario;
-            runOnUiThread(this::continuarCargando);
-        });
     }
 
     private void continuarCargando() {
@@ -116,12 +131,7 @@ public class InfoGrupoPublica extends AppCompatActivity {
         tvDescription.setText(grupo.getDescripcion());
 
         if (grupo.getUrl() != null && !grupo.getUrl().isEmpty()) {
-            Glide.with(this)
-                    .load(grupo.getUrl())
-                    .placeholder(R.drawable.ic_people)
-                    .error(R.drawable.ic_people)
-                    .centerCrop()
-                    .into(ivFotoGrupo);
+            Glide.with(this).load(grupo.getUrl()).placeholder(R.drawable.ic_people).centerCrop().into(ivFotoGrupo);
         }
     }
 
@@ -184,32 +194,43 @@ public class InfoGrupoPublica extends AppCompatActivity {
     }
 
     private void cargarLibrosLeidos() {
-        final List<BookEn> librosDetallados = new ArrayList<>();
-        bookAdapter = new BookIntAdapter(librosDetallados, b -> { });
+        listaLibrosGlobal.clear();
+        bookAdapter = new BookIntAdapter(listaLibrosGlobal, b -> { });
         rvLibros.setAdapter(bookAdapter);
 
         apiCatalogo.verCatalogo(grupo.getIdGrupo()).enqueue(new Callback<List<CatalogoLectura>>() {
             @Override
             public void onResponse(Call<List<CatalogoLectura>> call, Response<List<CatalogoLectura>> response) {
-                if (response.isSuccessful() && response.body() != null) {
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
-                    for (CatalogoLectura item : response.body()) {
-                        if (item.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) {
-                            apiBook.obtenerBookPorId(item.getIdBook()).enqueue(new Callback<BookEn>() {
-                                @Override
-                                public void onResponse(Call<BookEn> call, Response<BookEn> rb) {
-                                    if (rb.isSuccessful() && rb.body() != null) {
-                                        librosDetallados.add(rb.body());
-                                        bookAdapter.notifyItemInserted(librosDetallados.size() - 1);
-                                    }
-                                }
-                                @Override public void onFailure(Call<BookEn> call, Throwable t) { }
-                            });
-                        }
+                    List<CatalogoLectura> filtrados = new ArrayList<>();
+                    for(CatalogoLectura c : response.body()){
+                        if(c.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) filtrados.add(c);
                     }
+
+                    if(filtrados.isEmpty()){
+                        actualizarEstadoVacio();
+                        return;
+                    }
+
+                    for (CatalogoLectura item : filtrados) {
+                        apiBook.obtenerBookPorId(item.getIdBook()).enqueue(new Callback<BookEn>() {
+                            @Override
+                            public void onResponse(Call<BookEn> call, Response<BookEn> rb) {
+                                if (rb.isSuccessful() && rb.body() != null) {
+                                    listaLibrosGlobal.add(rb.body());
+                                    bookAdapter.notifyItemInserted(listaLibrosGlobal.size() - 1);
+                                    actualizarEstadoVacio();
+                                }
+                            }
+                            @Override public void onFailure(Call<BookEn> call, Throwable t) { }
+                        });
+                    }
+                } else {
+                    actualizarEstadoVacio();
                 }
             }
-            @Override public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) { }
+            @Override public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) { actualizarEstadoVacio(); }
         });
     }
 
@@ -218,11 +239,45 @@ public class InfoGrupoPublica extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Valoracion>> call, Response<List<Valoracion>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    valoracionAdapter = new ValoracionAdapter(response.body(), null);
+                    listaResenasGlobal = response.body();
+                    valoracionAdapter = new ValoracionAdapter(listaResenasGlobal, null);
                     rvComentarios.setAdapter(valoracionAdapter);
                 }
+                actualizarEstadoVacio();
             }
-            @Override public void onFailure(Call<List<Valoracion>> call, Throwable t) { }
+            @Override public void onFailure(Call<List<Valoracion>> call, Throwable t) { actualizarEstadoVacio(); }
+        });
+    }
+
+    private void actualizarEstadoVacio() {
+        runOnUiThread(() -> {
+            int tabActiva = tabLayout.getSelectedTabPosition();
+
+            if (tabActiva == 0) { // Libros
+                rvComentarios.setVisibility(View.GONE);
+                if (listaLibrosGlobal.isEmpty()) {
+                    layoutEmpty.setVisibility(View.VISIBLE);
+                    rvLibros.setVisibility(View.GONE);
+                    ivEmptyIcon.setImageResource(R.drawable.ic_libro);
+                    tvEmptyTitle.setText("¡Estantería vacía!");
+                    tvEmptySubtitle.setText("Este grupo aún no ha compartido sus lecturas finalizadas.");
+                } else {
+                    layoutEmpty.setVisibility(View.GONE);
+                    rvLibros.setVisibility(View.VISIBLE);
+                }
+            } else { // Reseñas
+                rvLibros.setVisibility(View.GONE);
+                if (listaResenasGlobal.isEmpty()) {
+                    layoutEmpty.setVisibility(View.VISIBLE);
+                    rvComentarios.setVisibility(View.GONE);
+                    ivEmptyIcon.setImageResource(R.drawable.ic_people);
+                    tvEmptyTitle.setText("Sin opiniones todavía");
+                    tvEmptySubtitle.setText("Sé el primero en unirte y dejar tu reseña sobre este grupo.");
+                } else {
+                    layoutEmpty.setVisibility(View.GONE);
+                    rvComentarios.setVisibility(View.VISIBLE);
+                }
+            }
         });
     }
 
@@ -235,13 +290,7 @@ public class InfoGrupoPublica extends AppCompatActivity {
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    rvLibros.setVisibility(View.VISIBLE);
-                    rvComentarios.setVisibility(View.GONE);
-                } else {
-                    rvLibros.setVisibility(View.GONE);
-                    rvComentarios.setVisibility(View.VISIBLE);
-                }
+                actualizarEstadoVacio();
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) { }
             @Override public void onTabReselected(TabLayout.Tab tab) { }

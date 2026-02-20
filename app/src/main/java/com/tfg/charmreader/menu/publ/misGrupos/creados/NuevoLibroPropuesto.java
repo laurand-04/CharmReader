@@ -1,7 +1,9 @@
 package com.tfg.charmreader.menu.publ.misGrupos.creados;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -16,7 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookExtAdapter;
@@ -48,19 +49,14 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Nota: Asegúrate de que el layout activity_buscador_api_externa tenga los IDs correctos
         setContentView(R.layout.activity_buscador_api_externa);
 
         etQuery = findViewById(R.id.searchViewAPI);
         recyclerView = findViewById(R.id.recyclerViewBook);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        adapter = new BookExtAdapter(new ArrayList<>(), new BookExtAdapter.OnBookClickListener() {
-            @Override
-            public void onBookClick(Book book) {
-                // Al hacer clic, iniciamos el proceso de guardado doble
-                guardarLibroYPropuesta(book);
-            }
-        });
+        adapter = new BookExtAdapter(new ArrayList<>(), this::guardarLibroYPropuesta);
 
         recyclerView.setAdapter(adapter);
 
@@ -87,52 +83,49 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
     }
 
     private void guardarLibroYPropuesta(Book book) {
-        // Obtenemos el ID del grupo que viene de ManejoGrupo
+        // 1. Obtener IDs necesarios (Grupo del intent e Usuario de SharedPreferences)
         int idGrupo = getIntent().getIntExtra("idGrupo", -1);
 
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idUsuario = prefs.getInt("idUsuario", -1);
+
+        if (idUsuario == -1 || idGrupo == -1) {
+            Toast.makeText(this, "Error de sesión o de grupo", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 2. Proceso de red en hilo secundario
         new Thread(() -> {
             try {
-                // 1. Obtener ID del usuario logueado (Sincrónico dentro del hilo)
-                int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
-
-                // 2. Mapear Book (Externo) a BookEn (Tu BD)
+                // Mapear Book externo a tu objeto de BD
                 BookEn bookEn = new BookEn(book, idUsuario);
 
-                // 3. PASO A: Guardar el libro en la tabla 'books'
+                // PASO A: Guardar el libro en la tabla 'books' (u obtenerlo si ya existe)
                 Response<BookEn> responseLibro = apiBook.anadirBook(bookEn).execute();
 
                 if (responseLibro.isSuccessful() && responseLibro.body() != null) {
-                    BookEn libroGuardado = responseLibro.body();
-                    int idLibroGenerado = libroGuardado.getId();
+                    int idLibroGenerado = responseLibro.body().getId();
 
-                    Log.d("API_FLOW", "Libro guardado con ID: " + idLibroGenerado);
+                    // PASO B: Crear la propuesta en el catálogo del grupo
+                    CatalogoLectura propuesta = new CatalogoLectura();
+                    propuesta.setIdGrupo(idGrupo);
+                    propuesta.setIdBook(idLibroGenerado);
+                    propuesta.setEstado(CatalogoLectura.EstadoLectura.PROPUESTO);
 
-                    // 4. PASO B: Si tenemos un ID de grupo válido, crear la propuesta en el catálogo
-                    if (idGrupo != -1) {
-                        CatalogoLectura propuesta = new CatalogoLectura();
-                        propuesta.setIdGrupo(idGrupo);
-                        propuesta.setIdBook(idLibroGenerado);
-                        propuesta.setEstado(CatalogoLectura.EstadoLectura.PROPUESTO);
+                    Response<CatalogoLectura> responseCat = apiCatalogo.añadirLibro(propuesta).execute();
 
-                        Response<CatalogoLectura> responseCat = apiCatalogo.añadirLibro(propuesta).execute();
-
-                        if (responseCat.isSuccessful()) {
-                            Log.d("API_FLOW", "Propuesta añadida al catálogo del grupo " + idGrupo);
-                        }
+                    if (responseCat.isSuccessful()) {
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, "¡Libro propuesto al grupo!", Toast.LENGTH_SHORT).show();
+                            setResult(Activity.RESULT_OK);
+                            finish();
+                        });
+                    } else {
+                        Log.e("API_ERROR", "Error al añadir al catálogo: " + responseCat.code());
                     }
-
-                    // 5. Finalizar y avisar al usuario
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "Libro propuesto con éxito", Toast.LENGTH_SHORT).show();
-                        setResult(Activity.RESULT_OK);
-                        finish();
-                    });
-                } else {
-                    Log.e("API_ERROR", "Error al guardar libro: " + responseLibro.code());
                 }
-
             } catch (Exception e) {
-                Log.e("API_EXCEPTION", "Error en el proceso de guardado: " + e.getMessage());
+                Log.e("API_EXCEPTION", "Error en el guardado: " + e.getMessage());
                 runOnUiThread(() -> Toast.makeText(this, "Error al procesar el libro", Toast.LENGTH_SHORT).show());
             }
         }).start();

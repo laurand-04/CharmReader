@@ -1,16 +1,20 @@
 package com.tfg.charmreader.menu.priv.estanteria;
 
 import android.app.Activity;
-import android.content.DialogInterface;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.R;
@@ -29,7 +33,6 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
     private final FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
     private final I_ApiEstanteria apiEstanteria = API.getInstancia().create(I_ApiEstanteria.class);
 
-    // Color por defecto (el lila de tu app)
     private String colorSeleccionado = "#F3E5F5";
 
     @Override
@@ -38,31 +41,62 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
         binding = ActivityNuevaEstanteriaBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+            getWindow().getAttributes().setBlurBehindRadius(20);
+        }
+
         if (firebaseUser == null) {
             finish();
             return;
         }
 
-        configurarSelectorColores();
+        // 🔥 Listener para la 'X' con confirmación
+        binding.btnBackNuevaEstanteria.setOnClickListener(v -> comprobarYSalir());
 
-        // Actualizamos los IDs a los nuevos del XML (btnGuardar)
+        // 🔥 Manejar también el botón 'Atrás' físico del sistema
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                comprobarYSalir();
+            }
+        });
+
+        configurarSelectorColores();
         binding.btnGuardar.setOnClickListener(v -> guardar());
     }
 
+    /**
+     * Comprueba si el usuario ha escrito algo antes de cerrar la pantalla
+     */
+    private void comprobarYSalir() {
+        String titulo = binding.etTitulo.getText().toString().trim();
+
+        if (!titulo.isEmpty()) {
+            // Si hay texto, preguntamos
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("¿Descartar estantería?")
+                    .setMessage("Tienes cambios sin guardar. Si sales ahora, perderás la información introducida.")
+                    .setNegativeButton("Seguir editando", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Descartar", (dialog, which) -> finish())
+                    .show();
+        } else {
+            // Si está vacío, cerramos directamente
+            finish();
+        }
+    }
+
     private void configurarSelectorColores() {
-        // Asignamos listeners a cada View de color
         View.OnClickListener colorListener = v -> {
-            // Resetear escalas (efecto visual de selección)
             resetearEscalasColores();
             v.setScaleX(1.3f);
             v.setScaleY(1.3f);
 
-            // Cambiar el color del preview de arriba
             if (v.getId() == R.id.color1) colorSeleccionado = "#F3E5F5";
-            if (v.getId() == R.id.color2) colorSeleccionado = "#E3F2FD";
-            if (v.getId() == R.id.color3) colorSeleccionado = "#E8F5E9";
-            if (v.getId() == R.id.color4) colorSeleccionado = "#FFF3E0";
-            if (v.getId() == R.id.color5) colorSeleccionado = "#FFEBEE";
+            else if (v.getId() == R.id.color2) colorSeleccionado = "#E3F2FD";
+            else if (v.getId() == R.id.color3) colorSeleccionado = "#E8F5E9";
+            else if (v.getId() == R.id.color4) colorSeleccionado = "#FFF3E0";
+            else if (v.getId() == R.id.color5) colorSeleccionado = "#FFEBEE";
 
             binding.ivIconoPreview.getBackground().setColorFilter(
                     android.graphics.Color.parseColor(colorSeleccionado),
@@ -86,7 +120,6 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
     }
 
     private void guardar() {
-        // Usamos etTitulo (TextInputEditText) en lugar del Titulo antiguo
         String titulo = binding.etTitulo.getText().toString().trim();
         if (titulo.isEmpty()){
             binding.tilTitulo.setError("Introduce un nombre");
@@ -96,7 +129,8 @@ public class CargarNuevaEstanteria extends AppCompatActivity {
         }
 
         new Thread(() -> {
-            int idUsuario = Utilidades.obtenerIdUsuarioDesdeAPI();
+            SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+            int idUsuario = prefs.getInt("idUsuario", -1);
             runOnUiThread(() -> {
                 if (idUsuario != -1) {
                     ejecutarGuardadoEstanteria(idUsuario, titulo);
