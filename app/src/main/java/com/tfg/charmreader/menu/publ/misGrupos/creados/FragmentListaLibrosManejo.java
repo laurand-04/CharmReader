@@ -8,11 +8,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
@@ -30,12 +32,9 @@ public class FragmentListaLibrosManejo extends Fragment {
     private int idGrupo, tipoLista;
     private RecyclerView rvLibros;
     private final List<BookEn> listaLibros = new ArrayList<>();
-
-    // Vistas para el Empty State
     private LinearLayout layoutEmpty;
     private ImageView ivEmptyIcon;
     private TextView tvEmptyTitle, tvEmptySubtitle;
-
     private boolean cargando = false;
 
     private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
@@ -62,10 +61,7 @@ public class FragmentListaLibrosManejo extends Fragment {
         idGrupo = getArguments().getInt("idGrupo");
         tipoLista = getArguments().getInt("tipoLista");
 
-        // 🔥 CORRECCIÓN DE ID: Debe ser rvListaManejo como en tu XML
         rvLibros = view.findViewById(R.id.rvListaManejo);
-
-        // Vincular vistas del Empty State
         layoutEmpty = view.findViewById(R.id.layoutEmptyManejo);
         ivEmptyIcon = view.findViewById(R.id.ivEmptyIconManejo);
         tvEmptyTitle = view.findViewById(R.id.tvEmptyTitleManejo);
@@ -85,16 +81,42 @@ public class FragmentListaLibrosManejo extends Fragment {
                 }
         );
 
+        // 🔥 Lógica de borrado con clic largo (Solo pestaña 0)
+        adapter.setOnLibroLongClickListener(libro -> {
+            if (tipoLista == 0) {
+                mostrarDialogoEliminar(libro);
+            }
+        });
+
         rvLibros.setAdapter(adapter);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (!cargando) {
-            cargarDatos();
-        }
+    private void mostrarDialogoEliminar(BookEn libro) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Eliminar Propuesta")
+                .setMessage("¿Deseas quitar '" + libro.getTitulo() + "' de la lista de propuestas?")
+                .setNegativeButton("CANCELAR", null)
+                .setPositiveButton("ELIMINAR", (dialog, which) -> ejecutarEliminacion(libro))
+                .show();
     }
+
+    private void ejecutarEliminacion(BookEn libro) {
+        apiCatalogo.eliminarPropuesta(idGrupo, libro.getId()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(getContext(), "Propuesta eliminada", Toast.LENGTH_SHORT).show();
+                    cargarDatos();
+                }
+            }
+            @Override public void onFailure(Call<Void> call, Throwable t) {
+                Toast.makeText(getContext(), "Error de conexión", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onResume() { super.onResume(); if (!cargando) cargarDatos(); }
 
     private void cargarDatos() {
         cargando = true;
@@ -103,40 +125,26 @@ public class FragmentListaLibrosManejo extends Fragment {
             public void onResponse(Call<List<CatalogoLectura>> call, Response<List<CatalogoLectura>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     filtrarYCargarLibros(response.body());
-                } else {
-                    cargando = false;
-                    mostrarEstadoVacio(true);
-                }
+                } else { cargando = false; mostrarEstadoVacio(true); }
             }
-            @Override
-            public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {
-                cargando = false;
-                mostrarEstadoVacio(true);
+            @Override public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {
+                cargando = false; mostrarEstadoVacio(true);
             }
         });
     }
 
     private void filtrarYCargarLibros(List<CatalogoLectura> catalogo) {
         listaLibros.clear();
-
         List<Integer> idsAFiltrar = new ArrayList<>();
         for (CatalogoLectura item : catalogo) {
-            boolean cumpleFiltro = false;
-            // Usamos item.getEstado() comparado con tu Enum o enteros según tu lógica de BD
-            if (tipoLista == 0 && item.getEstado() == CatalogoLectura.EstadoLectura.PROPUESTO) cumpleFiltro = true;
-            else if (tipoLista == 1 && item.getEstado() == CatalogoLectura.EstadoLectura.ACTUAL) cumpleFiltro = true;
-            else if (tipoLista == 2 && item.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) cumpleFiltro = true;
-
-            if (cumpleFiltro) {
-                idsAFiltrar.add(item.getIdBook());
-            }
+            boolean cumple = false;
+            if (tipoLista == 0 && item.getEstado() == CatalogoLectura.EstadoLectura.PROPUESTO) cumple = true;
+            else if (tipoLista == 1 && item.getEstado() == CatalogoLectura.EstadoLectura.ACTUAL) cumple = true;
+            else if (tipoLista == 2 && item.getEstado() == CatalogoLectura.EstadoLectura.FINALIZADO) cumple = true;
+            if (cumple) idsAFiltrar.add(item.getIdBook());
         }
 
-        if (idsAFiltrar.isEmpty()) {
-            cargando = false;
-            mostrarEstadoVacio(true);
-            return;
-        }
+        if (idsAFiltrar.isEmpty()) { cargando = false; mostrarEstadoVacio(true); return; }
 
         final int[] completados = {0};
         for (Integer idBook : idsAFiltrar) {
@@ -144,23 +152,12 @@ public class FragmentListaLibrosManejo extends Fragment {
                 @Override
                 public void onResponse(Call<BookEn> call, Response<BookEn> r) {
                     completados[0]++;
-                    if (r.isSuccessful() && r.body() != null) {
-                        listaLibros.add(r.body());
-                    }
-
-                    if (completados[0] == idsAFiltrar.size()) {
-                        cargando = false;
-                        finalizarCarga();
-                    }
+                    if (r.isSuccessful() && r.body() != null) listaLibros.add(r.body());
+                    if (completados[0] == idsAFiltrar.size()) { cargando = false; finalizarCarga(); }
                 }
-
-                @Override
-                public void onFailure(Call<BookEn> call, Throwable t) {
+                @Override public void onFailure(Call<BookEn> call, Throwable t) {
                     completados[0]++;
-                    if (completados[0] == idsAFiltrar.size()) {
-                        cargando = false;
-                        finalizarCarga();
-                    }
+                    if (completados[0] == idsAFiltrar.size()) { cargando = false; finalizarCarga(); }
                 }
             });
         }
@@ -169,45 +166,34 @@ public class FragmentListaLibrosManejo extends Fragment {
     private void finalizarCarga() {
         if (isAdded()) {
             requireActivity().runOnUiThread(() -> {
-                if (listaLibros.isEmpty()) {
-                    mostrarEstadoVacio(true);
-                } else {
-                    mostrarEstadoVacio(false);
-                    if (rvLibros.getAdapter() != null) {
-                        rvLibros.getAdapter().notifyDataSetChanged();
-                    }
-                }
+                mostrarEstadoVacio(listaLibros.isEmpty());
+                if (rvLibros.getAdapter() != null) rvLibros.getAdapter().notifyDataSetChanged();
             });
         }
     }
 
     private void mostrarEstadoVacio(boolean vacio) {
         if (!isAdded()) return;
-
+        layoutEmpty.setVisibility(vacio ? View.VISIBLE : View.GONE);
+        rvLibros.setVisibility(vacio ? View.GONE : View.VISIBLE);
         if (vacio) {
-            layoutEmpty.setVisibility(View.VISIBLE);
-            rvLibros.setVisibility(View.GONE);
-
             switch (tipoLista) {
-                case 0: // Propuestas
+                case 0:
                     ivEmptyIcon.setImageResource(R.drawable.ic_libro);
                     tvEmptyTitle.setText("¡Lluvia de ideas!");
-                    tvEmptySubtitle.setText("No has propuesto libros todavía. Pulsa el botón + para animar el grupo.");
+                    tvEmptySubtitle.setText("No hay propuestas todavía. Pulsa + para añadir una.");
                     break;
-                case 1: // Actual
+                case 1:
                     ivEmptyIcon.setImageResource(R.drawable.ic_people);
                     tvEmptyTitle.setText("Tiempo de descanso");
-                    tvEmptySubtitle.setText("El grupo no está leyendo nada ahora mismo. ¿Es hora de votar una propuesta?");
+                    tvEmptySubtitle.setText("No hay lectura actual en curso.");
                     break;
-                case 2: // Finalizadas
+                case 2:
                     ivEmptyIcon.setImageResource(R.drawable.ic_gavel);
                     tvEmptyTitle.setText("Camino por recorrer");
-                    tvEmptySubtitle.setText("Aún no habéis terminado vuestra primera lectura oficial. ¡El historial os espera!");
+                    tvEmptySubtitle.setText("Aún no hay lecturas finalizadas.");
                     break;
             }
-        } else {
-            layoutEmpty.setVisibility(View.GONE);
-            rvLibros.setVisibility(View.VISIBLE);
         }
     }
 }

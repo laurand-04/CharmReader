@@ -18,17 +18,28 @@ import java.util.List;
 
 public class BookIntAdapter extends RecyclerView.Adapter<BookIntAdapter.LibroViewHolder> {
     private List<BookEn> libros;
-    private List<BookEn> listaOriginal; // 🔥 Copia para el filtro
+    private List<BookEn> listaOriginal;
     private OnBookClickListener listener;
+    private OnItemLongClickListener longListener; // 🔥 Nuevo listener
 
     public interface OnBookClickListener {
         void onBookClick(BookEn book);
+    }
+
+    // 🔥 Interfaz para el clic largo (Borrado)
+    public interface OnItemLongClickListener {
+        void onItemLongClick(BookEn book);
     }
 
     public BookIntAdapter(List<BookEn> libros, OnBookClickListener listener) {
         this.libros = (libros != null) ? libros : new ArrayList<>();
         this.listaOriginal = new ArrayList<>(this.libros);
         this.listener = listener;
+    }
+
+    // 🔥 Setter para el listener de borrado
+    public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+        this.longListener = listener;
     }
 
     @NonNull
@@ -56,8 +67,18 @@ public class BookIntAdapter extends RecyclerView.Adapter<BookIntAdapter.LibroVie
             holder.ivPortada.setImageResource(android.R.drawable.stat_notify_error);
         }
 
+        // Clic normal
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onBookClick(libro);
+        });
+
+        // 🔥 Clic largo para eliminar
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longListener != null) {
+                longListener.onItemLongClick(libro);
+                return true;
+            }
+            return false;
         });
     }
 
@@ -66,7 +87,6 @@ public class BookIntAdapter extends RecyclerView.Adapter<BookIntAdapter.LibroVie
         return libros != null ? libros.size() : 0;
     }
 
-    // 🔥 MÉTODO PARA FILTRAR
     public void filtrar(String texto) {
         if (texto == null || texto.isEmpty()) {
             libros.clear();
@@ -90,7 +110,7 @@ public class BookIntAdapter extends RecyclerView.Adapter<BookIntAdapter.LibroVie
         this.libros.clear();
         if (nuevosLibros != null) {
             this.libros.addAll(nuevosLibros);
-            this.listaOriginal = new ArrayList<>(nuevosLibros); // Actualizar copia
+            this.listaOriginal = new ArrayList<>(nuevosLibros);
         }
         notifyDataSetChanged();
     }

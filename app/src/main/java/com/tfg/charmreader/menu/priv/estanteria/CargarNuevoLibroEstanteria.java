@@ -1,7 +1,6 @@
 package com.tfg.charmreader.menu.priv.estanteria;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -72,12 +71,11 @@ public class CargarNuevoLibroEstanteria extends AppCompatActivity {
 
                 if (idUsuarioActual == -1) return;
 
-                // Obtenemos los libros del usuario en la estantería 0
+                // 1. Obtenemos los libros que tienen estantería 0
                 Response<List<LibrosDeUsuario>> response = apiLibrosDeUsuario
                         .obtenerLibrosDeEstanteria(0, idUsuarioActual)
                         .execute();
 
-                // Si la respuesta es exitosa pero vacía, o no exitosa
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     List<LibrosDeUsuario> relaciones = response.body();
 
@@ -86,14 +84,22 @@ public class CargarNuevoLibroEstanteria extends AppCompatActivity {
                         idsLibros.add(item.getId().getIdL());
                     }
 
+                    // 2. Obtenemos los detalles de esos libros
                     Response<List<Libro>> responseLibros = apiLibro.obtenerLibrosPorIds(idsLibros).execute();
 
-                    if (responseLibros.isSuccessful() && responseLibros.body() != null && !responseLibros.body().isEmpty()) {
+                    if (responseLibros.isSuccessful() && responseLibros.body() != null) {
                         List<Libro> listaFinal = responseLibros.body();
                         runOnUiThread(() -> {
                             layoutEmpty.setVisibility(View.GONE);
                             rvLibros.setVisibility(View.VISIBLE);
+
+                            // 3. Inicializamos el adapter
                             adapter = new LibrosAdapter(listaFinal, libro -> anadirLibroAEstanteria(libro));
+
+                            // 🔥 PASO CLAVE: Seteamos los datos para que el adapter los procese
+                            adapter.setSoloPendientes(false); // Aquí queremos ver todos los que no tienen estantería
+                            adapter.setData(listaFinal, relaciones);
+
                             rvLibros.setAdapter(adapter);
                         });
                     } else {

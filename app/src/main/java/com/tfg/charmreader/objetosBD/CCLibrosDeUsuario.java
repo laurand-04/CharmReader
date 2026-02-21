@@ -2,7 +2,9 @@ package com.tfg.charmreader.objetosBD;
 
 import com.google.gson.annotations.SerializedName;
 
-public class CCLibrosDeUsuario {
+import java.io.Serializable;
+
+public class CCLibrosDeUsuario implements Serializable {
     @SerializedName("idU")
     private int idU;
     @SerializedName("idL")
@@ -18,7 +20,7 @@ public class CCLibrosDeUsuario {
     }
 
     public void setIdU(Integer idU) {
-        idU = idU;
+        this.idU = idU;
     }
 
     public Integer getIdL() {
@@ -26,6 +28,6 @@ public class CCLibrosDeUsuario {
     }
 
     public void setIdL(Integer idL) {
-        idL = idL;
+        this.idL = idL;
     }
 }

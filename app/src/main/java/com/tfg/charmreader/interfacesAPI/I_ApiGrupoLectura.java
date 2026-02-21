@@ -24,8 +24,11 @@ public interface I_ApiGrupoLectura {
     @GET("/grupo/buscar/{id}")
     Call<GrupoLectura> obtenerGrupoPorId(@Path("id") int idGrupo);
 
-    @PUT("grupo/actualizar")
+    @PUT("/grupo/actualizar")
     Call<GrupoLectura> actualizar(@Body GrupoLectura grupo);
+
+    @PUT("/grupo/salir-admin/{idGrupo}/{idAdmin}")
+    Call<okhttp3.ResponseBody> gestionarSalidaAdmin(@Path("idGrupo") int idGrupo, @Path("idAdmin") int idAdmin);
 
     @DELETE("/grupo/eliminar/{id}")
     Call<Void> eliminarGrupo(@Path("id") int idGrupo);

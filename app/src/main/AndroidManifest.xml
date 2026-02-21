@@ -95,6 +95,13 @@
 
         <activity android:name=".menu.publ.misGrupos.creados.NuevoLibroPropuesto"/>
 
+        <activity android:name=".menu.publ.misGrupos.creados.GestionSesiones"
+            android:windowSoftInputMode="adjustResize"/>
+
+        <activity android:name=".menu.publ.misGrupos.creados.NuevaSesion"
+            android:windowSoftInputMode="adjustPan"
+            android:theme="@style/Theme.Transparent"/>
+
         <activity android:name=".menu.publ.explorar.NuevoGrupo"
             android:windowSoftInputMode="adjustResize"/>
 

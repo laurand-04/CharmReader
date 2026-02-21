@@ -1,6 +1,7 @@
 package com.tfg.charmreader.menu.priv.tusLibros;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.Utilidades;
+import com.tfg.charmreader.menu.priv.estanteria.ValoracionLibro;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
 
 import java.io.InputStream;
@@ -37,14 +39,14 @@ public class Visor_n extends AppCompatActivity {
     private GestureDetector gestureDetector;
     private boolean apiCargada = false;
     private boolean epubCargado = false;
-    private int idUsuario; // 🔥 Variable local para no consultar SharedPreferences constantemente
+    private int idUsuario;
+    private LibrosDeUsuario libroUsuarioActual; // 🔥 Mantenemos el objeto completo
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_visor_n);
 
-        // 1. Obtener ID de usuario localmente al iniciar
         SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         idUsuario = prefs.getInt("idUsuario", -1);
 
@@ -54,7 +56,9 @@ public class Visor_n extends AppCompatActivity {
             return;
         }
 
-        // Vincular vistas
+        // Recuperar objeto inicial si el Fragment lo envió
+        libroUsuarioActual = (LibrosDeUsuario) getIntent().getSerializableExtra("OBJETO_LIBRO_USUARIO");
+
         webViewContent = findViewById(R.id.webViewContent);
         pbVisor = findViewById(R.id.pbVisor);
 
@@ -84,6 +88,15 @@ public class Visor_n extends AppCompatActivity {
             Toast.makeText(this, "No se proporcionó EPUB", Toast.LENGTH_SHORT).show();
             finish();
         }
+
+        webViewContent.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (epubCargado && currentChapter == chapters.size() - 1) {
+                float porcentaje = obtenerPorcentajeScroll();
+                if (porcentaje > 0.95f) {
+                    verificarYMarcarFinalizado();
+                }
+            }
+        });
     }
 
     private void configurarGestos() {
@@ -162,20 +175,36 @@ public class Visor_n extends AppCompatActivity {
         new Thread(() -> {
             try {
                 int idLibro = getIntent().getIntExtra("idL", -1);
-                // 🔥 Ya no usamos Utilidades.obtenerIdUsuarioDesdeAPI(), usamos la variable local
+                boolean forzarReinicio = getIntent().getBooleanExtra("REINICIAR_LECTURA", false);
+
                 Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
                         .getLibrodeUsuario(idUsuario, idLibro).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
-                    currentChapter = response.body().getCapitulo();
-                    scrollGuardado = response.body().getScroll();
+                    libroUsuarioActual = response.body(); // 🔥 Actualizamos el objeto global
+
+                    if (forzarReinicio) {
+                        currentChapter = 0;
+                        scrollGuardado = 0f;
+                        libroUsuarioActual.setCapitulo(0);
+                        libroUsuarioActual.setScroll(0f);
+                    } else {
+                        currentChapter = libroUsuarioActual.getCapitulo();
+                        scrollGuardado = libroUsuarioActual.getScroll();
+                    }
+
+                    if (libroUsuarioActual.getFechaInicio() == null) {
+                        libroUsuarioActual.setFechaInicio(new java.util.Date());
+                        Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
+                    }
+
                     runOnUiThread(() -> {
                         this.apiCargada = true;
                         verificarYMostrarCapitulo();
                     });
                 }
             } catch (Exception e) {
-                Log.e("API", "Error cargando progreso", e);
+                Log.e("API", "Error crítico cargando progreso: " + e.getMessage());
             }
         }).start();
     }
@@ -203,25 +232,21 @@ public class Visor_n extends AppCompatActivity {
     }
 
     private void guardarSeguimiento() {
+        if (libroUsuarioActual == null) return;
+
         final float porcentaje = obtenerPorcentajeScroll();
         final int capitulo = currentChapter;
-        final int idLibro = getIntent().getIntExtra("idL", -1);
 
         new Thread(() -> {
             try {
-                // 🔥 Usamos el idUsuario que cargamos en el onCreate
-                if (idUsuario == -1 || idLibro == -1) return;
+                libroUsuarioActual.setCapitulo(capitulo);
+                libroUsuarioActual.setScroll(porcentaje);
 
-                Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
-                        .getLibrodeUsuario(idUsuario, idLibro).execute();
-
-                if (response.isSuccessful() && response.body() != null) {
-                    LibrosDeUsuario progreso = response.body();
-                    progreso.setCapitulo(capitulo);
-                    progreso.setScroll(porcentaje);
-                    Utilidades.apiLibrosDeUsuario.guardarProgreso(progreso).execute();
-                    Log.d("PROGRESO", "Guardado Cap: " + capitulo + " Scroll: " + porcentaje);
+                if (capitulo == chapters.size() - 1 && porcentaje > 0.95f && libroUsuarioActual.getFechaFin() == null) {
+                    libroUsuarioActual.setFechaFin(new java.util.Date());
                 }
+
+                Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
             } catch (Exception e) {
                 Log.e("PROGRESO", "Error al guardar", e);
             }
@@ -257,6 +282,50 @@ public class Visor_n extends AppCompatActivity {
                 }
             }
         }, 300);
+    }
+
+    private void mostrarDialogoFinalizado() {
+        if (isFinishing()) return;
+
+        android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.setContentView(R.layout.dialog_libro_terminado);
+        dialog.setCancelable(false);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        dialog.findViewById(R.id.btnIrAValorar).setOnClickListener(v -> {
+            // 🔥 PASAMOS EL OBJETO COMPLETO A VALORACIÓN
+            Intent i = new Intent(this, ValoracionLibro.class);
+            i.putExtra("OBJETO_LIBRO_USUARIO", libroUsuarioActual);
+            startActivity(i);
+            dialog.dismiss();
+            finish();
+        });
+
+        dialog.findViewById(R.id.btnCerrarDialog).setOnClickListener(v -> {
+            dialog.dismiss();
+            finish();
+        });
+
+        dialog.show();
+    }
+
+    private void verificarYMarcarFinalizado() {
+        if (libroUsuarioActual != null && libroUsuarioActual.getFechaFin() == null) {
+            new Thread(() -> {
+                try {
+                    libroUsuarioActual.setFechaFin(new java.util.Date());
+                    Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
+                    Log.d("PROGRESO", "Libro marcado como finalizado");
+                    runOnUiThread(this::mostrarDialogoFinalizado);
+                } catch (Exception e) {
+                    Log.e("PROGRESO", "Error al marcar finalizado", e);
+                }
+            }).start();
+        }
     }
 
     private void mostrarContenidoFinal() {

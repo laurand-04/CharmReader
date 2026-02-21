@@ -1,5 +1,6 @@
 package com.tfg.charmreader.menu.priv.adapterRecyclerView;
 
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,15 +19,25 @@ public class EstanteriasAdapter extends RecyclerView.Adapter<EstanteriasAdapter.
     private List<Estanteria> estanterias;
     private List<Estanteria> listaOriginal;
     private OnItemClickListener listener;
+    private OnItemLongClickListener longListener; // 🔥 Listener para eliminación
 
     public interface OnItemClickListener {
         void onItemClick(Estanteria estanteria);
+    }
+
+    // 🔥 Interfaz para borrar
+    public interface OnItemLongClickListener {
+        void onItemLongClick(Estanteria estanteria);
     }
 
     public EstanteriasAdapter(List<Estanteria> estanterias, OnItemClickListener listener) {
         this.estanterias = (estanterias != null) ? estanterias : new ArrayList<>();
         this.listaOriginal = new ArrayList<>(this.estanterias);
         this.listener = listener;
+    }
+
+    public void setOnItemLongClickListener(OnItemLongClickListener longListener) {
+        this.longListener = longListener;
     }
 
     @NonNull
@@ -42,25 +53,31 @@ public class EstanteriasAdapter extends RecyclerView.Adapter<EstanteriasAdapter.
         Estanteria estanteria = estanterias.get(position);
         holder.tvTitulo.setText(estanteria.getNombre());
 
-        // 🔥 Aplicar el color de fondo al icono circular
         if (estanteria.getColor() != null && !estanteria.getColor().isEmpty()) {
             try {
                 holder.ivIcono.getBackground().setColorFilter(
-                        android.graphics.Color.parseColor(estanteria.getColor()),
-                        android.graphics.PorterDuff.Mode.SRC_IN
+                        Color.parseColor(estanteria.getColor()),
+                        PorterDuff.Mode.SRC_IN
                 );
             } catch (Exception e) {
-                // Color por defecto si el string no es un hex válido
-                holder.ivIcono.getBackground().setColorFilter(0xFFF3E5F5, android.graphics.PorterDuff.Mode.SRC_IN);
+                holder.ivIcono.getBackground().setColorFilter(0xFFF3E5F5, PorterDuff.Mode.SRC_IN);
             }
         }
 
-        // Conteo de libros
         int num = estanteria.getCantidadLibros();
         holder.tvCantidad.setText(num == 1 ? "1 libro" : num + " libros");
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(estanteria);
+        });
+
+        // 🔥 Evento de clic largo para eliminar
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longListener != null) {
+                longListener.onItemLongClick(estanteria);
+                return true;
+            }
+            return false;
         });
     }
 

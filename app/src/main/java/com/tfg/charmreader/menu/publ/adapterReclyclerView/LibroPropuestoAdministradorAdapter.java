@@ -23,18 +23,26 @@ public class LibroPropuestoAdministradorAdapter extends RecyclerView.Adapter<Lib
     private int idGrupo;
     private final I_ApiVotacion apiVotacion = API.getInstancia().create(I_ApiVotacion.class);
 
-    // 🔹 Interfaz para el clic
     private OnLibroClickListener listener;
+    private OnLibroLongClickListener longListener; // 🔥 Nuevo listener
 
     public interface OnLibroClickListener {
         void onLibroClick(BookEn libro);
     }
 
-    // 🔹 Constructor actualizado
+    // 🔥 Interfaz para borrar propuesta
+    public interface OnLibroLongClickListener {
+        void onLibroLongClick(BookEn libro);
+    }
+
     public LibroPropuestoAdministradorAdapter(List<BookEn> listaLibros, int idGrupo, OnLibroClickListener listener) {
         this.listaLibros = listaLibros;
         this.idGrupo = idGrupo;
         this.listener = listener;
+    }
+
+    public void setOnLibroLongClickListener(OnLibroLongClickListener longListener) {
+        this.longListener = longListener;
     }
 
     @NonNull
@@ -52,9 +60,17 @@ public class LibroPropuestoAdministradorAdapter extends RecyclerView.Adapter<Lib
         holder.tvAutor.setText(libro.getAutor());
         holder.tvVotos.setText("...");
 
-        // 🔹 Clic en el elemento
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onLibroClick(libro);
+        });
+
+        // 🔥 Evento de clic largo
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longListener != null) {
+                longListener.onLibroLongClick(libro);
+                return true;
+            }
+            return false;
         });
 
         String coverId = libro.getCoverId();
@@ -74,26 +90,18 @@ public class LibroPropuestoAdministradorAdapter extends RecyclerView.Adapter<Lib
             public void onResponse(Call<Long> call, Response<Long> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     holder.tvVotos.setText(response.body() + " votos");
-                } else {
-                    holder.tvVotos.setText("0 votos");
-                }
+                } else { holder.tvVotos.setText("0 votos"); }
             }
-            @Override
-            public void onFailure(Call<Long> call, Throwable t) {
-                holder.tvVotos.setText("0 votos");
-            }
+            @Override public void onFailure(Call<Long> call, Throwable t) { holder.tvVotos.setText("0 votos"); }
         });
     }
 
     @Override
-    public int getItemCount() {
-        return listaLibros != null ? listaLibros.size() : 0;
-    }
+    public int getItemCount() { return listaLibros != null ? listaLibros.size() : 0; }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvAutor, tvVotos;
         ImageView ivPortada;
-
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tvTituloLibro);

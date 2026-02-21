@@ -27,4 +27,7 @@ public interface I_APICatalogo {
 
     @GET("catalogo/grupo2/{idGrupo}/historial")
     Call<List<CatalogoLectura>> obtenerHistorial2(@Path("idGrupo") int idGrupo);
+
+    @DELETE("catalogo/eliminar-propuesta/{idGrupo}/{idBook}")
+    Call<Void> eliminarPropuesta(@Path("idGrupo") int idGrupo, @Path("idBook") int idBook);
 }

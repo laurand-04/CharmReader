@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -18,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.interfacesAPI.I_ApiEstanteria;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
@@ -50,6 +52,7 @@ public class EstanteriaFragment extends Fragment {
 
         rvEstanterias.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Configuración inicial del Adapter
         adapter = new EstanteriasAdapter(new ArrayList<>(), estanteria -> {
             Intent intent = new Intent(getActivity(), LibrosEstanteria.class);
             intent.putExtra("Nombre", estanteria.getNombre());
@@ -57,6 +60,9 @@ public class EstanteriaFragment extends Fragment {
             intent.putExtra("Color", estanteria.getColor());
             startActivity(intent);
         });
+
+        // 🔥 PASO CLAVE: Listener para eliminar con clic largo
+        adapter.setOnItemLongClickListener(this::mostrarDialogoEliminarEstanteria);
 
         rvEstanterias.setAdapter(adapter);
 
@@ -79,6 +85,40 @@ public class EstanteriaFragment extends Fragment {
         return view;
     }
 
+    // 🔥 Método para mostrar el diálogo de confirmación
+    private void mostrarDialogoEliminarEstanteria(Estanteria estanteria) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Eliminar estantería")
+                .setMessage("¿Estás seguro de que quieres eliminar '" + estanteria.getNombre() + "'?")
+                .setNegativeButton("CANCELAR", null)
+                .setPositiveButton("ELIMINAR", (dialog, which) -> ejecutarEliminacion(estanteria))
+                .show();
+    }
+
+    // 🔥 Método para ejecutar la llamada al backend
+    private void ejecutarEliminacion(Estanteria estanteria) {
+        new Thread(() -> {
+            try {
+                I_ApiEstanteria api = API.getInstancia().create(I_ApiEstanteria.class);
+                // Llamada al endpoint DELETE /estanterias/eliminar/{id}
+                retrofit2.Response<Boolean> response = api.eliminarEstanteria(estanteria.getId()).execute();
+
+                if (isAdded() && getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
+                            Toast.makeText(getContext(), "Estantería eliminada", Toast.LENGTH_SHORT).show();
+                            cargarEstanterias(); // Refrescamos la lista completa
+                        } else {
+                            Toast.makeText(getContext(), "Error al eliminar la estantería", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                Log.e("EstanteriaFragment", "Error en la red al eliminar", e);
+            }
+        }).start();
+    }
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -94,7 +134,6 @@ public class EstanteriaFragment extends Fragment {
     }
 
     private void cargarEstanterias() {
-        // 1. En Fragmentos, el contexto se obtiene con requireContext() o getContext()
         if (getContext() == null) return;
 
         SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
@@ -128,7 +167,6 @@ public class EstanteriaFragment extends Fragment {
                         }
                     }
 
-                    // 2. Usamos getActivity().runOnUiThread porque estamos en un Fragment
                     if (isAdded() && getActivity() != null) {
                         getActivity().runOnUiThread(() -> {
                             mostrarEstadoVacio(false);
@@ -139,14 +177,13 @@ public class EstanteriaFragment extends Fragment {
                     mostrarEstadoVacio(true);
                 }
             } catch (Exception e) {
-                Log.e("EstanteriaFragment", "Error", e);
+                Log.e("EstanteriaFragment", "Error cargando estanterías", e);
                 mostrarEstadoVacio(true);
             }
         }).start();
     }
 
     private void mostrarEstadoVacio(boolean estaVacio) {
-        // En Fragmentos siempre comprobar isAdded() antes de tocar la UI desde un hilo
         if (isAdded() && getActivity() != null) {
             getActivity().runOnUiThread(() -> {
                 if (estaVacio) {

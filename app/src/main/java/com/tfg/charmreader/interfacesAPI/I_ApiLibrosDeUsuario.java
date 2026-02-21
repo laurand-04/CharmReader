@@ -4,8 +4,10 @@ import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
 
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -29,4 +31,10 @@ public interface I_ApiLibrosDeUsuario {
 
     @PUT("/libros_de_usuarios/usuario/{idU}/libro/{idL}/estanteria/{idEst}")
     Call<Boolean> asignarLibroAEstanteria(@Path("idU") int idUsuario, @Path("idL") int idLibro, @Path("idEst") int idEstanteria);
+
+    @PUT("/libros_de_usuarios/usuario/{idU}/libro/{idL}/estanteria/0")
+    Call<Boolean> desvincularLibroDeEstanteria(@Path("idU") int idU, @Path("idL") int idL);
+
+    @DELETE("/libros_de_usuarios/eliminar/{idU}/{idL}")
+    Call<ResponseBody> eliminarLibro(@Path("idU") int idU, @Path("idL") int idL);
 }

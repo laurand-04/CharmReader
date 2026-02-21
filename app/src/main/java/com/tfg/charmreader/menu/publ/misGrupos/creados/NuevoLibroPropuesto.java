@@ -2,18 +2,18 @@ package com.tfg.charmreader.menu.publ.misGrupos.creados;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.widget.EditText;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -37,9 +37,12 @@ import retrofit2.Response;
 
 public class NuevoLibroPropuesto extends AppCompatActivity {
 
-    private EditText etQuery;
+    private SearchView searchView;
     private RecyclerView recyclerView;
     private BookExtAdapter adapter;
+    private LinearLayout layoutEmpty;
+    private ProgressBar progressBar;
+
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable = null;
 
@@ -49,43 +52,95 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Nota: Asegúrate de que el layout activity_buscador_api_externa tenga los IDs correctos
         setContentView(R.layout.activity_buscador_api_externa);
 
-        etQuery = findViewById(R.id.searchViewAPI);
+        // Vincular vistas según tus IDs del XML
+        searchView = findViewById(R.id.searchViewAPI);
         recyclerView = findViewById(R.id.recyclerViewBook);
+        layoutEmpty = findViewById(R.id.layoutEmptyBuscador);
+        progressBar = findViewById(R.id.progressBar);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
         adapter = new BookExtAdapter(new ArrayList<>(), this::guardarLibroYPropuesta);
-
         recyclerView.setAdapter(adapter);
 
-        etQuery.addTextChangedListener(new TextWatcher() {
+        // Configuración del SearchView
+        searchView.setIconifiedByDefault(false); // Forzar a que esté expandido
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public boolean onQueryTextSubmit(String query) {
+                if (query.trim().length() >= 3) {
+                    buscarLibro(query.trim());
+                }
+                searchView.clearFocus(); // Cerrar teclado al buscar
+                return true;
+            }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public boolean onQueryTextChange(String newText) {
                 if (searchRunnable != null) {
                     searchHandler.removeCallbacks(searchRunnable);
+                }
+
+                if (newText.trim().length() >= 3) {
+                    searchRunnable = () -> buscarLibro(newText.trim());
+                    searchHandler.postDelayed(searchRunnable, 800);
+                } else if (newText.trim().isEmpty()) {
+                    // Si borra el texto, volvemos al estado vacío
+                    mostrarEstado(true);
+                }
+                return true;
+            }
+        });
+
+        findViewById(R.id.btnBackBuscador).setOnClickListener(v -> finish());
+    }
+
+    private void buscarLibro(String query) {
+        runOnUiThread(() -> {
+            if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        });
+
+        APIexterna.getLibroService().buscarLibroPorTitulo(query).enqueue(new Callback<BookResponse>() {
+            @Override
+            public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Book> lista = response.body().getBooks();
+                    if (lista != null && !lista.isEmpty()) {
+                        mostrarEstado(false);
+                        adapter.updateData(lista);
+                    } else {
+                        mostrarEstado(true);
+                    }
+                } else {
+                    mostrarEstado(true);
                 }
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
-                String query = s.toString().trim();
-                if (query.length() >= 3) {
-                    searchRunnable = () -> buscarLibro(query);
-                    searchHandler.postDelayed(searchRunnable, 800);
-                }
+            public void onFailure(Call<BookResponse> call, Throwable t) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Log.e("API_DEBUG", "Fallo: " + t.getMessage());
+                mostrarEstado(true);
             }
         });
     }
 
-    private void guardarLibroYPropuesta(Book book) {
-        // 1. Obtener IDs necesarios (Grupo del intent e Usuario de SharedPreferences)
-        int idGrupo = getIntent().getIntExtra("idGrupo", -1);
+    // Método para alternar entre la lista y el mensaje de "vacío"
+    private void mostrarEstado(boolean isEmpty) {
+        if (isEmpty) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            layoutEmpty.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+    }
 
+    private void guardarLibroYPropuesta(Book book) {
+        int idGrupo = getIntent().getIntExtra("idGrupo", -1);
         SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", -1);
 
@@ -94,19 +149,14 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
             return;
         }
 
-        // 2. Proceso de red en hilo secundario
         new Thread(() -> {
             try {
-                // Mapear Book externo a tu objeto de BD
-                BookEn bookEn = new BookEn(book, idUsuario);
-
-                // PASO A: Guardar el libro en la tabla 'books' (u obtenerlo si ya existe)
+                BookEn bookEn = new BookEn(book, idUsuario, false);
                 Response<BookEn> responseLibro = apiBook.anadirBook(bookEn).execute();
 
                 if (responseLibro.isSuccessful() && responseLibro.body() != null) {
                     int idLibroGenerado = responseLibro.body().getId();
 
-                    // PASO B: Crear la propuesta en el catálogo del grupo
                     CatalogoLectura propuesta = new CatalogoLectura();
                     propuesta.setIdGrupo(idGrupo);
                     propuesta.setIdBook(idLibroGenerado);
@@ -120,32 +170,12 @@ public class NuevoLibroPropuesto extends AppCompatActivity {
                             setResult(Activity.RESULT_OK);
                             finish();
                         });
-                    } else {
-                        Log.e("API_ERROR", "Error al añadir al catálogo: " + responseCat.code());
                     }
                 }
             } catch (Exception e) {
-                Log.e("API_EXCEPTION", "Error en el guardado: " + e.getMessage());
-                runOnUiThread(() -> Toast.makeText(this, "Error al procesar el libro", Toast.LENGTH_SHORT).show());
+                Log.e("API_EXCEPTION", "Error: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(this, "Error al procesar", Toast.LENGTH_SHORT).show());
             }
         }).start();
-    }
-
-    private void buscarLibro(String query) {
-        APIexterna.getLibroService().buscarLibroPorTitulo(query).enqueue(new Callback<BookResponse>() {
-            @Override
-            public void onResponse(Call<BookResponse> call, Response<BookResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Book> lista = response.body().getBooks();
-                    if (lista != null) {
-                        adapter.updateData(lista);
-                    }
-                }
-            }
-            @Override
-            public void onFailure(Call<BookResponse> call, Throwable t) {
-                Log.e("API_DEBUG", "Fallo en búsqueda: " + t.getMessage());
-            }
-        });
     }
 }

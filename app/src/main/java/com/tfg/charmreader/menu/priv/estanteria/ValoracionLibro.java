@@ -1,10 +1,8 @@
 package com.tfg.charmreader.menu.priv.estanteria;
 
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RatingBar;
@@ -30,17 +28,15 @@ public class ValoracionLibro extends AppCompatActivity {
     private RatingBar ratingBar;
     private TextInputEditText etDescription;
     private MaterialButton btnSubmit;
-    private ImageView btnBack; // Cambiado a ImageView para la X
+    private ImageView btnBack;
 
     private I_ApiLibrosDeUsuario apiService;
-    private int idUsuario, idLibro;
-    private LibrosDeUsuario libroActual;
+    private LibrosDeUsuario libroActual; // 🔥 El objeto que recibimos
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Ajuste de teclado y desenfoque (Android 12+)
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
@@ -49,14 +45,21 @@ public class ValoracionLibro extends AppCompatActivity {
 
         setContentView(R.layout.activity_valoracion_libro);
 
-        idUsuario = getIntent().getIntExtra("idU", -1);
-        idLibro = getIntent().getIntExtra("idL", -1);
+        // 🔥 RECUPERAMOS EL OBJETO DEL INTENT
+        libroActual = (LibrosDeUsuario) getIntent().getSerializableExtra("OBJETO_LIBRO_USUARIO");
 
         inicializarVistas();
         configurarRetrofit();
-        cargarDatosLibro();
 
-        // Listeners para cerrar con confirmación
+        // 🔥 Seteamos los datos directamente del objeto
+        if (libroActual != null) {
+            ratingBar.setRating((float) libroActual.getValoracion());
+            etDescription.setText(libroActual.getDescripcion());
+        } else {
+            Toast.makeText(this, "Error al cargar datos del libro", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+
         btnBack.setOnClickListener(v -> comprobarYSalir());
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -81,11 +84,16 @@ public class ValoracionLibro extends AppCompatActivity {
     }
 
     private void comprobarYSalir() {
+        if (libroActual == null) {
+            finish();
+            return;
+        }
+
         String desc = etDescription.getText().toString().trim();
         float stars = ratingBar.getRating();
 
-        // Si ha interactuado con la vista, preguntamos antes de salir
-        if (!desc.isEmpty() || stars > 0) {
+        // Si ha cambiado respecto al objeto original, preguntamos
+        if (!desc.equals(libroActual.getDescripcion()) || stars != (float)libroActual.getValoracion()) {
             new MaterialAlertDialogBuilder(this)
                     .setTitle("¿Descartar cambios?")
                     .setMessage("Si sales ahora perderás la valoración introducida.")
@@ -97,29 +105,13 @@ public class ValoracionLibro extends AppCompatActivity {
         }
     }
 
-    private void cargarDatosLibro() {
-        apiService.getLibrodeUsuario(idUsuario, idLibro).enqueue(new Callback<LibrosDeUsuario>() {
-            @Override
-            public void onResponse(Call<LibrosDeUsuario> call, Response<LibrosDeUsuario> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    libroActual = response.body();
-                    ratingBar.setRating((float) libroActual.getValoracion());
-                    etDescription.setText(libroActual.getDescripcion());
-                }
-            }
-            @Override
-            public void onFailure(Call<LibrosDeUsuario> call, Throwable t) {
-                Toast.makeText(ValoracionLibro.this, "Error al conectar con la API", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
     private void actualizarValoracion() {
         if (libroActual == null) return;
 
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Guardando...");
 
+        // Actualizamos el objeto recibido
         libroActual.setValoracion((double) ratingBar.getRating());
         libroActual.setDescripcion(etDescription.getText().toString());
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -12,18 +13,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="12dp"
+        android:padding="16dp"
         android:background="?attr/selectableItemBackground"
         android:gravity="center_vertical">
-
-        <com.google.android.material.imageview.ShapeableImageView
-            android:id="@+id/ivPortadaLibro"
-            android:layout_width="55dp"
-            android:layout_height="80dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_libro"
-            app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
-            android:layout_marginEnd="16dp"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -32,27 +24,26 @@
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvTituloLibro"
-                android:layout_width="match_parent"
+                android:id="@+id/tvFechaSesion"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Título del libro"
+                android:text="25/12/2024"
+                android:textColor="#1A1A1A"
                 android:textSize="16sp"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="#1A1A1A" />
+                android:fontFamily="sans-serif-medium" />
 
             <TextView
-                android:id="@+id/tvAutorLibro"
-                android:layout_width="match_parent"
+                android:id="@+id/tvHoraSesion"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Autor del libro"
+                android:text="18:30h"
+                android:textColor="#757575"
                 android:textSize="13sp"
                 android:fontFamily="sans-serif"
-                android:textColor="#757575"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/tvBadgeLeido"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -60,24 +51,17 @@
             android:paddingHorizontal="10dp"
             android:paddingVertical="4dp"
             android:layout_marginStart="8dp"
-            android:background="@drawable/bg_leido_chip"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:src="@drawable/ic_check_circle"
-                android:layout_marginEnd="4dp"
-                app:tint="#2E7D32" />
+            android:background="@drawable/bg_badge_admin">
 
             <TextView
+                android:id="@+id/tvCapsSesion"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Leído"
+                android:text="Cap. 1 - 5"
                 android:textSize="11sp"
                 android:fontFamily="sans-serif-black"
                 android:textAllCaps="true"
-                android:textColor="#2E7D32" />
+                android:textColor="@color/basico" />
         </LinearLayout>
 
     </LinearLayout>

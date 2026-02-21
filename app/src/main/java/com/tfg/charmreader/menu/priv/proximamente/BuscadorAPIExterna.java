@@ -173,7 +173,7 @@ public class BuscadorAPIExterna extends AppCompatActivity {
         // 2. Usamos el hilo solo para la subida (Retrofit .execute() es bloqueante)
         new Thread(() -> {
             try {
-                BookEn bookEn = new BookEn(book, idUsuario);
+                BookEn bookEn = new BookEn(book, idUsuario, true);
                 Response<BookEn> response = apiBook.anadirBook(bookEn).execute();
 
                 runOnUiThread(() -> {

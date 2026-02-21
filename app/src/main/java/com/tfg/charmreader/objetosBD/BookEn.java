@@ -33,6 +33,9 @@ public class BookEn implements Serializable {
     @SerializedName("infoUrl")
     private String infoUrl;
 
+    @SerializedName("privado")
+    private Boolean privado;
+
     public enum TemaLibro {
         AVENTURAS, CIENCIA_FICCION, DRAMA, FANTASIA,
         HISTORICA, HUMOR, POLICIACA, ROMANCE,
@@ -41,7 +44,7 @@ public class BookEn implements Serializable {
     }
 
     // Constructor que realiza la conversión de BookRe a BookEn
-    public BookEn(Book re, int idU) {
+    public BookEn(Book re, int idU, Boolean privado) {
         this.titulo = re.getTitle();
         this.subtitulo = re.getSubtitle();
         this.fechaPublicacion = re.getPublishYear();
@@ -65,6 +68,8 @@ public class BookEn implements Serializable {
         this.idU = idU;
 
         this.infoUrl = re.getFullOpenLibraryUrl();
+
+        this.privado = privado;
     }
 
     public String getTitulo() {
@@ -140,6 +145,14 @@ public class BookEn implements Serializable {
     }
     public String getInfoUrl() { return infoUrl; }
     public void setInfoUrl(String infoUrl) { this.infoUrl = infoUrl; }
+
+    public Boolean getPrivado() {
+        return privado;
+    }
+
+    public void setPrivado(Boolean privado) {
+        this.privado = privado;
+    }
 
     public static TemaLibro mapearTema(String temaExterno) {
         if (temaExterno == null || temaExterno.isEmpty()) return TemaLibro.OTRO;

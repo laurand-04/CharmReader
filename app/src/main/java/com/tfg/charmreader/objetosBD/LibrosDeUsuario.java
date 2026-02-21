@@ -2,7 +2,10 @@ package com.tfg.charmreader.objetosBD;
 
 import com.google.gson.annotations.SerializedName;
 
-public class LibrosDeUsuario {
+import java.io.Serializable;
+import java.util.Date;
+
+public class LibrosDeUsuario implements Serializable {
     @SerializedName("id")
     private CCLibrosDeUsuario id;
     @SerializedName("capitulo")
@@ -17,6 +20,12 @@ public class LibrosDeUsuario {
     private double valoracion;
     @SerializedName("descripcion")
     private String descripcion;
+
+    @SerializedName("fechaInicio")
+    private Date fechaInicio;
+
+    @SerializedName("fechaFin")
+    private Date fechaFin;
 
     public LibrosDeUsuario(CCLibrosDeUsuario id, int capituloActual, String rutaEpub) {
         this.id = id;
@@ -39,6 +48,18 @@ public class LibrosDeUsuario {
         this.idEstanteria = idEstanteria;
         this.valoracion = valoracion;
         this.descripcion = descripcion;
+    }
+
+    public LibrosDeUsuario(CCLibrosDeUsuario id, int capitulo, String ruta, float scroll, int idEstanteria, double valoracion, String descripcion, Date  fechaInicio, Date fechaFin) {
+        this.id = id;
+        this.capitulo = capitulo;
+        this.ruta = ruta;
+        this.scroll = scroll;
+        this.idEstanteria = idEstanteria;
+        this.valoracion = valoracion;
+        this.descripcion = descripcion;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
     }
 
     public CCLibrosDeUsuario getId() {
@@ -71,9 +92,6 @@ public class LibrosDeUsuario {
     public float getScroll() {
         return scroll;
     }
-
-
-
     public void setIdEstanteria(int idEstanteria) {
         this.idEstanteria = idEstanteria;
     }
@@ -92,5 +110,25 @@ public class LibrosDeUsuario {
 
     public String getDescripcion() {
         return descripcion;
+    }
+
+    public int getIdEstanteria() {
+        return idEstanteria;
+    }
+
+    public Date getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(Date fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public Date getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(Date fechaFin) {
+        this.fechaFin = fechaFin;
     }
 }

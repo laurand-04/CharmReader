@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiBook;
@@ -44,7 +46,6 @@ public class ProximamenteFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_proximamente, container, false);
 
-        // 1. Inicialización de vistas
         rvLibros = view.findViewById(R.id.recyclerProximamente);
         tvCount = view.findViewById(R.id.tvCountProximamente);
         searchView = view.findViewById(R.id.searchViewProximamente);
@@ -52,29 +53,27 @@ public class ProximamenteFragment extends Fragment {
 
         rvLibros.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // 2. Configuración del Adapter
         adapter = new BookIntAdapter(new ArrayList<>(), libro -> {
             Intent intent = new Intent(getActivity(), ProximoLibro.class);
             intent.putExtra("idLibro", libro.getId());
             startActivity(intent);
         });
+
+        // 🔥 CONFIGURACIÓN CLIC LARGO PARA ELIMINAR
+        adapter.setOnItemLongClickListener(this::mostrarDialogoEliminar);
+
         rvLibros.setAdapter(adapter);
 
-        // 3. Buscador funcional
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) { return false; }
-
             @Override
             public boolean onQueryTextChange(String newText) {
-                if (adapter != null) {
-                    adapter.filtrar(newText);
-                }
+                if (adapter != null) adapter.filtrar(newText);
                 return true;
             }
         });
 
-        // 4. FAB para ir al buscador de la API Externa
         FloatingActionButton fab = view.findViewById(R.id.fab_add_Proximamente);
         fab.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), BuscadorAPIExterna.class);
@@ -82,6 +81,35 @@ public class ProximamenteFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void mostrarDialogoEliminar(BookEn book) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Eliminar libro")
+                .setMessage("¿Estás seguro de que deseas eliminar '" + book.getTitulo() + "' de tu lista de pendientes?")
+                .setNegativeButton("CANCELAR", null)
+                .setPositiveButton("ELIMINAR", (dialog, which) -> ejecutarEliminacion(book))
+                .show();
+    }
+
+    private void ejecutarEliminacion(BookEn book) {
+        new Thread(() -> {
+            try {
+                I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
+                retrofit2.Response<Boolean> response = apiBook.eliminarBook(book.getId()).execute();
+
+                if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
+                    if (isAdded() && getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Toast.makeText(getContext(), "Libro eliminado", Toast.LENGTH_SHORT).show();
+                            cargarLibros(); // Recargar la lista
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("DELETE_BOOK", "Error al eliminar libro", e);
+            }
+        }).start();
     }
 
     @Override
@@ -99,17 +127,12 @@ public class ProximamenteFragment extends Fragment {
     }
 
     private void cargarLibros() {
-        // 1. Obtener el ID de SharedPreferences (Instantáneo y seguro)
         if (getContext() == null) return;
         SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", -1);
 
-        if (idUsuario == -1) {
-            Log.e("ProximamenteFragment", "ID de usuario no encontrado localmente");
-            return;
-        }
+        if (idUsuario == -1) return;
 
-        // 2. Usar hilo solo para la petición de red
         new Thread(() -> {
             try {
                 I_ApiBook apiBook = API.getInstancia().create(I_ApiBook.class);
@@ -128,16 +151,14 @@ public class ProximamenteFragment extends Fragment {
                                 layoutEmpty.setVisibility(View.GONE);
                                 rvLibros.setVisibility(View.VISIBLE);
                                 adapter.setBooks(listaRecibida);
-
                                 int total = listaRecibida.size();
-                                String msg = (total == 1) ? "1 LIBRO PENDIENTE" : total + " LIBROS PENDIENTES";
-                                tvCount.setText(msg);
+                                tvCount.setText((total == 1) ? "1 LIBRO PENDIENTE" : total + " LIBROS PENDIENTES");
                             }
                         });
                     }
                 }
             } catch (Exception e) {
-                Log.e("DEBUG_APP", "Error crítico al cargar libros pendientes", e);
+                Log.e("DEBUG_APP", "Error al cargar libros", e);
             }
         }).start();
     }

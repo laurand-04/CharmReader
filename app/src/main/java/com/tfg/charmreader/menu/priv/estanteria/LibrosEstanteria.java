@@ -23,7 +23,6 @@ import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibro;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosDeUsuario;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.LibrosAdapter;
@@ -43,10 +42,10 @@ public class LibrosEstanteria extends AppCompatActivity {
     private I_ApiLibrosDeUsuario apiLibrosDeUsuario;
     private I_ApiLibro apiLibro;
     private int idEstanteria;
-    private ActivityResultLauncher<Intent> launcherCargarLibro;
     private List<LibrosDeUsuario> listaLibrosUsuarioGlobal;
     private TextView tvCantidad;
     private LinearLayout layoutEmpty;
+    private ActivityResultLauncher<Intent> launcherCargarLibro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +61,6 @@ public class LibrosEstanteria extends AppCompatActivity {
         View viewColor = findViewById(R.id.viewEstanteriaColor);
         MaterialCardView statusColorContainer = findViewById(R.id.statusColorContainer);
         layoutEmpty = findViewById(R.id.layoutEmptyLibrosEstanteria);
-
         SearchView searchView = findViewById(R.id.searchViewLibrosEst);
         FloatingActionButton fab = findViewById(R.id.fab_add_librosEstanteria);
 
@@ -73,10 +71,7 @@ public class LibrosEstanteria extends AppCompatActivity {
         String nombreEstanteria = getIntent().getStringExtra("Nombre");
         String colorPastelRecibido = getIntent().getStringExtra("Color");
 
-        if (nombreEstanteria != null) {
-            tvTitulo.setText(nombreEstanteria);
-        }
-
+        if (nombreEstanteria != null) tvTitulo.setText(nombreEstanteria);
         btnBack.setOnClickListener(v -> finish());
 
         if (colorPastelRecibido != null && !colorPastelRecibido.isEmpty()) {
@@ -100,11 +95,7 @@ public class LibrosEstanteria extends AppCompatActivity {
 
         launcherCargarLibro = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        cargarDatos(idEstanteria);
-                    }
-                }
+                result -> { if (result.getResultCode() == RESULT_OK) cargarDatos(idEstanteria); }
         );
 
         fab.setOnClickListener(v -> {
@@ -129,11 +120,14 @@ public class LibrosEstanteria extends AppCompatActivity {
 
     private void cargarDatos(int idEstanteriaConsultar) {
         if (idEstanteriaConsultar == -1) return;
+
         SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         int idUsuarioActual = prefs.getInt("idUsuario", -1);
+
         new Thread(() -> {
             try {
-                Response<List<LibrosDeUsuario>> response = apiLibrosDeUsuario.obtenerLibrosDeEstanteria(idEstanteriaConsultar, idUsuarioActual).execute();
+                Response<List<LibrosDeUsuario>> response = apiLibrosDeUsuario
+                        .obtenerLibrosDeEstanteria(idEstanteriaConsultar, idUsuarioActual).execute();
 
                 if (response.isSuccessful() && response.body() != null) {
                     this.listaLibrosUsuarioGlobal = response.body();
@@ -158,20 +152,26 @@ public class LibrosEstanteria extends AppCompatActivity {
                             int total = listaLibrosFinal.size();
                             tvCantidad.setText((total == 1) ? "1 libro" : total + " libros");
 
+                            // 1. Inicializamos el adapter con tu lógica original de ValoracionLibro
                             adapter = new LibrosAdapter(listaLibrosFinal, libro -> {
-                                if (listaLibrosUsuarioGlobal != null) {
-                                    for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
-                                        if (ldu.getId().getIdL() == libro.getId()) {
-                                            Intent intent = new Intent(LibrosEstanteria.this, ValoracionLibro.class);
-                                            intent.putExtra("URL_LIBRO", ldu.getRuta());
-                                            intent.putExtra("idL", ldu.getId().getIdL());
-                                            intent.putExtra("idU", ldu.getId().getIdU());
-                                            startActivity(intent);
-                                            return;
-                                        }
+                                for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
+                                    if (ldu.getId().getIdL() == libro.getId()) {
+                                        Intent intent = new Intent(LibrosEstanteria.this, ValoracionLibro.class);
+                                        // 🔥 Mantenemos el paso del objeto completo como acordamos
+                                        intent.putExtra("OBJETO_LIBRO_USUARIO", ldu);
+                                        intent.putExtra("URL_LIBRO", ldu.getRuta());
+                                        intent.putExtra("idL", ldu.getId().getIdL());
+                                        intent.putExtra("idU", ldu.getId().getIdU());
+                                        startActivity(intent);
+                                        return;
                                     }
                                 }
                             });
+                            adapter.setSoloPendientes(false);
+                            adapter.setOnItemLongClickListener(this::mostrarDialogoQuitarDeEstanteria);
+
+                            // 🔥 2. Cargamos los datos en el adapter para que se visualicen
+                            adapter.setData(listaLibrosFinal, listaLibrosUsuarioGlobal);
                             rvLibros.setAdapter(adapter);
                         });
                     }
@@ -179,7 +179,7 @@ public class LibrosEstanteria extends AppCompatActivity {
                     runOnUiThread(() -> mostrarEstadoVacio(true));
                 }
             } catch (IOException e) {
-                Log.e("LibrosEstanteria", "Error de red: " + e.getMessage());
+                Log.e("LibrosEstanteria", "Error: " + e.getMessage());
                 runOnUiThread(() -> mostrarEstadoVacio(true));
             }
         }).start();
@@ -194,5 +194,36 @@ public class LibrosEstanteria extends AppCompatActivity {
             layoutEmpty.setVisibility(View.GONE);
             rvLibros.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void mostrarDialogoQuitarDeEstanteria(Libro libro) {
+        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Quitar de la estantería")
+                .setMessage("¿Deseas quitar '" + libro.getNombre() + "' de esta estantería?")
+                .setNegativeButton("CANCELAR", null)
+                .setPositiveButton("QUITAR", (dialog, which) -> ejecutarDesvinculacion(libro))
+                .show();
+    }
+
+    private void ejecutarDesvinculacion(Libro libro) {
+        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idU = prefs.getInt("idUsuario", -1);
+        int idL = libro.getId();
+
+        new Thread(() -> {
+            try {
+                // Llamamos al método que pone la estantería a 0
+                retrofit2.Response<Boolean> response = apiLibrosDeUsuario.desvincularLibroDeEstanteria(idU, idL).execute();
+
+                if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
+                    runOnUiThread(() -> {
+                        android.widget.Toast.makeText(this, "Libro quitado de la estantería", android.widget.Toast.LENGTH_SHORT).show();
+                        cargarDatos(idEstanteria); // Recargamos para que desaparezca de la lista
+                    });
+                }
+            } catch (IOException e) {
+                Log.e("LibrosEstanteria", "Error al desvincular", e);
+            }
+        }).start();
     }
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
@@ -23,4 +24,7 @@ public interface I_ApiBook {
 
     @GET("/books/usuario/{usuarioId}")
     Call<List<BookEn>> obtenerBooksPorUsuario(@Path("usuarioId") int usuarioId);
+
+    @DELETE("/books/eliminar/{id}")
+    Call<Boolean> eliminarBook(@Path("id") int id);
 }

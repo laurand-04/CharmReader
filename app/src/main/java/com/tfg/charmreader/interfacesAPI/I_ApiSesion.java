@@ -1,6 +1,8 @@
 package com.tfg.charmreader.interfacesAPI;
 
 import com.tfg.charmreader.objetosBD.Sesion;
+
+import java.util.Date;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.http.*;
@@ -20,5 +22,12 @@ public interface I_ApiSesion {
             @Path("idGrupo") int idGrupo,
             @Path("inicio") String fechaInicio, // Formato "yyyy-MM-dd"
             @Path("fin") String fechaFin
+    );
+
+    @DELETE("sesiones/eliminar/{idGrupo}/{fecha}/{hora}")
+    Call<Void> eliminarSesion(
+            @Path("idGrupo") int idGrupo,
+            @Path("fecha") String fechaFormateada,
+            @Path("hora") String hora
     );
 }

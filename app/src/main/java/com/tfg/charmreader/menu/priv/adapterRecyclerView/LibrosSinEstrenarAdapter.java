@@ -4,13 +4,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.objetosBD.LibrosSinEstrenar;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,12 +17,18 @@ import java.util.Locale;
 public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstrenarAdapter.LibroViewHolder> {
 
     private List<LibrosSinEstrenar> libros;
-    private List<LibrosSinEstrenar> listaOriginal; // 🔥 Para el filtrado
+    private List<LibrosSinEstrenar> listaOriginal;
     private OnItemClickListener listener;
+    private OnItemLongClickListener longListener; // 🔥 Nuevo listener
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     public interface OnItemClickListener {
         void onItemClick(LibrosSinEstrenar libro);
+    }
+
+    // 🔥 Interfaz para borrar
+    public interface OnItemLongClickListener {
+        void onItemLongClick(LibrosSinEstrenar libro);
     }
 
     public LibrosSinEstrenarAdapter(List<LibrosSinEstrenar> libros, OnItemClickListener listener) {
@@ -34,11 +37,14 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         this.listener = listener;
     }
 
+    public void setOnItemLongClickListener(OnItemLongClickListener longListener) {
+        this.longListener = longListener;
+    }
+
     @NonNull
     @Override
     public LibroViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_libro_futuro, parent, false);
+        View itemView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_libro_futuro, parent, false);
         return new LibroViewHolder(itemView);
     }
 
@@ -53,12 +59,11 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
 
         if (libro.getFechaPublicacion() != null) {
             holder.tvFecha.setText(dateFormat.format(libro.getFechaPublicacion()));
-
             Date hoy = new Date();
             if (libro.getFechaPublicacion().before(hoy)) {
-                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#4CAF50")); // Verde
+                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
             } else {
-                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#F44336")); // Rojo
+                holder.tvFecha.setTextColor(android.graphics.Color.parseColor("#F44336"));
             }
         } else {
             holder.tvFecha.setText("Sin fecha");
@@ -68,6 +73,15 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(libro);
         });
+
+        // 🔥 Configuración de clic largo
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longListener != null) {
+                longListener.onItemLongClick(libro);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
@@ -75,7 +89,6 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         return libros != null ? libros.size() : 0;
     }
 
-    // 🔥 MÉTODO PARA FILTRAR
     public void filtrar(String texto) {
         if (texto == null || texto.isEmpty()) {
             libros.clear();
@@ -84,10 +97,8 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
             List<LibrosSinEstrenar> filtrados = new ArrayList<>();
             String query = texto.toLowerCase().trim();
             for (LibrosSinEstrenar libro : listaOriginal) {
-                // Filtramos por título (que está dentro del ID) o por autor
                 String titulo = (libro.getId() != null) ? libro.getId().getNombre().toLowerCase() : "";
                 String autor = (libro.getAutor() != null) ? libro.getAutor().toLowerCase() : "";
-
                 if (titulo.contains(query) || autor.contains(query)) {
                     filtrados.add(libro);
                 }
@@ -102,14 +113,13 @@ public class LibrosSinEstrenarAdapter extends RecyclerView.Adapter<LibrosSinEstr
         this.libros.clear();
         if (nuevosLibros != null) {
             this.libros.addAll(nuevosLibros);
-            this.listaOriginal = new ArrayList<>(nuevosLibros); // Actualizar lista de referencia
+            this.listaOriginal = new ArrayList<>(nuevosLibros);
         }
         notifyDataSetChanged();
     }
 
     public static class LibroViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitulo, tvAutor, tvFecha;
-
         public LibroViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitulo = itemView.findViewById(R.id.tvTituloLibro);

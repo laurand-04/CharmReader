@@ -1,6 +1,7 @@
 package com.tfg.charmreader.menu.publ.explorar;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.tabs.TabLayout;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_APICatalogo;
@@ -25,6 +27,7 @@ import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
 import com.tfg.charmreader.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.menu.priv.adapterRecyclerView.BookIntAdapter;
 import com.tfg.charmreader.menu.publ.adapterReclyclerView.ValoracionAdapter;
+import com.tfg.charmreader.menu.publ.misGrupos.creados.ManejoGrupo;
 import com.tfg.charmreader.objetosBD.API;
 import com.tfg.charmreader.objetosBD.BookEn;
 import com.tfg.charmreader.objetosBD.CatalogoLectura;
@@ -48,7 +51,8 @@ public class InfoGrupoPublica extends AppCompatActivity {
     private RecyclerView rvLibros, rvComentarios;
     private BookIntAdapter bookAdapter;
     private ValoracionAdapter valoracionAdapter;
-    private MaterialButton btnAccionUnirse, btnAccionAbandonar;
+    private MaterialButton btnAccionUnirse, btnAccionAbandonar, btnGestionar;
+    private MaterialCardView cardFoto;
 
     private LinearLayout layoutEmpty;
     private ImageView ivEmptyIcon;
@@ -80,7 +84,6 @@ public class InfoGrupoPublica extends AppCompatActivity {
             return;
         }
 
-        // 🔥 OBTENER ID LOCALMENTE (Instantáneo)
         SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         idUsuarioLogueado = prefs.getInt("idUsuario", -1);
 
@@ -93,8 +96,6 @@ public class InfoGrupoPublica extends AppCompatActivity {
         inicializarVistas();
         configurarTabs();
         cargarDatosGrupo();
-
-        // Iniciamos la carga de datos del grupo directamente
         continuarCargando();
     }
 
@@ -104,8 +105,12 @@ public class InfoGrupoPublica extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvDescDetalle);
         ivFotoGrupo = findViewById(R.id.ivDetalleGrupoFoto);
         btnBack = findViewById(R.id.btnBackInfoPublica);
+
         btnAccionUnirse = findViewById(R.id.btnAccionUnirse);
         btnAccionAbandonar = findViewById(R.id.btnAccionAbandonar);
+        btnGestionar = findViewById(R.id.btnGestionarPublico);
+        cardFoto = findViewById(R.id.cardFotoPerfil);
+
         tabLayout = findViewById(R.id.tabLayout);
         rvLibros = findViewById(R.id.rvLibrosLeidos);
         rvComentarios = findViewById(R.id.rvComentariosGrupo);
@@ -116,7 +121,14 @@ public class InfoGrupoPublica extends AppCompatActivity {
 
         rvLibros.setLayoutManager(new LinearLayoutManager(this));
         rvComentarios.setLayoutManager(new LinearLayoutManager(this));
+
         btnBack.setOnClickListener(v -> finish());
+
+        btnGestionar.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ManejoGrupo.class);
+            intent.putExtra("objetoGrupo", grupo);
+            startActivity(intent);
+        });
     }
 
     private void continuarCargando() {
@@ -136,6 +148,11 @@ public class InfoGrupoPublica extends AppCompatActivity {
     }
 
     private void verificarSuscripcion() {
+        if (grupo.getIdUsuario() == idUsuarioLogueado) {
+            actualizarBotones(true);
+            return;
+        }
+
         apiMiembro.obtenerPorGrupo(grupo.getIdGrupo()).enqueue(new Callback<List<Miembro>>() {
             @Override
             public void onResponse(Call<List<Miembro>> call, Response<List<Miembro>> response) {
@@ -155,6 +172,19 @@ public class InfoGrupoPublica extends AppCompatActivity {
     }
 
     private void actualizarBotones(boolean esMiembro) {
+        if (grupo.getIdUsuario() == idUsuarioLogueado) {
+            // MODO ADMINISTRADOR
+            btnAccionUnirse.setVisibility(View.GONE);
+            btnAccionAbandonar.setVisibility(View.GONE);
+            btnGestionar.setVisibility(View.VISIBLE);
+            cardFoto.setStrokeWidth(4); // Resalte visual en la foto
+            return;
+        }
+
+        // MODO USUARIO NORMAL
+        btnGestionar.setVisibility(View.GONE);
+        cardFoto.setStrokeWidth(0);
+
         if (esMiembro) {
             btnAccionUnirse.setVisibility(View.GONE);
             btnAccionAbandonar.setVisibility(View.VISIBLE);
@@ -260,7 +290,7 @@ public class InfoGrupoPublica extends AppCompatActivity {
                     rvLibros.setVisibility(View.GONE);
                     ivEmptyIcon.setImageResource(R.drawable.ic_libro);
                     tvEmptyTitle.setText("¡Estantería vacía!");
-                    tvEmptySubtitle.setText("Este grupo aún no ha compartido sus lecturas finalizadas.");
+                    tvEmptySubtitle.setText("Sin lecturas finalizadas.");
                 } else {
                     layoutEmpty.setVisibility(View.GONE);
                     rvLibros.setVisibility(View.VISIBLE);
@@ -271,8 +301,8 @@ public class InfoGrupoPublica extends AppCompatActivity {
                     layoutEmpty.setVisibility(View.VISIBLE);
                     rvComentarios.setVisibility(View.GONE);
                     ivEmptyIcon.setImageResource(R.drawable.ic_people);
-                    tvEmptyTitle.setText("Sin opiniones todavía");
-                    tvEmptySubtitle.setText("Sé el primero en unirte y dejar tu reseña sobre este grupo.");
+                    tvEmptyTitle.setText("Sin opiniones");
+                    tvEmptySubtitle.setText("Sé el primero en dejar tu reseña.");
                 } else {
                     layoutEmpty.setVisibility(View.GONE);
                     rvComentarios.setVisibility(View.VISIBLE);

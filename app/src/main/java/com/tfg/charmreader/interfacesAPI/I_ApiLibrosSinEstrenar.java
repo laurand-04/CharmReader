@@ -9,6 +9,7 @@ import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.HTTP;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
@@ -23,6 +24,6 @@ public interface I_ApiLibrosSinEstrenar {
     @PUT("/libros_sin_estrenar/{idu}/{nombre}")
     Call<LibrosSinEstrenar> actualizarLibrosSinEstrenar(@Body LibrosSinEstrenar librosSinEstrenar, @Path("idu") int idu, @Path("nombre") String nombre);
 
-    @DELETE("/libros_sin_estrenar")
+    @HTTP(method = "DELETE", path = "/libros_sin_estrenar/eliminar", hasBody = true)
     Call<String> eliminarLibrosSinEstrenar(@Body CCLibrosSinEstrenar cclibrosSinEstrenar);
 }

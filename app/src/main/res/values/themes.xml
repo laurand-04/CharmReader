@@ -50,4 +50,18 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <!-- Para hacer que a la hora de seleccionar dias y horas salgan del color basico de mi app -->
+    <style name="DialogPickerTheme" parent="Theme.MaterialComponents.Light.Dialog">
+        <item name="colorPrimary">@color/basico</item>
+        <item name="colorAccent">@color/basico</item>
+
+        <item name="android:buttonBarPositiveButtonStyle">@style/PickerButtonStyle</item>
+        <item name="android:buttonBarNegativeButtonStyle">@style/PickerButtonStyle</item>
+    </style>
+
+    <style name="PickerButtonStyle" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:textColor">@color/basico</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

@@ -4,17 +4,19 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
+import android.widget.Toast;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayout;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiMiembro;
@@ -51,7 +53,6 @@ public class MisGruposFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_mis_grupos, container, false);
 
-        // 1. Obtener ID localmente (Sin esperas ni red)
         if (getContext() != null) {
             SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
             idUsuario = prefs.getInt("idUsuario", -1);
@@ -61,10 +62,7 @@ public class MisGruposFragment extends Fragment {
         configurarTabs();
         configurarBuscador(view);
 
-        // 2. Cargar datos si tenemos el ID
-        if (idUsuario > 0) {
-            cargarDatos();
-        }
+        if (idUsuario > 0) cargarDatos();
 
         return view;
     }
@@ -80,30 +78,73 @@ public class MisGruposFragment extends Fragment {
         rvMisGrupos.setLayoutManager(new LinearLayoutManager(getContext()));
 
         adapter = new GrupoLecturaAdapter(new ArrayList<>(), grupo -> {
-            Intent intent;
-            if (tabLayout.getSelectedTabPosition() == 0) {
-                intent = new Intent(getActivity(), InfoGrupoPrivada.class);
-            } else {
-                intent = new Intent(getActivity(), ManejoGrupo.class);
-            }
+            Intent intent = new Intent(getActivity(), (tabLayout.getSelectedTabPosition() == 0) ? InfoGrupoPrivada.class : ManejoGrupo.class);
             intent.putExtra("objetoGrupo", grupo);
             startActivity(intent);
         });
 
+        // 🔥 Evento de clic largo para borrar o ceder control
+        adapter.setOnItemLongClickListener(this::mostrarDialogoGestionAdmin);
+
         rvMisGrupos.setAdapter(adapter);
     }
+
+    private void mostrarDialogoGestionAdmin(GrupoLectura grupo) {
+        if (tabLayout.getSelectedTabPosition() == 1) { // Solo en "Creados"
+            new MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Abandonar Grupo")
+                    .setMessage("¿Deseas dejar de ser administrador de '" + grupo.getNombre() + "'?\n\n" +
+                            "• Si hay miembros, el control pasará al más antiguo.\n" +
+                            "• Si estás solo, el grupo se eliminará.")
+                    .setNegativeButton("CANCELAR", null)
+                    .setPositiveButton("ACEPTAR", (dialog, which) -> ejecutarSalidaAdmin(grupo))
+                    .show();
+        }
+    }
+
+    private void ejecutarSalidaAdmin(GrupoLectura grupo) {
+        apiGrupo.gestionarSalidaAdmin(grupo.getIdGrupo(), idUsuario).enqueue(new Callback<okhttp3.ResponseBody>() {
+            @Override
+            public void onResponse(Call<okhttp3.ResponseBody> call, Response<okhttp3.ResponseBody> response) {
+                try {
+                    if (response.isSuccessful() && response.body() != null) {
+                        // Leemos el texto tal cual viene del servidor
+                        String res = response.body().string().replace("\"", ""); // Quitamos comillas si las hubiera
+
+                        Log.d("API_RES", "Respuesta servidor: " + res);
+
+                        if (res.equalsIgnoreCase("CEDIDO")) {
+                            Toast.makeText(getContext(), "Control cedido correctamente", Toast.LENGTH_SHORT).show();
+                        } else if (res.equalsIgnoreCase("ELIMINADO")) {
+                            Toast.makeText(getContext(), "Grupo eliminado permanentemente", Toast.LENGTH_SHORT).show();
+                        }
+
+                        // 🔥 Aquí está la clave: refrescar la interfaz
+                        cargarDatos();
+                    } else {
+                        Log.e("API_ERROR", "Código de error: " + response.code());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<okhttp3.ResponseBody> call, Throwable t) {
+                Toast.makeText(getContext(), "Error de red: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    // ... Resto de métodos (configurarTabs, cargarDatos, mostrarLista, configurarBuscador, etc.) ...
 
     private void configurarTabs() {
         if (tabLayout.getTabCount() == 0) {
             tabLayout.addTab(tabLayout.newTab().setText("Suscritos"));
             tabLayout.addTab(tabLayout.newTab().setText("Creados"));
         }
-
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                mostrarLista(tab.getPosition() == 0 ? listaSuscritos : listaCreados);
-            }
+            @Override public void onTabSelected(TabLayout.Tab tab) { mostrarLista(tab.getPosition() == 0 ? listaSuscritos : listaCreados); }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
@@ -111,55 +152,38 @@ public class MisGruposFragment extends Fragment {
 
     private void cargarDatos() {
         if (idUsuario <= 0) return;
-
-        // Cargar Grupos Suscritos
         apiMiembro.obtenerGruposDondeEsMiembro(idUsuario).enqueue(new Callback<List<GrupoLectura>>() {
-            @Override
-            public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
+            @Override public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     listaSuscritos = response.body();
-                    if (isAdded() && tabLayout.getSelectedTabPosition() == 0) {
-                        mostrarLista(listaSuscritos);
-                    }
+                    if (isAdded() && tabLayout.getSelectedTabPosition() == 0) mostrarLista(listaSuscritos);
                 }
             }
-            @Override public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {
-                if (isAdded() && tabLayout.getSelectedTabPosition() == 0) actualizarEstadoVacio(true);
-            }
+            @Override public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {}
         });
 
-        // Cargar Grupos Creados
         apiGrupo.obtenerGruposPorAdmin(idUsuario).enqueue(new Callback<List<GrupoLectura>>() {
-            @Override
-            public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
+            @Override public void onResponse(Call<List<GrupoLectura>> call, Response<List<GrupoLectura>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     listaCreados = response.body();
-                    if (isAdded() && tabLayout.getSelectedTabPosition() == 1) {
-                        mostrarLista(listaCreados);
-                    }
+                    if (isAdded() && tabLayout.getSelectedTabPosition() == 1) mostrarLista(listaCreados);
                 }
             }
-            @Override public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {
-                if (isAdded() && tabLayout.getSelectedTabPosition() == 1) actualizarEstadoVacio(true);
-            }
+            @Override public void onFailure(Call<List<GrupoLectura>> call, Throwable t) {}
         });
     }
 
     private void mostrarLista(List<GrupoLectura> lista) {
         listaActual = (lista != null) ? lista : new ArrayList<>();
-        if (adapter != null) {
-            adapter.setGrupoLectura(listaActual);
-        }
+        if (adapter != null) adapter.setGrupoLectura(listaActual);
         actualizarEstadoVacio(listaActual.isEmpty());
     }
 
     private void actualizarEstadoVacio(boolean estaVacio) {
         if (!isAdded()) return;
-
+        layoutEmpty.setVisibility(estaVacio ? View.VISIBLE : View.GONE);
+        rvMisGrupos.setVisibility(estaVacio ? View.GONE : View.VISIBLE);
         if (estaVacio) {
-            layoutEmpty.setVisibility(View.VISIBLE);
-            rvMisGrupos.setVisibility(View.GONE);
-
             if (tabLayout.getSelectedTabPosition() == 0) {
                 ivEmptyIcon.setImageResource(R.drawable.ic_people);
                 tvEmptyTitle.setText("¡Estás solo por aquí!");
@@ -169,39 +193,25 @@ public class MisGruposFragment extends Fragment {
                 tvEmptyTitle.setText("¿Tienes una idea?");
                 tvEmptySubtitle.setText("Aún no has creado ningún grupo.");
             }
-        } else {
-            layoutEmpty.setVisibility(View.GONE);
-            rvMisGrupos.setVisibility(View.VISIBLE);
         }
     }
 
     private void configurarBuscador(View v) {
         SearchView searchView = v.findViewById(R.id.searchViewMisGrupos);
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) { return false; }
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                filtrar(newText);
-                return true;
-            }
+            @Override public boolean onQueryTextSubmit(String query) { return false; }
+            @Override public boolean onQueryTextChange(String newText) { filtrar(newText); return true; }
         });
     }
 
     private void filtrar(String texto) {
         List<GrupoLectura> filtrada = new ArrayList<>();
         for (GrupoLectura g : listaActual) {
-            if (g.getNombre().toLowerCase().contains(texto.toLowerCase())) {
-                filtrada.add(g);
-            }
+            if (g.getNombre().toLowerCase().contains(texto.toLowerCase())) filtrada.add(g);
         }
         adapter.setGrupoLectura(filtrada);
         actualizarEstadoVacio(filtrada.isEmpty());
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if (idUsuario > 0) cargarDatos();
-    }
+    @Override public void onResume() { super.onResume(); if (idUsuario > 0) cargarDatos(); }
 }
