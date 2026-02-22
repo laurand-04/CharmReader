@@ -26,23 +26,24 @@ public class RecuperacionActivity extends AppCompatActivity {
         binding.recuperacionButton.setOnClickListener(v -> recuperacion());
 
         // 2. Lógica de la FLECHA de volver (btnVolver)
-        // Al usar Binding y haber puesto elevation en el XML, esto funcionará ahora sí
         binding.btnVolver.setOnClickListener(v -> finish());
     }
 
     private void recuperacion() {
         String email = binding.emailEditText.getText().toString().trim();
         if (email.isEmpty()) {
-            mostrarAlerta("Alerta", "Rellena el correo para poder iniciar la recuperación de contraseña");
+            mostrarAlerta("Campo vacío", "Por favor, introduce tu correo electrónico para enviarte las instrucciones.");
             return;
         }
 
         mAuth.sendPasswordResetEmail(email)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        mostrarAlerta("Envío de correo",
-                                "Si existe una cuenta asociada a este email, recibirás un correo de recuperación",
-                                () -> finish()); // Cerramos la actividad al aceptar
+                        // Mensaje mejorado con aviso de SPAM
+                        String mensajeExito = "Si existe una cuenta asociada a este email, recibirás un correo en unos instantes.\n\n" +
+                                "⚠️ IMPORTANTE: Si no lo encuentras en tu bandeja de entrada, por favor, revisa tu carpeta de Correo no deseado o Spam.";
+
+                        mostrarAlerta("Correo enviado", mensajeExito, () -> finish());
                     } else {
                         mostrarError(task.getException());
                     }
@@ -52,11 +53,13 @@ public class RecuperacionActivity extends AppCompatActivity {
     // --- MÉTODOS DE APOYO (ALERTAS) ---
 
     public void mostrarAlerta(String titulo, String contenido, Runnable accionAlCerrar) {
+        // Usamos MaterialAlertDialogBuilder si quieres que se vea más moderno (estilo Admin)
+        // o mantenemos AlertDialog.Builder para ser coherentes con el resto de la app
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(titulo);
         builder.setMessage(contenido);
         builder.setCancelable(false);
-        builder.setPositiveButton("Aceptar", (dialog, which) -> {
+        builder.setPositiveButton("Entendido", (dialog, which) -> {
             dialog.dismiss();
             if (accionAlCerrar != null) accionAlCerrar.run();
         });
@@ -68,14 +71,14 @@ public class RecuperacionActivity extends AppCompatActivity {
     }
 
     public void mostrarError(Exception e){
-        String mensajeError = "Error desconocido";
+        String mensajeError = "Ha ocurrido un error inesperado. Inténtalo de nuevo más tarde.";
         if (e instanceof FirebaseAuthInvalidUserException) {
-            mensajeError = "No existe ningún usuario con ese email.";
+            mensajeError = "No hemos encontrado ninguna cuenta vinculada a este correo electrónico.";
         } else if (e instanceof FirebaseAuthInvalidCredentialsException) {
-            mensajeError = "El email introducido no es válido.";
+            mensajeError = "El formato del correo electrónico no es válido.";
         } else if (e != null) {
             mensajeError = e.getMessage();
         }
-        mostrarAlerta("Error", mensajeError);
+        mostrarAlerta("No se pudo enviar", mensajeError);
     }
 }

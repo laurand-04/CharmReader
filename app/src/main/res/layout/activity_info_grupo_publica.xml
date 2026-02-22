@@ -179,53 +179,59 @@
                 app:tabIndicatorFullWidth="false"
                 app:tabRippleColor="@android:color/transparent"/>
 
-            <LinearLayout
-                android:id="@+id/layoutEmptyGrupo"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:gravity="center"
-                android:orientation="vertical"
-                android:visibility="gone">
-                <ImageView
-                    android:id="@+id/ivEmptyIcon"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:src="@drawable/ic_libro"
-                    app:tint="#D1D1D1" />
-                <TextView
-                    android:id="@+id/tvEmptyTitle"
-                    android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:minHeight="300dp">
+
+                <LinearLayout
+                    android:id="@+id/layoutEmptyGrupo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <ImageView
+                        android:id="@+id/ivEmptyIcon"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:src="@drawable/ic_libro"
+                        app:tint="#D1D1D1" />
+                    <TextView
+                        android:id="@+id/tvEmptyTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Sin datos"
+                        android:textColor="#1A1A1A"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/tvEmptySubtitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No hay nada que mostrar por ahora."
+                        android:textColor="#999999"
+                        android:textSize="14sp"
+                        android:textAlignment="center" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvLibrosLeidos"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Sin datos"
-                    android:textColor="#1A1A1A"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/tvEmptySubtitle"
-                    android:layout_width="wrap_content"
+                    android:nestedScrollingEnabled="false" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvComentariosGrupo"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="No hay nada que mostrar por ahora."
-                    android:textColor="#999999"
-                    android:textSize="14sp"
-                    android:textAlignment="center" />
-            </LinearLayout>
+                    android:layout_marginTop="16dp"
+                    android:nestedScrollingEnabled="false"
+                    android:visibility="gone" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvLibrosLeidos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:nestedScrollingEnabled="false" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvComentariosGrupo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:nestedScrollingEnabled="false"
-                android:visibility="gone" />
+            </FrameLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -22,23 +22,24 @@
             android:padding="8dp"
             android:src="@drawable/ic_arrow_back"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:elevation="2dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:tint="#444444" />
 
         <TextView
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
             android:text="Mi Perfil"
             android:textColor="#1A1A1A"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/btnVolverPerfil"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
@@ -135,11 +136,24 @@
             </androidx.cardview.widget.CardView>
 
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnCambiarPassword"
+                android:id="@+id/btnExportarPDF"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="24dp"
+                android:text="EXTRAER INFORME DE LECTURAS"
+                android:textColor="@color/basico"
+                app:strokeColor="@color/basico"
+                app:cornerRadius="12dp"
+                app:icon="@android:drawable/ic_menu_save"
+                app:iconTint="@color/basico" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCambiarPassword"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
                 android:text="CAMBIAR CONTRASEÑA"
                 android:textColor="@color/basico"
                 app:strokeColor="@color/basico"

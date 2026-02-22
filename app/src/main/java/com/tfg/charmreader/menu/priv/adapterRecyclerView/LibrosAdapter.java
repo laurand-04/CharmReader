@@ -24,7 +24,7 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
     private List<LibrosDeUsuario> relacionesUsuario;
     private OnItemClickListener listener;
     private OnItemLongClickListener longListener;
-    private boolean soloPendientes = false; // 🔥 Flag para controlar el filtrado
+    private boolean soloPendientes = false;
 
     public interface OnItemClickListener {
         void onItemClick(Libro libro);
@@ -35,15 +35,17 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
     }
 
     public LibrosAdapter(List<Libro> libros, OnItemClickListener listener) {
-        this.librosMostrados = new ArrayList<>();
-        this.todosLosLibros = new ArrayList<>(libros);
+        // Inicializar siempre para evitar NullPointerException
+        this.todosLosLibros = (libros != null) ? new ArrayList<>(libros) : new ArrayList<>();
+        this.librosMostrados = new ArrayList<>(this.todosLosLibros);
         this.relacionesUsuario = new ArrayList<>();
         this.listener = listener;
     }
 
-    // 🔥 Método para activar/desactivar el filtrado de leídos
     public void setSoloPendientes(boolean soloPendientes) {
         this.soloPendientes = soloPendientes;
+        // Importante: Refrescar la vista si se cambia el flag
+        filtrar("");
     }
 
     public void setOnItemLongClickListener(OnItemLongClickListener longListener) {
@@ -60,25 +62,25 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
 
     @Override
     public void onBindViewHolder(@NonNull LibroViewHolder holder, int position) {
+        if (librosMostrados.isEmpty()) return;
+
         Libro libro = librosMostrados.get(position);
         holder.tvTitulo.setText(libro.getNombre());
         holder.tvAutor.setText(libro.getAutor());
 
+        // Manejo del Badge
         if (estaFinalizado(libro.getId())) {
             holder.tvBadgeLeido.setVisibility(View.VISIBLE);
         } else {
             holder.tvBadgeLeido.setVisibility(View.GONE);
         }
 
-        if (libro.getUrl() != null && !libro.getUrl().isEmpty()) {
-            Glide.with(holder.itemView.getContext())
-                    .load(libro.getUrl())
-                    .placeholder(R.drawable.ic_libro)
-                    .error(R.drawable.ic_libro)
-                    .into(holder.ivPortada);
-        } else {
-            holder.ivPortada.setImageResource(R.drawable.ic_libro);
-        }
+        // Carga de imagen con Glide
+        Glide.with(holder.itemView.getContext())
+                .load(libro.getUrl())
+                .placeholder(R.drawable.ic_libro)
+                .error(R.drawable.ic_libro)
+                .into(holder.ivPortada);
 
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) listener.onItemClick(libro);
@@ -99,8 +101,13 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
     }
 
     public void setData(List<Libro> nuevosLibros, List<LibrosDeUsuario> nuevasRelaciones) {
-        this.todosLosLibros = (nuevosLibros != null) ? nuevosLibros : new ArrayList<>();
-        this.relacionesUsuario = (nuevasRelaciones != null) ? nuevasRelaciones : new ArrayList<>();
+        this.todosLosLibros.clear();
+        this.todosLosLibros.addAll(nuevosLibros != null ? nuevosLibros : new ArrayList<>());
+
+        this.relacionesUsuario.clear();
+        this.relacionesUsuario.addAll(nuevasRelaciones != null ? nuevasRelaciones : new ArrayList<>());
+
+        // 🔥 Forzamos el filtrado para que aplique la lógica de ocultar leídos o mostrar badges
         filtrar("");
     }
 
@@ -109,16 +116,21 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
         String query = (texto == null) ? "" : texto.toLowerCase().trim();
 
         for (Libro libro : todosLosLibros) {
+            // 1. Verificamos si el libro coincide con el nombre o autor
             boolean coincideBusqueda = query.isEmpty() ||
                     libro.getNombre().toLowerCase().contains(query) ||
                     libro.getAutor().toLowerCase().contains(query);
 
             if (coincideBusqueda) {
-                // 🔥 Lógica Clave: Si soloPendientes es true Y está finalizado, NO lo añadimos.
-                // Pero si hay texto en el buscador, ignoramos el filtro de pendientes para que aparezca todo.
-                if (soloPendientes && query.isEmpty() && estaFinalizado(libro.getId())) {
+                boolean finalizado = estaFinalizado(libro.getId());
+
+                // 2. Aplicamos la lógica de visualización:
+                // Si el buscador está VACÍO y queremos SOLO PENDIENTES, saltamos los finalizados.
+                // Si el buscador TIENE TEXTO, ignoramos el flag 'soloPendientes' y mostramos todo.
+                if (query.isEmpty() && soloPendientes && finalizado) {
                     continue;
                 }
+
                 librosMostrados.add(libro);
             }
         }
@@ -126,8 +138,10 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
     }
 
     private boolean estaFinalizado(int idLibro) {
+        if (relacionesUsuario == null) return false;
         for (LibrosDeUsuario ldu : relacionesUsuario) {
-            if (ldu.getId().getIdL() == idLibro) {
+            // Verificamos que el ID no sea nulo antes de comparar
+            if (ldu.getId() != null && ldu.getId().getIdL() == idLibro) {
                 return ldu.getFechaFin() != null;
             }
         }

@@ -44,7 +44,9 @@
 
         <activity android:name=".menu.priv.tusLibros.CargarNuevoLibro"/>
 
-        <activity android:name=".menu.priv.futuro.NuevoFuturoLibro"/>
+        <activity android:name=".menu.priv.futuro.NuevoFuturoLibro"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.Transparent"/>
 
         <activity android:name=".Visor"/>
 
@@ -66,7 +68,9 @@
         <activity android:name=".menu.priv.proximamente.ProximoLibro"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".menu.priv.futuro.FuturoLibro"/>
+        <activity android:name=".menu.priv.futuro.FuturoLibro"
+            android:windowSoftInputMode="adjustPan"
+            android:theme="@style/Theme.Transparent"/>
 
         <activity android:name=".menu.publ.Public"
             android:windowSoftInputMode="adjustPan"/>
@@ -87,6 +91,10 @@
         <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionGrupo"
             android:theme="@style/Theme.Transparent"
             android:windowSoftInputMode="adjustResize"/>
+
+        <activity android:name=".menu.publ.misGrupos.suscritos.ResenasGrupoPrivada"
+            android:windowSoftInputMode="adjustResize"/>
+
 
         <activity android:name=".menu.publ.misGrupos.creados.Suscritos"/>
 
@@ -118,6 +126,15 @@
         <activity android:name=".admin.GestionBackup"/>
 
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

@@ -47,7 +47,7 @@ public class TusLibrosFragment extends Fragment {
     public TusLibrosFragment() {}
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tus_libros, container, false);
 
@@ -63,6 +63,7 @@ public class TusLibrosFragment extends Fragment {
             if (listaLibrosUsuarioGlobal != null) {
                 for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
                     if (ldu.getId().getIdL() == libro.getId()) {
+                        // Si el libro tiene fecha de fin, preguntamos si quiere releer
                         if (ldu.getFechaFin() != null) {
                             mostrarDialogoRelectura(ldu);
                         } else {
@@ -73,11 +74,10 @@ public class TusLibrosFragment extends Fragment {
                 }
             }
         });
+
+        // 🔥 IMPORTANTE: El flag de solo pendientes se activa aquí
         adapter.setSoloPendientes(true);
-
-        // 🔥 CONFIGURACIÓN CLIC LARGO PARA ELIMINAR
         adapter.setOnItemLongClickListener(this::mostrarDialogoEliminar);
-
         rvLibros.setAdapter(adapter);
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -85,6 +85,7 @@ public class TusLibrosFragment extends Fragment {
             public boolean onQueryTextSubmit(String query) { return false; }
             @Override
             public boolean onQueryTextChange(String newText) {
+                // Al buscar, el adapter internamente ignorará el filtro de pendientes
                 if (adapter != null) adapter.filtrar(newText);
                 return true;
             }
@@ -98,57 +99,26 @@ public class TusLibrosFragment extends Fragment {
         return view;
     }
 
-    private void mostrarDialogoEliminar(Libro libro) {
-        new MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Eliminar libro")
-                .setMessage("¿Deseas eliminar '" + libro.getNombre() + "' de tu biblioteca? Se borrará también de tus estanterías.")
-                .setNegativeButton("CANCELAR", null)
-                .setPositiveButton("ELIMINAR", (dialog, which) -> ejecutarEliminacion(libro))
-                .show();
-    }
-
-    private void ejecutarEliminacion(Libro libro) {
-        SharedPreferences prefs = requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
-        int idU = prefs.getInt("idUsuario", -1);
-        int idL = libro.getId();
-
-        new Thread(() -> {
-            try {
-                I_ApiLibrosDeUsuario api = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
-                // Llamada al endpoint DELETE /eliminar/{idU}/{idL}
-                retrofit2.Response<ResponseBody> response = api.eliminarLibro(idU, idL).execute();
-
-                if (response.isSuccessful()) {
-                    if (isAdded()) {
-                        requireActivity().runOnUiThread(() -> {
-                            Toast.makeText(getContext(), "Libro eliminado correctamente", Toast.LENGTH_SHORT).show();
-                            cargarLibros(); // Refresca la lista
-                        });
-                    }
-                }
-            } catch (Exception e) {
-                Log.e("ELIMINAR", "Error: " + e.getMessage());
-            }
-        }).start();
-    }
-
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         cargarLibros();
     }
 
+    // Actualizamos la lista cuando volvemos de añadir un libro o de valorar
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            if (rvLibros != null) rvLibros.postDelayed(this::cargarLibros, 500);
+        if (resultCode == Activity.RESULT_OK) {
+            cargarLibros();
         }
     }
 
+    // Método para recargar la lista de libros desde la API
     private void cargarLibros() {
-        if (getContext() == null) return;
-        SharedPreferences prefs = getContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        if (!isAdded()) return;
+
+        SharedPreferences prefs = requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", -1);
 
         if (idUsuario == -1) {
@@ -161,67 +131,103 @@ public class TusLibrosFragment extends Fragment {
                 I_ApiLibrosDeUsuario apiLibrosUsuario = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
                 I_ApiLibro apiLibros = API.getInstancia().create(I_ApiLibro.class);
 
+                // 1. Obtenemos las relaciones (donde están las fechas de fin)
                 retrofit2.Response<List<LibrosDeUsuario>> responseRelacion = apiLibrosUsuario.obtenerLibrosDeUsuario(idUsuario).execute();
-                listaLibrosUsuarioGlobal = responseRelacion.body();
 
-                if (listaLibrosUsuarioGlobal == null || listaLibrosUsuarioGlobal.isEmpty()) {
-                    mostrarEstadoVacio(true);
-                    return;
-                }
+                if (responseRelacion.isSuccessful() && responseRelacion.body() != null) {
+                    listaLibrosUsuarioGlobal = responseRelacion.body();
 
-                List<Integer> idsLibros = new ArrayList<>();
-                for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
-                    if (ldu.getId() != null) idsLibros.add(ldu.getId().getIdL());
-                }
+                    if (listaLibrosUsuarioGlobal.isEmpty()) {
+                        requireActivity().runOnUiThread(() -> mostrarEstadoVacio(true));
+                        return;
+                    }
 
-                retrofit2.Response<List<Libro>> responseLibros = apiLibros.obtenerLibrosPorIds(idsLibros).execute();
-                List<Libro> listaLibros = responseLibros.body();
+                    // 2. Extraemos IDs para pedir los detalles de los libros
+                    List<Integer> idsLibros = new ArrayList<>();
+                    for (LibrosDeUsuario ldu : listaLibrosUsuarioGlobal) {
+                        if (ldu.getId() != null) idsLibros.add(ldu.getId().getIdL());
+                    }
 
-                if (isAdded() && getActivity() != null) {
-                    requireActivity().runOnUiThread(() -> {
-                        if (listaLibros == null || listaLibros.isEmpty()) {
-                            mostrarEstadoVacio(true);
-                        } else {
-                            mostrarEstadoVacio(false);
-                            adapter.setData(listaLibros, listaLibrosUsuarioGlobal);
-                        }
-                    });
+                    // 3. Pedimos los libros por ID
+                    retrofit2.Response<List<Libro>> responseLibros = apiLibros.obtenerLibrosPorIds(idsLibros).execute();
+                    List<Libro> listaLibros = responseLibros.body();
+
+                    if (isAdded() && getActivity() != null) {
+                        requireActivity().runOnUiThread(() -> {
+                            if (listaLibros == null || listaLibros.isEmpty()) {
+                                mostrarEstadoVacio(true);
+                            } else {
+                                mostrarEstadoVacio(false);
+                                // 🔥 PASAMOS AMBAS LISTAS: El adapter filtrará automáticamente
+                                adapter.setData(listaLibros, listaLibrosUsuarioGlobal);
+                            }
+                        });
+                    }
+                } else {
+                    requireActivity().runOnUiThread(() -> mostrarEstadoVacio(true));
                 }
             } catch (Exception e) {
-                mostrarEstadoVacio(true);
+                if (isAdded()) requireActivity().runOnUiThread(() -> mostrarEstadoVacio(true));
             }
         }).start();
     }
 
     private void mostrarEstadoVacio(boolean estaVacio) {
-        if (isAdded() && getActivity() != null) {
-            requireActivity().runOnUiThread(() -> {
-                layoutEmpty.setVisibility(estaVacio ? View.VISIBLE : View.GONE);
-                rvLibros.setVisibility(estaVacio ? View.GONE : View.VISIBLE);
-            });
-        }
+        layoutEmpty.setVisibility(estaVacio ? View.VISIBLE : View.GONE);
+        rvLibros.setVisibility(estaVacio ? View.GONE : View.VISIBLE);
+    }
+
+    private void mostrarDialogoEliminar(Libro libro) {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Eliminar libro")
+                .setMessage("¿Deseas eliminar '" + libro.getNombre() + "' de tu biblioteca?")
+                .setNegativeButton("CANCELAR", null)
+                .setPositiveButton("ELIMINAR", (dialog, which) -> ejecutarEliminacion(libro))
+                .show();
+    }
+
+    private void ejecutarEliminacion(Libro libro) {
+        SharedPreferences prefs = requireContext().getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
+        int idU = prefs.getInt("idUsuario", -1);
+
+        new Thread(() -> {
+            try {
+                I_ApiLibrosDeUsuario api = API.getInstancia().create(I_ApiLibrosDeUsuario.class);
+                retrofit2.Response<ResponseBody> response = api.eliminarLibro(idU, libro.getId()).execute();
+                if (response.isSuccessful() && isAdded()) {
+                    requireActivity().runOnUiThread(() -> {
+                        Toast.makeText(getContext(), "Libro eliminado", Toast.LENGTH_SHORT).show();
+                        cargarLibros();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e("ELIMINAR", "Error: " + e.getMessage());
+            }
+        }).start();
     }
 
     private void mostrarDialogoRelectura(LibrosDeUsuario ldu) {
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("¡Libro ya leído!")
-                .setMessage("¿Qué deseas hacer con este libro?")
+                .setMessage("¿Qué deseas hacer?")
                 .setNeutralButton("CANCELAR", null)
                 .setNegativeButton("REINICIAR", (dialog, which) -> reiniciarYAbrir(ldu))
-                .setPositiveButton("CONTINUAR", (dialog, which) -> abrirVisor(ldu, false))
+                .setPositiveButton("VER FINAL", (dialog, which) -> abrirVisor(ldu, false))
                 .show();
     }
 
     private void reiniciarYAbrir(LibrosDeUsuario ldu) {
         ldu.setCapitulo(0);
         ldu.setScroll(0f);
-        ldu.setFechaInicio(new java.util.Date());
-        ldu.setFechaFin(null);
+        ldu.setFechaFin(null); // Al borrar la fecha de fin, volverá a aparecer en la lista principal
 
         new Thread(() -> {
             try {
                 Utilidades.apiLibrosDeUsuario.guardarProgreso(ldu).execute();
-                if (isAdded()) requireActivity().runOnUiThread(() -> abrirVisor(ldu, true));
+                if (isAdded()) requireActivity().runOnUiThread(() -> {
+                    cargarLibros(); // Recargamos para que el cambio de fecha se refleje
+                    abrirVisor(ldu, true);
+                });
             } catch (Exception e) {
                 Log.e("REINICIAR", "Error: " + e.getMessage());
             }
@@ -235,5 +241,13 @@ public class TusLibrosFragment extends Fragment {
         intent.putExtra("idL", ldu.getId().getIdL());
         if (esReinicio) intent.putExtra("REINICIAR_LECTURA", true);
         startActivity(intent);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 🔥 Cada vez que el usuario vuelve a esta pantalla (ej: desde el visor), refrescamos
+        Log.d("RELOAD", "Refrescando lista al volver al fragmento");
+        cargarLibros();
     }
 }

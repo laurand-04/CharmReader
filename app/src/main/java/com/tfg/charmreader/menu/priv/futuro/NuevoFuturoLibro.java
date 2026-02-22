@@ -1,18 +1,21 @@
 package com.tfg.charmreader.menu.priv.futuro;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.interfacesAPI.I_ApiLibrosSinEstrenar;
@@ -41,17 +44,26 @@ public class NuevoFuturoLibro extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nuevo_futuro_libro);
 
-        // Barra de estado blanca con iconos oscuros
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            getWindow().setStatusBarColor(Color.WHITE);
+        // 🔥 Efecto de desenfoque detrás del diálogo (Android 12+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_BLUR_BEHIND);
+            getWindow().getAttributes().setBlurBehindRadius(20);
         }
 
         apiService = API.getInstancia().create(I_ApiLibrosSinEstrenar.class);
-
         vincularVistas();
 
-        btnBack.setOnClickListener(v -> finish());
+        // 🔥 Listener para la 'X' con confirmación
+        btnBack.setOnClickListener(v -> comprobarYSalir());
+
+        // 🔥 Manejar botón 'Atrás' físico
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                comprobarYSalir();
+            }
+        });
+
         etFecha.setOnClickListener(v -> mostrarDatePicker());
         btnGuardar.setOnClickListener(v -> guardarLibro());
     }
@@ -64,9 +76,27 @@ public class NuevoFuturoLibro extends AppCompatActivity {
         btnBack = findViewById(R.id.btnBackNuevoFuturo);
     }
 
+    private void comprobarYSalir() {
+        String titulo = etTitulo.getText().toString().trim();
+        String autor = etAutor.getText().toString().trim();
+
+        if (!titulo.isEmpty() || !autor.isEmpty() || fechaSeleccionada != null) {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("¿Descartar lanzamiento?")
+                    .setMessage("Tienes cambios sin guardar. Si sales ahora, perderás la información introducida.")
+                    .setNegativeButton("Seguir editando", (dialog, which) -> dialog.dismiss())
+                    .setPositiveButton("Descartar", (dialog, which) -> finish())
+                    .show();
+        } else {
+            finish();
+        }
+    }
+
     private void mostrarDatePicker() {
         Calendar calendar = Calendar.getInstance();
-        DatePickerDialog datePicker = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+
+        // Añadimos R.style.DialogPickerTheme aquí para que combine con tu app
+        DatePickerDialog datePicker = new DatePickerDialog(this, R.style.DialogPickerTheme, (view, year, month, dayOfMonth) -> {
             Calendar seleccion = Calendar.getInstance();
             seleccion.set(year, month, dayOfMonth);
             fechaSeleccionada = seleccion.getTime();
@@ -74,6 +104,7 @@ public class NuevoFuturoLibro extends AppCompatActivity {
             etFecha.setText(sdf.format(fechaSeleccionada));
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
 
+        // No permitimos seleccionar fechas pasadas, ya que es un "Lanzamiento Futuro"
         datePicker.getDatePicker().setMinDate(System.currentTimeMillis());
         datePicker.show();
     }
@@ -87,19 +118,17 @@ public class NuevoFuturoLibro extends AppCompatActivity {
             return;
         }
 
-        // 1. Obtener el ID desde SharedPreferences (Instantáneo)
         SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
         int idUsuario = prefs.getInt("idUsuario", -1);
 
         if (idUsuario == -1) {
-            Toast.makeText(this, "Error de sesión. Por favor, logueate de nuevo.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error de sesión", Toast.LENGTH_SHORT).show();
             return;
         }
 
         btnGuardar.setEnabled(false);
         btnGuardar.setText("GUARDANDO...");
 
-        // 2. Enviar directamente al servidor (Retrofit ya gestiona el hilo secundario en enqueue)
         enviarServidor(idUsuario, titulo, autor);
     }
 
@@ -115,18 +144,16 @@ public class NuevoFuturoLibro extends AppCompatActivity {
             public void onResponse(Call<LibrosSinEstrenar> call, Response<LibrosSinEstrenar> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(NuevoFuturoLibro.this, "¡Lanzamiento guardado!", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK);
+                    setResult(Activity.RESULT_OK);
                     finish();
                 } else {
                     restaurarBoton();
-                    Toast.makeText(NuevoFuturoLibro.this, "Error al guardar en el servidor", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(Call<LibrosSinEstrenar> call, Throwable t) {
                 restaurarBoton();
-                Toast.makeText(NuevoFuturoLibro.this, "Error de red", Toast.LENGTH_SHORT).show();
             }
         });
     }

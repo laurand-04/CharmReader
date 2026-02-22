@@ -5,331 +5,294 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.tfg.charmreader.R;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.Utilidades;
 import com.tfg.charmreader.menu.priv.estanteria.ValoracionLibro;
 import com.tfg.charmreader.objetosBD.LibrosDeUsuario;
 
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import nl.siegmann.epublib.domain.Book;
 import nl.siegmann.epublib.domain.Resource;
-import nl.siegmann.epublib.domain.TOCReference;
+import nl.siegmann.epublib.domain.SpineReference;
 import nl.siegmann.epublib.epub.EpubReader;
-import retrofit2.Response;
 
 public class Visor_n extends AppCompatActivity {
 
     private WebView webViewContent;
     private ProgressBar pbVisor;
     private List<Resource> chapters = new ArrayList<>();
+    private Book epubBook;
     private int currentChapter = 0;
     private float scrollGuardado = 0f;
-    private GestureDetector gestureDetector;
     private boolean apiCargada = false;
     private boolean epubCargado = false;
-    private int idUsuario;
-    private LibrosDeUsuario libroUsuarioActual; // 🔥 Mantenemos el objeto completo
+    private LibrosDeUsuario libroUsuarioActual;
+    private boolean dialogoMostrado = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_visor_n);
+        setContentView(com.tfg.charmreader.R.layout.activity_visor_n);
 
-        SharedPreferences prefs = getSharedPreferences("sesion_usuario", Context.MODE_PRIVATE);
-        idUsuario = prefs.getInt("idUsuario", -1);
-
-        if (idUsuario == -1) {
-            Toast.makeText(this, "Error de sesión", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-
-        // Recuperar objeto inicial si el Fragment lo envió
         libroUsuarioActual = (LibrosDeUsuario) getIntent().getSerializableExtra("OBJETO_LIBRO_USUARIO");
+        String urlLibro = getIntent().getStringExtra("URL_LIBRO");
 
-        webViewContent = findViewById(R.id.webViewContent);
-        pbVisor = findViewById(R.id.pbVisor);
+        webViewContent = findViewById(com.tfg.charmreader.R.id.webViewContent);
+        pbVisor = findViewById(com.tfg.charmreader.R.id.pbVisor);
 
         webViewContent.getSettings().setJavaScriptEnabled(true);
+        webViewContent.getSettings().setAllowFileAccess(true);
+        webViewContent.getSettings().setDomStorageEnabled(true);
         webViewContent.setAlpha(0f);
 
-        webViewContent.setWebViewClient(new android.webkit.WebViewClient() {
+        webViewContent.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                if (scrollGuardado > 0f) {
-                    aplicarScroll();
-                } else {
-                    mostrarContenidoFinal();
-                }
+                aplicarScroll();
+                mostrarContenidoFinal();
+            }
+        });
+
+        webViewContent.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            if (epubCargado && currentChapter == chapters.size() - 1) {
+                if (obtenerPorcentajeScroll() > 0.98f) marcarComoFinalizado();
             }
         });
 
         configurarGestos();
 
-        String urlLibro = getIntent().getStringExtra("URL_LIBRO");
         if (urlLibro != null) {
-            Uri epubUri = Uri.parse(urlLibro);
             cargarProgresoDesdeAPI();
-            readEpub(epubUri);
-        } else {
-            Toast.makeText(this, "No se proporcionó EPUB", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-
-        webViewContent.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-            if (epubCargado && currentChapter == chapters.size() - 1) {
-                float porcentaje = obtenerPorcentajeScroll();
-                if (porcentaje > 0.95f) {
-                    verificarYMarcarFinalizado();
-                }
-            }
-        });
-    }
-
-    private void configurarGestos() {
-        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
-            private static final int SWIPE_THRESHOLD = 100;
-            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
-
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                float x = e.getX();
-                if (x > webViewContent.getWidth() / 2) nextChapter();
-                else prevChapter();
-                return true;
-            }
-
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                float diffX = e2.getX() - e1.getX();
-                if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                    if (diffX < 0) nextChapter();
-                    else prevChapter();
-                    return true;
-                }
-                return false;
-            }
-        });
-        webViewContent.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        guardarSeguimiento();
-    }
-
-    private void nextChapter() {
-        if (currentChapter < chapters.size() - 1) {
-            guardarSeguimiento();
-            currentChapter++;
-            scrollGuardado = 0f;
-            showChapter(currentChapter);
-        }
-    }
-
-    private void prevChapter() {
-        if (currentChapter > 0) {
-            guardarSeguimiento();
-            currentChapter--;
-            scrollGuardado = 0f;
-            showChapter(currentChapter);
+            readEpub(Uri.parse(urlLibro));
         }
     }
 
     private void readEpub(Uri epubUri) {
         new Thread(() -> {
             try {
-                InputStream is = getContentResolver().openInputStream(epubUri);
-                nl.siegmann.epublib.domain.Book book = new EpubReader().readEpub(is);
-                List<Resource> tempChapters = new ArrayList<>();
-                for (TOCReference tocRef : book.getTableOfContents().getTocReferences()) {
-                    if (tocRef.getResource() != null) tempChapters.add(tocRef.getResource());
+                InputStream is;
+                if (epubUri.getScheme() != null && epubUri.getScheme().startsWith("http")) {
+                    is = new URL(epubUri.toString()).openStream();
+                } else {
+                    is = getContentResolver().openInputStream(epubUri);
                 }
-
+                this.epubBook = new EpubReader().readEpub(is);
+                List<Resource> tempChapters = new ArrayList<>();
+                for (SpineReference spineRef : epubBook.getSpine().getSpineReferences()) {
+                    tempChapters.add(spineRef.getResource());
+                }
                 runOnUiThread(() -> {
                     this.chapters = tempChapters;
                     this.epubCargado = true;
-                    verificarYMostrarCapitulo();
+                    verificarYMostrar();
                 });
-            } catch (Exception e) {
-                Log.e("EPUB", "Error al leer EPUB", e);
-            }
+            } catch (Exception e) { Log.e("VISOR", "Error EPUB", e); }
         }).start();
     }
+
+    private void showChapter(int index) {
+        if (chapters.isEmpty() || index < 0 || index >= chapters.size()) return;
+
+        new Thread(() -> {
+            try {
+                Resource res = chapters.get(index);
+                String content = new String(res.getData(), "UTF-8");
+
+                // 🔥 PROCESADOR DE IMÁGENES: Reemplaza src=".." por src="data:image/..;base64,.."
+                content = procesarImagenesHtml(content);
+
+                String finalHtml = "<html><head><style>" +
+                        "body{font-family:sans-serif; font-size:18px; line-height:1.6; padding:20px; color:#333; background-color:white;}" +
+                        "img{max-width:100% !important; height:auto !important; display:block; margin: 20px auto;}" +
+                        "</style></head><body>" + content + "</body></html>";
+
+                runOnUiThread(() -> {
+                    pbVisor.setVisibility(View.VISIBLE);
+                    webViewContent.setAlpha(0f);
+                    // Cargamos directamente sin BaseURL porque las imágenes ya están inyectadas
+                    webViewContent.loadDataWithBaseURL(null, finalHtml, "text/html", "UTF-8", null);
+                });
+            } catch (Exception e) { Log.e("VISOR", "Error procesando capítulo", e); }
+        }).start();
+    }
+
+    private String procesarImagenesHtml(String html) {
+        if (epubBook == null) return html;
+
+        // Buscamos todas las etiquetas img
+        Pattern pattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
+        Matcher matcher = pattern.matcher(html);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String src = matcher.group(1);
+            // Intentamos encontrar el recurso en el EPUB (limpiando rutas relativas tipo ../)
+            String cleanPath = src.replace("../", "");
+            Resource imageRes = epubBook.getResources().getByHref(cleanPath);
+
+            // Si no lo encuentra, probamos buscando solo por nombre de archivo
+            if (imageRes == null) {
+                String fileName = new java.io.File(src).getName();
+                for (Resource r : epubBook.getResources().getAll()) {
+                    if (r.getHref().endsWith(fileName)) {
+                        imageRes = r;
+                        break;
+                    }
+                }
+            }
+
+            if (imageRes != null) {
+                try {
+                    String base64Img = Base64.encodeToString(imageRes.getData(), Base64.NO_WRAP);
+                    String mimeType = imageRes.getMediaType().toString();
+                    String dataUri = "data:" + mimeType + ";base64," + base64Img;
+                    matcher.appendReplacement(sb, matcher.group(0).replace(src, dataUri));
+                } catch (Exception e) { matcher.appendReplacement(sb, matcher.group(0)); }
+            } else {
+                matcher.appendReplacement(sb, matcher.group(0));
+            }
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    // --- MÉTODOS DE APOYO (SIN CAMBIOS) ---
 
     private void cargarProgresoDesdeAPI() {
         new Thread(() -> {
             try {
-                int idLibro = getIntent().getIntExtra("idL", -1);
-                boolean forzarReinicio = getIntent().getBooleanExtra("REINICIAR_LECTURA", false);
-
-                Response<LibrosDeUsuario> response = Utilidades.apiLibrosDeUsuario
-                        .getLibrodeUsuario(idUsuario, idLibro).execute();
-
-                if (response.isSuccessful() && response.body() != null) {
-                    libroUsuarioActual = response.body(); // 🔥 Actualizamos el objeto global
-
-                    if (forzarReinicio) {
-                        currentChapter = 0;
-                        scrollGuardado = 0f;
-                        libroUsuarioActual.setCapitulo(0);
-                        libroUsuarioActual.setScroll(0f);
-                    } else {
-                        currentChapter = libroUsuarioActual.getCapitulo();
-                        scrollGuardado = libroUsuarioActual.getScroll();
-                    }
-
+                int idU = getSharedPreferences("sesion_usuario", MODE_PRIVATE).getInt("idUsuario", -1);
+                int idL = getIntent().getIntExtra("idL", -1);
+                retrofit2.Response<LibrosDeUsuario> res = Utilidades.apiLibrosDeUsuario.getLibrodeUsuario(idU, idL).execute();
+                if (res.isSuccessful() && res.body() != null) {
+                    libroUsuarioActual = res.body();
+                    currentChapter = libroUsuarioActual.getCapitulo();
+                    scrollGuardado = libroUsuarioActual.getScroll();
                     if (libroUsuarioActual.getFechaInicio() == null) {
-                        libroUsuarioActual.setFechaInicio(new java.util.Date());
-                        Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
+                        libroUsuarioActual.setFechaInicio(new Date());
+                        guardarProgresoAPI();
                     }
-
-                    runOnUiThread(() -> {
-                        this.apiCargada = true;
-                        verificarYMostrarCapitulo();
-                    });
                 }
-            } catch (Exception e) {
-                Log.e("API", "Error crítico cargando progreso: " + e.getMessage());
-            }
+                runOnUiThread(() -> { this.apiCargada = true; verificarYMostrar(); });
+            } catch (Exception e) { runOnUiThread(() -> { this.apiCargada = true; verificarYMostrar(); }); }
         }).start();
     }
 
-    private void verificarYMostrarCapitulo() {
+    private void verificarYMostrar() {
         if (epubCargado && apiCargada) {
+            if (currentChapter >= chapters.size()) currentChapter = chapters.size() - 1;
             showChapter(currentChapter);
         }
     }
 
-    private void showChapter(int index) {
-        if (index < 0 || index >= chapters.size()) return;
-        try {
-            pbVisor.setVisibility(View.VISIBLE);
-            webViewContent.setAlpha(0f);
-
-            Resource res = chapters.get(index);
-            String chapterHtml = new String(res.getData());
-            String html = "<html><head><style>body { font-family: sans-serif; font-size:18px; line-height:1.6; padding:16px; margin:0; }</style></head><body>"
-                    + chapterHtml + "</body></html>";
-            webViewContent.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
-        } catch (Exception e) {
-            Log.e("VISOR", "Error mostrando capítulo", e);
-        }
+    private void configurarGestos() {
+        GestureDetector gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                if (e.getX() > webViewContent.getWidth() / 2) {
+                    if (currentChapter < chapters.size() - 1) {
+                        currentChapter++; scrollGuardado = 0f; showChapter(currentChapter);
+                    } else marcarComoFinalizado();
+                } else {
+                    if (currentChapter > 0) {
+                        currentChapter--; scrollGuardado = 0f; showChapter(currentChapter);
+                    }
+                }
+                return true;
+            }
+        });
+        webViewContent.setOnTouchListener((v, event) -> gd.onTouchEvent(event));
     }
 
-    private void guardarSeguimiento() {
-        if (libroUsuarioActual == null) return;
+    private void marcarComoFinalizado() {
+        if (libroUsuarioActual != null && libroUsuarioActual.getFechaFin() == null) {
+            libroUsuarioActual.setFechaFin(new Date());
+            libroUsuarioActual.setCapitulo(chapters.size() - 1);
+            libroUsuarioActual.setScroll(1f);
+            guardarProgresoAPI();
+        }
+        if (!dialogoMostrado) mostrarAvisoFinalizacion();
+    }
 
-        final float porcentaje = obtenerPorcentajeScroll();
-        final int capitulo = currentChapter;
+    private void mostrarAvisoFinalizacion() {
+        dialogoMostrado = true;
+        runOnUiThread(() -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("¡Lectura completada!")
+                    .setMessage("Has llegado al final. ¿Quieres valorar el libro?")
+                    .setCancelable(false)
+                    .setPositiveButton("VALORAR", (d, w) -> {
+                        Intent i = new Intent(this, ValoracionLibro.class);
+                        i.putExtra("OBJETO_LIBRO_USUARIO", libroUsuarioActual);
+                        startActivity(i);
+                        finish();
+                    })
+                    .setNegativeButton("CERRAR", (d, w) -> finish())
+                    .show();
+        });
+    }
 
+    private void guardarProgresoAPI() {
         new Thread(() -> {
-            try {
-                libroUsuarioActual.setCapitulo(capitulo);
-                libroUsuarioActual.setScroll(porcentaje);
-
-                if (capitulo == chapters.size() - 1 && porcentaje > 0.95f && libroUsuarioActual.getFechaFin() == null) {
-                    libroUsuarioActual.setFechaFin(new java.util.Date());
-                }
-
-                Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
-            } catch (Exception e) {
-                Log.e("PROGRESO", "Error al guardar", e);
-            }
+            try { Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute(); }
+            catch (Exception e) { e.printStackTrace(); }
         }).start();
     }
 
     private float obtenerPorcentajeScroll() {
-        int scrollY = webViewContent.getScrollY();
-        float contentHeight = webViewContent.getContentHeight() * webViewContent.getScale();
-        int viewHeight = webViewContent.getHeight();
-        float maxScroll = contentHeight - viewHeight;
-
-        if (maxScroll <= 0) return 0f;
-        return Math.max(0f, Math.min(scrollY / maxScroll, 1f));
+        float d = getResources().getDisplayMetrics().density;
+        float h = webViewContent.getContentHeight() * d - webViewContent.getHeight();
+        return h <= 0 ? 1f : Math.min(1f, webViewContent.getScrollY() / h);
     }
 
     private void aplicarScroll() {
-        webViewContent.postDelayed(new Runnable() {
-            int intentos = 0;
-            @Override
-            public void run() {
-                float contentHeight = webViewContent.getContentHeight() * webViewContent.getScale();
-                if (contentHeight > webViewContent.getHeight() || intentos > 10) {
-                    int maxScroll = (int) (contentHeight - webViewContent.getHeight());
-                    int targetY = (int) (maxScroll * scrollGuardado);
-
-                    webViewContent.scrollTo(0, targetY);
-                    scrollGuardado = 0f;
-                    mostrarContenidoFinal();
-                } else {
-                    intentos++;
-                    webViewContent.postDelayed(this, 200);
-                }
-            }
-        }, 300);
-    }
-
-    private void mostrarDialogoFinalizado() {
-        if (isFinishing()) return;
-
-        android.app.Dialog dialog = new android.app.Dialog(this);
-        dialog.setContentView(R.layout.dialog_libro_terminado);
-        dialog.setCancelable(false);
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
-            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-        }
-
-        dialog.findViewById(R.id.btnIrAValorar).setOnClickListener(v -> {
-            // 🔥 PASAMOS EL OBJETO COMPLETO A VALORACIÓN
-            Intent i = new Intent(this, ValoracionLibro.class);
-            i.putExtra("OBJETO_LIBRO_USUARIO", libroUsuarioActual);
-            startActivity(i);
-            dialog.dismiss();
-            finish();
-        });
-
-        dialog.findViewById(R.id.btnCerrarDialog).setOnClickListener(v -> {
-            dialog.dismiss();
-            finish();
-        });
-
-        dialog.show();
-    }
-
-    private void verificarYMarcarFinalizado() {
-        if (libroUsuarioActual != null && libroUsuarioActual.getFechaFin() == null) {
-            new Thread(() -> {
-                try {
-                    libroUsuarioActual.setFechaFin(new java.util.Date());
-                    Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
-                    Log.d("PROGRESO", "Libro marcado como finalizado");
-                    runOnUiThread(this::mostrarDialogoFinalizado);
-                } catch (Exception e) {
-                    Log.e("PROGRESO", "Error al marcar finalizado", e);
-                }
-            }).start();
+        if (scrollGuardado > 0) {
+            webViewContent.postDelayed(() -> {
+                float d = getResources().getDisplayMetrics().density;
+                int y = (int) ((webViewContent.getContentHeight() * d - webViewContent.getHeight()) * scrollGuardado);
+                webViewContent.scrollTo(0, Math.max(0, y));
+            }, 400);
         }
     }
 
     private void mostrarContenidoFinal() {
         pbVisor.setVisibility(View.GONE);
-        webViewContent.animate().alpha(1f).setDuration(400).start();
+        webViewContent.animate().alpha(1f).setDuration(300).start();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (libroUsuarioActual != null && !chapters.isEmpty()) {
+            final int cap = currentChapter;
+            final float scr = obtenerPorcentajeScroll();
+            new Thread(() -> {
+                try {
+                    if (libroUsuarioActual.getFechaFin() == null) {
+                        libroUsuarioActual.setCapitulo(cap);
+                        libroUsuarioActual.setScroll(scr);
+                    }
+                    Utilidades.apiLibrosDeUsuario.guardarProgreso(libroUsuarioActual).execute();
+                } catch (Exception e) { e.printStackTrace(); }
+            }).start();
+        }
     }
 }

@@ -130,9 +130,9 @@ public class InfoGrupoPrivada extends AppCompatActivity {
         // NAVEGACIÓN A LA RESEÑA DEL GRUPO
         fabResena.setOnClickListener(v -> {
             if (grupo != null) {
-                Intent intent = new Intent(this, ValoracionGrupo.class);
-                intent.putExtra("idGrupo", grupo.getIdGrupo());
-                intent.putExtra("idLibro", -1); // Indica que es reseña de grupo
+                Intent intent = new Intent(this, ResenasGrupoPrivada.class);
+                // Enviamos el objeto completo, no solo el ID
+                intent.putExtra("objetoGrupo", grupo);
                 startActivity(intent);
             }
         });

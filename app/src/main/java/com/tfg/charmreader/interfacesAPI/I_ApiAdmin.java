@@ -15,4 +15,10 @@ public interface I_ApiAdmin {
 
     @GET("admin/densidad-participacion")
     Call<Double> getDensidad();
+
+    @GET("admin/tiempo-medio")
+    Call<Double> getTiempoMedioLectura();
+
+    @GET("admin/finalizados-mes")
+    Call<Long> getLibrosFinalizadosMes();
 }

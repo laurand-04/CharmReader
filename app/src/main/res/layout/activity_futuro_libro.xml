@@ -1,127 +1,145 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FDFDFD"
-    android:orientation="vertical"
-    android:fitsSystemWindows="true">
+    android:background="#33000000"
+    android:fillViewport="true">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:paddingHorizontal="12dp"
-        android:background="@android:color/white">
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <ImageView
-            android:id="@+id/btnBackDetalleFuturo"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_arrow_back"
-            app:tint="#444444"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:background="?attr/selectableItemBackgroundBorderless" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Detalles del Lanzamiento"
-            android:textColor="#1A1A1A"
-            android:textSize="18sp"
-            android:fontFamily="sans-serif-black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#F0F0F0" />
-
-    <androidx.core.widget.NestedScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
+        <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp">
+            app:cardBackgroundColor="@color/white"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="12dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Título del libro"
-                app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp"
-                app:startIconDrawable="@android:drawable/ic_menu_edit"
-                app:startIconTint="@color/basico">
+                android:padding="16dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDetalleTitulo"
+                <ImageView
+                    android:id="@+id/btnBackDetalleFuturo"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentTop="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_close"
+                    app:tint="#444444" />
+
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="textCapSentences"
-                    android:textColor="#212121" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_below="@id/btnBackDetalleFuturo"
+                    android:layout_marginTop="-10dp"
+                    android:orientation="vertical"
+                    android:paddingHorizontal="8dp"
+                    android:paddingBottom="8dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Autor"
-                app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp"
-                app:startIconDrawable="@android:drawable/ic_menu_edit"
-                app:startIconTint="@color/basico">
+                    <ImageView
+                        android:layout_width="80dp"
+                        android:layout_height="80dp"
+                        android:layout_gravity="center"
+                        android:layout_marginBottom="16dp"
+                        android:background="@drawable/bg_circle_basico"
+                        android:padding="16dp"
+                        android:src="@android:drawable/ic_menu_my_calendar"
+                        app:tint="@color/basico" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDetalleAutor"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:inputType="textPersonName"
-                    android:textColor="#212121" />
-            </com.google.android.material.textfield.TextInputLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        android:fontFamily="sans-serif-black"
+                        android:gravity="center"
+                        android:text="Detalles del Lanzamiento"
+                        android:textColor="#1A1A1A"
+                        android:textSize="22sp" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Fecha de publicación"
-                app:boxCornerRadiusTopStart="12dp" app:boxCornerRadiusTopEnd="12dp"
-                app:boxCornerRadiusBottomStart="12dp" app:boxCornerRadiusBottomEnd="12dp"
-                app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
-                app:startIconTint="@color/basico">
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Título del libro"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/basico"
+                        app:hintTextColor="@color/basico">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etDetalleFecha"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
-                    android:clickable="true"
-                    android:textColor="#212121" />
-            </com.google.android.material.textfield.TextInputLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDetalleTitulo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textCapSentences" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnActualizar"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="40dp"
-                android:text="GUARDAR CAMBIOS"
-                android:textAllCaps="false"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                app:cornerRadius="12dp"
-                app:backgroundTint="@color/basico" />
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Autor"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/basico"
+                        app:hintTextColor="@color/basico">
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-</LinearLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDetalleAutor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:hint="Fecha de publicación"
+                        app:boxCornerRadiusBottomEnd="12dp"
+                        app:boxCornerRadiusBottomStart="12dp"
+                        app:boxCornerRadiusTopEnd="12dp"
+                        app:boxCornerRadiusTopStart="12dp"
+                        app:boxStrokeColor="@color/basico"
+                        app:hintTextColor="@color/basico">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDetalleFecha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="false"
+                            android:clickable="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnActualizar"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="32dp"
+                        android:text="GUARDAR CAMBIOS"
+                        android:textAllCaps="false"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:backgroundTint="@color/basico"
+                        app:cornerRadius="16dp" />
+
+                </LinearLayout>
+            </RelativeLayout>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
