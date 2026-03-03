@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FDFDFD"
-    tools:context=".menu.priv.estanteria.EstanteriaFragment">
+    tools:context=".ui.priv.fragmentView.EstanteriaFragment">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardSearchEstanteria"

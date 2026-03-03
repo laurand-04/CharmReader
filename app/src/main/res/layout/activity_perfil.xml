@@ -83,6 +83,14 @@
                             app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
                             android:scaleType="centerCrop" />
 
+                        <ProgressBar
+                            android:id="@+id/pbFotoPerfil"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:layout_gravity="center"
+                            android:visibility="gone"
+                            android:indeterminateTint="@color/basico" />
+
                         <com.google.android.material.floatingactionbutton.FloatingActionButton
                             android:id="@+id/btnAbrirEdicion"
                             android:layout_width="wrap_content"

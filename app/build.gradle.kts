@@ -54,7 +54,7 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
     implementation("com.google.firebase:firebase-crashlytics-ndk")
     implementation("com.google.firebase:firebase-analytics")
     //Libreria Epub
@@ -63,20 +63,20 @@ dependencies {
     }
     //Para hacer el menu a ver si funciona
     //implementation ("com.google.android.material:material:1.11.0") // o la versión más reciente
-    implementation("com.google.android.material:material:1.12.0") //La version más reciente
+    implementation("com.google.android.material:material:1.13.0") //La version más reciente
 
     //Para hacer peticiones HTTP
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
 
     //Trabajar API externa
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    implementation("com.github.bumptech.glide:glide:5.0.5")
+    annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
 
     //Pantalla de carga con mi logo
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.core:core-splashscreen:1.2.0")
 
-
+    implementation("com.cloudinary:cloudinary-android:3.1.2")
 
 
 }

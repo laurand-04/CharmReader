@@ -8,6 +8,8 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
 
     <application
         android:allowBackup="true"
@@ -22,7 +24,7 @@
         android:usesCleartextTraffic="true">
 
         <activity
-            android:name=".autentication.LoginActivity"
+            android:name=".ui.autentication.LoginActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:theme="@style/Theme.App.Starting">
@@ -32,98 +34,96 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".autentication.RegisterActivity"
+        <activity android:name=".ui.autentication.RegisterActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".autentication.RecuperacionActivity"
+        <activity android:name=".ui.autentication.RecuperacionActivity"
             android:windowSoftInputMode="adjustResize"/>
 
         <activity
-            android:name=".menu.MainActivity"
+            android:name=".ui.MainActivity"
             android:windowSoftInputMode="adjustPan"> </activity>
 
-        <activity android:name=".menu.priv.tusLibros.CargarNuevoLibro"/>
+        <activity android:name=".ui.priv.tusLibros.CargarNuevoLibroActivity"/>
 
-        <activity android:name=".menu.priv.futuro.NuevoFuturoLibro"
+        <activity android:name=".ui.priv.futuro.NuevoFuturoLibroActivity"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".Visor"/>
+        <activity android:name=".ui.priv.tusLibros.VisorNActivity"/>
 
-        <activity android:name=".menu.priv.tusLibros.Visor_n"/>
-
-        <activity android:name=".menu.priv.estanteria.CargarNuevaEstanteria"
+        <activity android:name=".ui.priv.estanteria.NuevaEstanteriaActivity"
             android:windowSoftInputMode="adjustPan"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".menu.priv.estanteria.CargarNuevoLibroEstanteria"/>
+        <activity android:name=".ui.priv.estanteria.NuevoLibroEstanteriaActivity"/>
 
-        <activity android:name=".menu.priv.estanteria.LibrosEstanteria"/>
+        <activity android:name=".ui.priv.estanteria.LibrosEstanteriaActivity"/>
 
-        <activity android:name=".menu.priv.estanteria.ValoracionLibro"
+        <activity android:name=".ui.priv.estanteria.ValoracionLibroActivity"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".menu.priv.proximamente.BuscadorAPIExterna"/>
+        <activity android:name=".ui.priv.proximamente.BuscadorAPIExternaActivity"/>
 
-        <activity android:name=".menu.priv.proximamente.ProximoLibro"
+        <activity android:name=".ui.priv.proximamente.ProximoLibroActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".menu.priv.futuro.FuturoLibro"
+        <activity android:name=".ui.priv.futuro.FuturoLibroActivity"
             android:windowSoftInputMode="adjustPan"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".menu.publ.Public"
+        <activity android:name=".ui.publ.PublicActivity"
             android:windowSoftInputMode="adjustPan"/>
 
-        <activity android:name=".menu.publ.explorar.InfoGrupoPublica"/>
+        <activity android:name=".ui.publ.explorar.InfoGrupoPublicaActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.InfoGrupoPrivada"/>
+        <activity android:name=".ui.publ.misGrupos.suscritos.InfoGrupoPrivadaActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.creados.ManejoGrupo"/>
+        <activity android:name=".ui.publ.misGrupos.creados.ManejoGrupoActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.LibroActual"/>
+        <activity android:name=".ui.publ.misGrupos.suscritos.LibroActualActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionLibroNueva"
+        <activity android:name=".ui.publ.misGrupos.suscritos.ValoracionLibroNuevaActivity"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionesLibro"/>
+        <activity android:name=".ui.publ.misGrupos.suscritos.ValoracionesLibroActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ValoracionGrupo"
+        <activity android:name=".ui.publ.misGrupos.suscritos.ValoracionGrupoActivity"
             android:theme="@style/Theme.Transparent"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".menu.publ.misGrupos.suscritos.ResenasGrupoPrivada"
+        <activity android:name=".ui.publ.misGrupos.suscritos.ResenasGrupoPrivadaActivity"
             android:windowSoftInputMode="adjustResize"/>
 
 
-        <activity android:name=".menu.publ.misGrupos.creados.Suscritos"/>
+        <activity android:name=".ui.publ.misGrupos.creados.SuscritosActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.creados.EditarGrupo"
+        <activity android:name=".ui.publ.misGrupos.creados.EditarGrupoActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".menu.publ.misGrupos.creados.NuevoLibroPropuesto"/>
+        <activity android:name=".ui.publ.misGrupos.creados.NuevoLibroPropuestoActivity"/>
 
-        <activity android:name=".menu.publ.misGrupos.creados.GestionSesiones"
-            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.publ.misGrupos.creados.GestionSesionesActivity"
+            android:windowSoftInputMode="adjustResize" />
 
-        <activity android:name=".menu.publ.misGrupos.creados.NuevaSesion"
+        <activity android:name=".ui.publ.misGrupos.creados.NuevaSesionActivity"
             android:windowSoftInputMode="adjustPan"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".menu.publ.explorar.NuevoGrupo"
+        <activity android:name=".ui.publ.explorar.NuevoGrupoActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".autentication.Perfil"/>
+        <activity android:name=".ui.autentication.PerfilActivity"/>
 
-        <activity android:name=".admin.AdminMainActivity"/>
+        <activity android:name=".ui.admin.AdminMainActivity"/>
 
-        <activity android:name=".admin.GestionUsuarios"/>
+        <activity android:name=".ui.admin.GestionUsuariosActivity"/>
 
-        <activity android:name=".admin.GestionGrupos"/>
+        <activity android:name=".ui.admin.GestionGruposActivity"/>
 
-        <activity android:name=".admin.EstadisticasAdmin"/>
+        <activity android:name=".ui.admin.EstadisticasAdminActivity"/>
 
-        <activity android:name=".admin.GestionBackup"/>
+        <activity android:name=".ui.admin.GestionBackupActivity"/>
 
 
         <provider
