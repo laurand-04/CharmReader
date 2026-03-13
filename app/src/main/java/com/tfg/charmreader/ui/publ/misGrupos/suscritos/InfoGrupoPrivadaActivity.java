@@ -4,12 +4,15 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+
 import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.tfg.charmreader.R;
@@ -20,6 +23,7 @@ import com.tfg.charmreader.databinding.ActivityInfoGrupoPrivadaBinding;
 import com.tfg.charmreader.ui.publ.fragmentView.HistorialFragment;
 import com.tfg.charmreader.ui.publ.fragmentView.PropuestasFragment;
 import com.tfg.charmreader.viewmodel.publ.misGrupos.suscritos.InfoGrupoPrivadaViewModel;
+
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
@@ -39,7 +43,10 @@ public class InfoGrupoPrivadaActivity extends AppCompatActivity {
         configurarStatusBar();
 
         grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
-        if (grupo == null) { finish(); return; }
+        if (grupo == null) {
+            finish();
+            return;
+        }
 
         viewModel = new ViewModelProvider(this).get(InfoGrupoPrivadaViewModel.class);
 
@@ -60,6 +67,7 @@ public class InfoGrupoPrivadaActivity extends AppCompatActivity {
             if (libroActualObj != null) {
                 Intent i = new Intent(this, LibroActualActivity.class);
                 i.putExtra("libroSeleccionado", libroActualObj);
+                i.putExtra("grupo", grupo);
                 startActivity(i);
             }
         });
@@ -75,11 +83,13 @@ public class InfoGrupoPrivadaActivity extends AppCompatActivity {
 
     private void setupObservers() {
         viewModel.getLibroActual().observe(this, libro -> {
-            this.libroActualObj = libro;
-            binding.tvLibroActual.setText(libro.getTitulo());
-            binding.tvAutorActual.setText(libro.getAutor());
-            String url = "https://covers.openlibrary.org/b/id/" + libro.getCoverId() + "-M.jpg";
-            Glide.with(this).load(url).placeholder(R.drawable.ic_libro).into(binding.ivPortadaActual);
+            if (libro != null) {
+                this.libroActualObj = libro;
+                binding.tvLibroActual.setText(libro.getTitulo());
+                binding.tvAutorActual.setText(libro.getAutor());
+                String url = "https://covers.openlibrary.org/b/id/" + libro.getCoverId() + "-M.jpg";
+                Glide.with(this).load(url).placeholder(R.drawable.ic_libro).into(binding.ivPortadaActual);
+            }
         });
 
         viewModel.getProximaSesion().observe(this, sesion -> {
@@ -107,10 +117,19 @@ public class InfoGrupoPrivadaActivity extends AppCompatActivity {
     }
 
     private static class ViewPagerAdapter extends FragmentStateAdapter {
-        public ViewPagerAdapter(@NonNull AppCompatActivity activity) { super(activity); }
-        @NonNull @Override public Fragment createFragment(int position) {
+        public ViewPagerAdapter(@NonNull AppCompatActivity activity) {
+            super(activity);
+        }
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
             return (position == 0) ? new PropuestasFragment() : new HistorialFragment();
         }
-        @Override public int getItemCount() { return 2; }
+
+        @Override
+        public int getItemCount() {
+            return 2;
+        }
     }
 }

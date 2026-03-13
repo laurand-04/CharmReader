@@ -36,6 +36,12 @@ public class BookEn implements Serializable {
     @SerializedName("privado")
     private Boolean privado;
 
+    @SerializedName("ruta")
+    private String ruta;
+
+    @SerializedName("urlLibro")
+    private String urlLibro;
+
     public enum TemaLibro {
         AVENTURAS, CIENCIA_FICCION, DRAMA, FANTASIA,
         HISTORICA, HUMOR, POLICIACA, ROMANCE,
@@ -152,6 +158,22 @@ public class BookEn implements Serializable {
 
     public void setPrivado(Boolean privado) {
         this.privado = privado;
+    }
+
+    public String getRuta() {
+        return ruta;
+    }
+
+    public void setRuta(String ruta) {
+        this.ruta = ruta;
+    }
+
+    public String getUrlLibro() {
+        return urlLibro;
+    }
+
+    public void setUrlLibro(String urlLibro) {
+        this.urlLibro = urlLibro;
     }
 
     public static TemaLibro mapearTema(String temaExterno) {

@@ -36,6 +36,15 @@ public class ManejoGrupoActivity extends AppCompatActivity {
                 }
             });
 
+    private final ActivityResultLauncher<Intent> nuevaPropuestaLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK) {
+                    // Esto disparará la recarga de datos en los fragmentos
+                    viewModel.refrescarDatosGrupo(grupo.getIdGrupo());
+                    viewModel.consumeRefresh();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,6 +113,13 @@ public class ManejoGrupoActivity extends AppCompatActivity {
                     .setPositiveButton("Dictaminar", (d, w) -> viewModel.cerrarVotaciones(grupo.getIdGrupo()))
                     .setNegativeButton("Cancelar", null)
                     .show();
+        });
+
+        binding.fabAnadirLectura.setOnClickListener(v -> {
+            Intent i = new Intent(this, NuevoLibroPropuestoActivity.class);
+            i.putExtra("idGrupo", grupo.getIdGrupo());
+            // CAMBIO: Usar el launcher en lugar de startActivity(i)
+            nuevaPropuestaLauncher.launch(i);
         });
     }
 

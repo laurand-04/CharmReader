@@ -13,7 +13,6 @@ import retrofit2.Response;
 
 public class ManejoGrupoViewModel extends ViewModel {
     private final InfoGrupoRepository repository = new InfoGrupoRepository();
-
     private final MutableLiveData<GrupoLectura> grupo = new MutableLiveData<>();
     private final MutableLiveData<Integer> contadorMiembros = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);

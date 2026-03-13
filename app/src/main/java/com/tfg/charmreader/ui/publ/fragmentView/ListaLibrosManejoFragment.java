@@ -67,6 +67,7 @@ public class ListaLibrosManejoFragment extends Fragment {
         adapter = new LibroPropuestoAdministradorAdapter(new ArrayList<>(), idGrupo, libro -> {
             if (tipoLista == 0) {
                 Intent intent = new Intent(getActivity(), ProximoLibroActivity.class);
+                intent.putExtra("mostrarSubirEpub", true);
                 intent.putExtra("idLibro", libro.getId());
                 startActivity(intent);
             }

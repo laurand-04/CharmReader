@@ -26,4 +26,8 @@ public class EstanteriaRepository {
     public void guardarEstanteria(Estanteria estanteria, Callback<Estanteria> callback) {
         api.anadirEstanteria(estanteria).enqueue(callback);
     }
+
+    public void obetenerEstanteriaPorId(int idEstanteria, Callback<Estanteria> callback) {
+        api.obtenerEstanteriaPorId(idEstanteria).enqueue(callback);
+    }
 }

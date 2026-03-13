@@ -1,10 +1,13 @@
 package com.tfg.charmreader.viewmodel.publ.misGrupos.suscritos;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.model.Sesion;
+import com.tfg.charmreader.data.repository.priv.proximamente.BookRepository;
 import com.tfg.charmreader.data.repository.publ.SesionRepository;
 import com.tfg.charmreader.data.repository.publ.InfoGrupoRepository;
 import retrofit2.Call;
@@ -14,6 +17,8 @@ import retrofit2.Response;
 public class InfoGrupoPrivadaViewModel extends ViewModel {
     private final InfoGrupoRepository grupoRepo = new InfoGrupoRepository();
     private final SesionRepository sesionRepo = new SesionRepository();
+    private final BookRepository bookRepository = new BookRepository();
+
 
     private final MutableLiveData<BookEn> libroActual = new MutableLiveData<>();
     private final MutableLiveData<Sesion> proximaSesion = new MutableLiveData<>();
@@ -30,7 +35,10 @@ public class InfoGrupoPrivadaViewModel extends ViewModel {
         grupoRepo.obtenerLibroActual(idGrupo, new Callback<BookEn>() {
             @Override
             public void onResponse(Call<BookEn> call, Response<BookEn> response) {
-                if (response.isSuccessful()) libroActual.postValue(response.body());
+                if (response.isSuccessful()){
+                    Log.e("Leer vm", "Libro: " + response.body().getUrlLibro() + " --- " + response.body().getTitulo());
+                    libroActual.postValue(response.body());
+                }
             }
             @Override public void onFailure(Call<BookEn> call, Throwable t) {}
         });
@@ -45,4 +53,19 @@ public class InfoGrupoPrivadaViewModel extends ViewModel {
             @Override public void onFailure(Call<Sesion> call, Throwable t) { isLoading.postValue(false); }
         });
     }
+
+    /*public BookEn actualizarLibroActual(int idBook) {
+        BookEn book
+        bookRepository.obtenerBookPorId(idBook, new Callback<BookEn>() {
+            @Override
+            public void onResponse(Call<BookEn> call, Response<BookEn> response) {
+
+            }
+
+            @Override
+            public void onFailure(Call<BookEn> call, Throwable t) {
+
+            }
+        });
+    }*/
 }

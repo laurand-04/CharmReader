@@ -4,21 +4,31 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tfg.charmreader.R;
 import com.tfg.charmreader.databinding.ActivityLibrosEstanteriaBinding;
 import com.tfg.charmreader.ui.priv.adapterRecyclerView.LibrosAdapter;
 import com.tfg.charmreader.data.model.Libro;
 import com.tfg.charmreader.data.model.LibrosDeUsuario;
 import com.tfg.charmreader.viewmodel.priv.estanteria.LibrosEstanteriaViewModel;
+
+import java.util.List;
 
 public class LibrosEstanteriaActivity extends AppCompatActivity {
     private ActivityLibrosEstanteriaBinding binding;
@@ -51,7 +61,7 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
     private void setupObservers() {
         viewModel.getLibros().observe(this, libros -> {
             actualizarInterfaz(libros);
-            adapter = new LibrosAdapter(libros, libro -> abrirValoracion(libro));
+            adapter = new LibrosAdapter(libros, this::abrirValoracion);
             adapter.setSoloPendientes(false);
             adapter.setOnItemLongClickListener(this::mostrarDialogoQuitar);
             adapter.setData(libros, viewModel.getRelaciones().getValue());
@@ -66,30 +76,12 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
         viewModel.getMensaje().observe(this, msg -> Toast.makeText(this, msg, Toast.LENGTH_SHORT).show());
     }
 
-    private void abrirValoracion(Libro libro) {
-        for (LibrosDeUsuario ldu : viewModel.getRelaciones().getValue()) {
-            if (ldu.getId().getIdL() == libro.getId()) {
-                Intent intent = new Intent(this, ValoracionLibroActivity.class);
-                intent.putExtra("OBJETO_LIBRO_USUARIO", ldu);
-                intent.putExtra("URL_LIBRO", ldu.getRuta());
-                intent.putExtra("idL", ldu.getId().getIdL());
-                intent.putExtra("idU", ldu.getId().getIdU());
-                startActivity(intent);
-                return;
-            }
-        }
-    }
-
-    private void actualizarInterfaz(java.util.List<Libro> libros) {
-        boolean vacio = libros.isEmpty();
-        binding.layoutEmptyLibrosEstanteria.setVisibility(vacio ? View.VISIBLE : View.GONE);
-        binding.recyclerLibrosEstanteria.setVisibility(vacio ? View.GONE : View.VISIBLE);
-        int total = libros.size();
-        binding.tvCantidadLibrosEstanteria.setText((total == 1) ? "1 libro" : total + " libros");
-    }
-
     private void setupListeners() {
         binding.btnBack.setOnClickListener(v -> finish());
+
+        // Al pulsar el círculo de color de la toolbar
+        binding.statusColorContainer.setOnClickListener(v -> mostrarDialogoColores());
+
         binding.fabAddLibrosEstanteria.setOnClickListener(v -> {
             Intent intent = new Intent(this, NuevoLibroEstanteriaActivity.class);
             intent.putExtra("idEstanteria", idEstanteria);
@@ -105,8 +97,96 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
         });
     }
 
+    private void mostrarDialogoColores() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_cambiar_color, null);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        // Fondo transparente para que se vean los bordes redondeados del CardView
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        LinearLayout contenedor = dialogView.findViewById(R.id.contenedorColoresDialog);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarColor);
+        ImageView btnClose = dialogView.findViewById(R.id.btnCloseDialog);
+        ImageView ivPreview = dialogView.findViewById(R.id.ivIconoPreviewDialog);
+
+        // Cerrar al pulsar la X
+        if (btnClose != null) btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        if (contenedor != null) {
+            for (int i = 0; i < contenedor.getChildCount(); i++) {
+                View colorCircle = contenedor.getChildAt(i);
+                colorCircle.setOnClickListener(v -> {
+                    if (v.getTag() != null) {
+                        String colorPastel = v.getTag().toString();
+                        int fuerte = obtenerColorFuerte(colorPastel);
+
+                        // Actualizar UI de la actividad en tiempo real
+                        aplicarColoresDinamicosManual(colorPastel);
+
+                        // Actualizar el icono de preview del propio diálogo
+                        if (ivPreview != null) {
+                            ivPreview.getBackground().setColorFilter(fuerte, PorterDuff.Mode.SRC_IN);
+                            ivPreview.setColorFilter(fuerte);
+                        }
+
+                        // Guardar la elección en el tag del botón
+                        btnGuardar.setTag(colorPastel);
+                        btnGuardar.setBackgroundTintList(ColorStateList.valueOf(fuerte));
+                    }
+                });
+            }
+        }
+
+        btnGuardar.setOnClickListener(v -> {
+            if (v.getTag() != null) {
+                String colorFinal = v.getTag().toString();
+                viewModel.actualizarColorEstanteria(this, idEstanteria, colorFinal);
+            }
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    private void aplicarColoresDinamicosManual(String colorPastel) {
+        int fuerte = obtenerColorFuerte(colorPastel);
+        binding.viewEstanteriaColor.getBackground().setColorFilter(fuerte, PorterDuff.Mode.SRC_IN);
+        binding.statusColorContainer.setStrokeColor(ColorStateList.valueOf(fuerte));
+        binding.btnBack.setStrokeColor(ColorStateList.valueOf(fuerte));
+        binding.tvCantidadLibrosEstanteria.setTextColor(fuerte);
+        binding.fabAddLibrosEstanteria.setBackgroundTintList(ColorStateList.valueOf(fuerte));
+    }
+
+    private void abrirValoracion(Libro libro) {
+        if (viewModel.getRelaciones().getValue() == null) return;
+        for (LibrosDeUsuario ldu : viewModel.getRelaciones().getValue()) {
+            if (ldu.getId().getIdL() == libro.getId()) {
+                Intent intent = new Intent(this, ValoracionLibroActivity.class);
+                intent.putExtra("OBJETO_LIBRO_USUARIO", ldu);
+                intent.putExtra("URL_LIBRO", ldu.getRuta());
+                intent.putExtra("idL", ldu.getId().getIdL());
+                intent.putExtra("idU", ldu.getId().getIdU());
+                startActivity(intent);
+                return;
+            }
+        }
+    }
+
+    private void actualizarInterfaz(List<Libro> libros) {
+        boolean vacio = libros.isEmpty();
+        binding.layoutEmptyLibrosEstanteria.setVisibility(vacio ? View.VISIBLE : View.GONE);
+        binding.recyclerLibrosEstanteria.setVisibility(vacio ? View.GONE : View.VISIBLE);
+        int total = libros.size();
+        binding.tvCantidadLibrosEstanteria.setText((total == 1) ? "1 libro" : total + " libros");
+    }
+
     private void mostrarDialogoQuitar(Libro libro) {
-        new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        new MaterialAlertDialogBuilder(this)
                 .setTitle("Quitar de la estantería")
                 .setMessage("¿Deseas quitar '" + libro.getNombre() + "'?")
                 .setNegativeButton("CANCELAR", null)
@@ -118,17 +198,11 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
         String nombre = getIntent().getStringExtra("Nombre");
         String colorPastel = getIntent().getStringExtra("Color");
         if (nombre != null) binding.tvTituloEstanteria.setText(nombre);
-        if (colorPastel != null) {
-            int fuerte = obtenerColorFuerte(colorPastel);
-            binding.viewEstanteriaColor.getBackground().setColorFilter(fuerte, PorterDuff.Mode.SRC_IN);
-            binding.statusColorContainer.setStrokeColor(ColorStateList.valueOf(fuerte));
-            binding.btnBack.setStrokeColor(ColorStateList.valueOf(fuerte));
-            binding.tvCantidadLibrosEstanteria.setTextColor(fuerte);
-            binding.fabAddLibrosEstanteria.setBackgroundTintList(ColorStateList.valueOf(fuerte));
-        }
+        aplicarColoresDinamicosManual(colorPastel != null ? colorPastel : "#F3E5F5");
     }
 
     private int obtenerColorFuerte(String pastel) {
+        if (pastel == null) return Color.parseColor("#664FA4");
         switch (pastel.toUpperCase()) {
             case "#F3E5F5": return Color.parseColor("#664FA4");
             case "#E3F2FD": return Color.parseColor("#1976D2");

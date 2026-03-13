@@ -16,4 +16,6 @@ public interface I_ApiLibro {
 
     @GET("/libros/varios")
     Call<List<Libro>> obtenerLibrosPorIds(@Query("ids") List<Integer> ids);
+
+
 }

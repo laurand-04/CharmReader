@@ -77,7 +77,7 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
 
         // Carga de imagen con Glide
         Glide.with(holder.itemView.getContext())
-                .load(libro.getUrl())
+                .load(libro.getUrlImagen())
                 .placeholder(R.drawable.ic_libro)
                 .error(R.drawable.ic_libro)
                 .into(holder.ivPortada);

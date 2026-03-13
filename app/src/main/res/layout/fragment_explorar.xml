@@ -65,17 +65,4 @@
         android:clipToPadding="false"
         android:paddingBottom="88dp" />
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabCrearGrupo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="Añadir"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="20dp"
-        app:srcCompat="@android:drawable/ic_input_add"
-        app:tint="@android:color/white"
-        app:backgroundTint="@color/basico"
-        app:elevation="8dp"/>
-
 </RelativeLayout>

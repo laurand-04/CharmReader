@@ -12,6 +12,8 @@ import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -89,15 +91,20 @@ public class TusLibrosFragmentViewModel extends AndroidViewModel {
 
     public void eliminarLibro(int idLibro) {
         int idU = AuthRepository.getInstance(getApplication()).getIdUsuario();
-        libroRepo.desvincularLibro(idU, idLibro, new Callback<Boolean>() {
+        libroRepo.eliminarLibro(idU, idLibro, new Callback<ResponseBody>() {
+
             @Override
-            public void onResponse(Call<Boolean> call, Response<Boolean> response) {
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    mensaje.postValue("Libro eliminado de tu biblioteca");
+                    mensaje.postValue("Libro eliminado");
                     cargarBiblioteca();
                 }
             }
-            @Override public void onFailure(Call<Boolean> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+
+            }
         });
     }
 }

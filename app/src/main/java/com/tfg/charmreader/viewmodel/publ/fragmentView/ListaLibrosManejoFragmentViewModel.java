@@ -10,6 +10,7 @@ import com.tfg.charmreader.data.network.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiBook;
 import com.tfg.charmreader.data.repository.GrupoRepository;
 import com.tfg.charmreader.data.repository.priv.proximamente.BookRepository;
+import com.tfg.charmreader.data.repository.publ.InfoGrupoRepository;
 import com.tfg.charmreader.viewmodel.publ.misGrupos.creados.ManejoGrupoViewModel;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class ListaLibrosManejoFragmentViewModel extends ViewModel {
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
 
     private final GrupoRepository grupoRepository = new GrupoRepository();
+    private final InfoGrupoRepository ingoGrupoRepository = new InfoGrupoRepository();
     private final BookRepository bookRepository = new BookRepository();
 
     public LiveData<List<BookEn>> getLibros() { return libros; }
@@ -33,22 +35,68 @@ public class ListaLibrosManejoFragmentViewModel extends ViewModel {
 
     public void cargarDatos(int idGrupo, int tipoLista) {
         isLoading.setValue(true);
-        grupoRepository.obtenerHistorialCatalogo(idGrupo, new Callback<List<CatalogoLectura>>() {
-            @Override
-            public void onResponse(Call<List<CatalogoLectura>> call, Response<List<CatalogoLectura>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    filtrarYCargarDetalles(response.body(), tipoLista);
-                } else {
+        if(tipoLista == 0){ //Propuesta
+            ingoGrupoRepository.obtenerLibroPropuestas(idGrupo, new Callback<List<BookEn>>() {
+                @Override
+                public void onResponse(Call<List<BookEn>> call, Response<List<BookEn>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        libros.setValue(response.body());
+                        isLoading.setValue(false);
+                        //filtrarYCargarDetalles(response.body(), tipoLista);
+                    } else {
+                        libros.setValue(new ArrayList<>());
+                        isLoading.setValue(false);
+                    }
+                }
+                @Override
+                public void onFailure(Call<List<BookEn>> call, Throwable t) {
                     libros.setValue(new ArrayList<>());
                     isLoading.setValue(false);
                 }
-            }
-            @Override
-            public void onFailure(Call<List<CatalogoLectura>> call, Throwable t) {
-                libros.setValue(new ArrayList<>());
-                isLoading.setValue(false);
-            }
-        });
+            });
+        }
+        else if (tipoLista == 1){ //Actual
+            ingoGrupoRepository.obtenerLibroActual(idGrupo, new Callback<BookEn>() {
+                @Override
+                public void onResponse(Call<BookEn> call, Response<BookEn> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        List<BookEn> librosCargados = new ArrayList<>();
+                        librosCargados.add(response.body());
+                        libros.setValue(librosCargados);
+                        isLoading.setValue(false);
+                        //filtrarYCargarDetalles(response.body(), tipoLista);
+                    } else {
+                        libros.setValue(new ArrayList<>());
+                        isLoading.setValue(false);
+                    }
+                }
+                @Override
+                public void onFailure(Call<BookEn> call, Throwable t) {
+                    libros.setValue(new ArrayList<>());
+                    isLoading.setValue(false);
+                }
+            });
+        }
+        else{ //Historial
+            ingoGrupoRepository.obtenerHistorial(idGrupo, new Callback<List<BookEn>>() {
+                @Override
+                public void onResponse(Call<List<BookEn>> call, Response<List<BookEn>> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        libros.setValue(response.body());
+                        isLoading.setValue(false);
+                        //filtrarYCargarDetalles(response.body(), tipoLista);
+                    } else {
+                        libros.setValue(new ArrayList<>());
+                        isLoading.setValue(false);
+                    }
+                }
+                @Override
+                public void onFailure(Call<List<BookEn>> call, Throwable t) {
+                    libros.setValue(new ArrayList<>());
+                    isLoading.setValue(false);
+                }
+            });
+        }
     }
 
     private void filtrarYCargarDetalles(List<CatalogoLectura> catalogo, int tipoLista) {

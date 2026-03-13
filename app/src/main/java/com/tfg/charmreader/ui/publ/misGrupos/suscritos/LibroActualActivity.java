@@ -1,12 +1,19 @@
 package com.tfg.charmreader.ui.publ.misGrupos.suscritos;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.model.BookEn;
+import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.databinding.ActivityLibroActualBinding;
+import com.tfg.charmreader.ui.priv.tusLibros.VisorActivity;
 import com.tfg.charmreader.viewmodel.publ.misGrupos.suscritos.LibroActualViewModel;
 
 public class LibroActualActivity extends AppCompatActivity {
@@ -32,6 +39,24 @@ public class LibroActualActivity extends AppCompatActivity {
 
         // Botón atrás opcional (si decides añadirlo al XML o Toolbar)
         // binding.btnBack.setOnClickListener(v -> finish());
+
+        binding.btnLeerEpub.setOnClickListener(v -> {
+            BookEn libro = viewModel.getLibro().getValue();
+            if (libro != null) {
+                if (libro.getUrlLibro() != null) {
+                    viewModel.descargarLibro(libro);
+                } else {
+                    new MaterialAlertDialogBuilder(this)
+                            .setTitle("Libro no disponible todavía")
+                            .setMessage("El coordinador del grupo aún no ha subido el archivo del libro.\n\n" +
+                                    "Cuando esté disponible podrás descargarlo desde esta misma pantalla.\n\n" +
+                                    "Por ahora tendrás que esperar a que se publique.")
+                            .setPositiveButton("Entendido", (dialog, which) -> dialog.dismiss())
+                            .show();
+
+                }
+            }
+        });
     }
 
     private void setupObservers() {
@@ -57,6 +82,19 @@ public class LibroActualActivity extends AppCompatActivity {
                     .error(R.drawable.ic_libro)
                     .centerCrop()
                     .into(binding.ivDetallePortada);
+        });
+
+        viewModel.getMensaje().observe(this, msg -> {
+            if (msg == "Iniciando descarga..."){
+                Intent intent = new Intent(this, VisorActivity.class);
+                intent.putExtra("Libro", viewModel.getLibro().getValue());
+                intent.putExtra("grupoB", true);
+                GrupoLectura grupo = (GrupoLectura) getIntent().getSerializableExtra("grupo");
+                intent.putExtra("grupoO", grupo);
+                startActivity(intent);
+            }else{
+                Log.e("LibroActualActivity", "Error al descargarLibro");
+            }
         });
     }
 }

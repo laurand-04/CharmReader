@@ -5,10 +5,14 @@ import android.content.SharedPreferences;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
+import com.tfg.charmreader.data.model.Estanteria;
 import com.tfg.charmreader.data.model.Libro;
 import com.tfg.charmreader.data.model.LibrosDeUsuario;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.data.repository.priv.LibroRepository;
+import com.tfg.charmreader.data.repository.priv.estanteria.EstanteriaRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -16,7 +20,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class LibrosEstanteriaViewModel extends ViewModel {
-    private final LibroRepository repository = new LibroRepository();
+    private final LibroRepository libroRepository = new LibroRepository();
+    private final EstanteriaRepository estanteriaRepository = new EstanteriaRepository();
 
     private final MutableLiveData<List<Libro>> librosLiveData = new MutableLiveData<>();
     private final MutableLiveData<List<LibrosDeUsuario>> relacionesLiveData = new MutableLiveData<>();
@@ -35,7 +40,7 @@ public class LibrosEstanteriaViewModel extends ViewModel {
 
         isLoading.setValue(true);
         // Usamos el repositorio que ya maneja las interfaces API
-        repository.obtenerRelacionesPorEstanteria(idEstanteria, idU, new Callback<List<LibrosDeUsuario>>() {
+        libroRepository.obtenerRelacionesPorEstanteria(idEstanteria, idU, new Callback<List<LibrosDeUsuario>>() {
             @Override
             public void onResponse(Call<List<LibrosDeUsuario>> call, Response<List<LibrosDeUsuario>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -63,7 +68,7 @@ public class LibrosEstanteriaViewModel extends ViewModel {
     }
 
     private void cargarDetallesLibros(List<Integer> ids) {
-        repository.obtenerDetallesLibros(ids, new Callback<List<Libro>>() {
+        libroRepository.obtenerDetallesLibros(ids, new Callback<List<Libro>>() {
             @Override
             public void onResponse(Call<List<Libro>> call, Response<List<Libro>> response) {
                 isLoading.postValue(false);
@@ -79,7 +84,7 @@ public class LibrosEstanteriaViewModel extends ViewModel {
         int idU = AuthRepository.getInstance(context.getApplicationContext()).getIdUsuario();
 
         isLoading.setValue(true);
-        repository.desvincularLibro(idU, idLibro, new Callback<Boolean>() {
+        libroRepository.desvincularLibro(idU, idLibro, new Callback<Boolean>() {
             @Override
             public void onResponse(Call<Boolean> call, Response<Boolean> response) {
                 if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
@@ -90,6 +95,35 @@ public class LibrosEstanteriaViewModel extends ViewModel {
                 }
             }
             @Override public void onFailure(Call<Boolean> call, Throwable t) {
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    public void actualizarColorEstanteria(Context context, int idEstanteria, String nuevoColorHex) {
+        isLoading.setValue(true);
+        estanteriaRepository.obetenerEstanteriaPorId(idEstanteria, new Callback<Estanteria>() {
+            @Override
+            public void onResponse(Call<Estanteria> call, Response<Estanteria> response) {
+                Estanteria estanreria = response.body();
+                estanreria.setColor(nuevoColorHex);
+                estanteriaRepository.guardarEstanteria(estanreria, new Callback<Estanteria>() {
+                    @Override
+                    public void onResponse(Call<Estanteria> call, Response<Estanteria> response) {
+                        isLoading.postValue(false);
+                        if (response.isSuccessful() && Boolean.TRUE.equals(response.body())) {
+                            mensaje.postValue("Color actualizado");
+                            // Aquí podrías recargar o simplemente notificar el éxito
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Estanteria> call, Throwable t) {
+                        isLoading.postValue(false);
+                    }
+                });
+            }
+            @Override public void onFailure(Call<Estanteria> call, Throwable t) {
                 isLoading.postValue(false);
             }
         });

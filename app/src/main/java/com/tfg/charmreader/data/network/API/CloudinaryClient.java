@@ -46,10 +46,23 @@ public class CloudinaryClient {
     public static com.cloudinary.android.UploadRequest nuevoUpload(byte[] bytes) {
         return MediaManager.get().upload(bytes) // Acepta el array de bytes directamente
                 .option("folder", "portadas_libros")
-                .option("unsigned_upload_preset", "tu_preset_name")
+                .option("unsigned_upload_preset", "tfg_preset")
                 .option("transformation", new com.cloudinary.Transformation()
                         .width(400)
                         .height(600)
                         .crop("fill")); // Formato típico de portada de libro
+    }
+
+    public static com.cloudinary.android.UploadRequest nuevoUpload(String path) {
+        return MediaManager.get().upload(path)
+                .option("folder", "libros_tfg")
+                // IMPORTANTE: Para archivos que no son imagen/video
+                .option("resource_type", "raw")
+                // Asegúrate de usar un preset que permita subidas 'raw' si es unsigned
+                .option("unsigned_upload_preset", "tfg_preset");
+    }
+
+    public static com.cloudinary.android.UploadRequest nuevoUpload(java.io.File file) {
+        return nuevoUpload(file.getAbsolutePath());
     }
 }

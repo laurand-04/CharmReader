@@ -19,6 +19,7 @@ import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.FragmentMisGruposBinding;
 import com.tfg.charmreader.ui.publ.adapterReclyclerView.GrupoLecturaAdapter;
+import com.tfg.charmreader.ui.publ.explorar.NuevoGrupoActivity;
 import com.tfg.charmreader.ui.publ.misGrupos.creados.ManejoGrupoActivity;
 import com.tfg.charmreader.ui.publ.misGrupos.suscritos.InfoGrupoPrivadaActivity;
 import com.tfg.charmreader.viewmodel.publ.fragmentView.MisGruposFragmentViewModel;
@@ -53,6 +54,11 @@ public class MisGruposFragment extends Fragment {
         setupObservers();
 
         if (idUsuario > 0) viewModel.cargarDatos(idUsuario);
+
+        binding.fabCrearGrupoMisGrupos.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), NuevoGrupoActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void setupRecyclerView() {
@@ -106,9 +112,14 @@ public class MisGruposFragment extends Fragment {
                 new TabLayout.OnTabSelectedListener() {
                     @Override
                     public void onTabSelected(TabLayout.Tab tab) {
-                        List<GrupoLectura> lista = (tab.getPosition() == 0)
-                                ? viewModel.getListaSuscritos().getValue()
-                                : viewModel.getListaCreados().getValue();
+                        List<GrupoLectura> lista;
+                        if (tab.getPosition() == 0) { // Suscritos
+                            lista = viewModel.getListaSuscritos().getValue();
+                            binding.fabCrearGrupoMisGrupos.setVisibility(View.GONE); // OCULTAR
+                        } else { // Creados
+                            lista = viewModel.getListaCreados().getValue();
+                            binding.fabCrearGrupoMisGrupos.setVisibility(View.VISIBLE); // MOSTRAR
+                        }
                         actualizarListaUI(lista);
                     }
                     @Override public void onTabUnselected(TabLayout.Tab tab) {}

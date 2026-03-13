@@ -51,6 +51,14 @@ public class EstanteriaFragment extends Fragment {
         viewModel.cargarEstanterias();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.cargarEstanterias();
+        }
+    }
+
     private void setupRecyclerView() {
         binding.recyclerEstanterias.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EstanteriasAdapter(new ArrayList<>(), estanteria -> {

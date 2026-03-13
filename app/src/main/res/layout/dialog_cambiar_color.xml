@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="24dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="12dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/btnCloseDialog"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:src="@drawable/ic_close"
+            app:tint="#444444" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btnCloseDialog"
+            android:layout_marginTop="-10dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="8dp"
+            android:paddingBottom="8dp">
+
+            <ImageView
+                android:id="@+id/ivIconoPreviewDialog"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/bg_circle_basico"
+                android:padding="16dp"
+                android:src="@drawable/ic_estanteria"
+                app:tint="@color/basico" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:gravity="center"
+                android:text="Color de la estantería"
+                android:textColor="#1A1A1A"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Selecciona un nuevo tono"
+                android:textColor="#757575"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/contenedorColoresDialog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="20dp"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <View android:id="@+id/c1" android:layout_width="35dp" android:layout_height="35dp" android:layout_margin="6dp" android:background="@drawable/bg_circle_basico" android:tag="#F3E5F5"/>
+                <View android:id="@+id/c2" android:layout_width="35dp" android:layout_height="35dp" android:layout_margin="6dp" android:background="@drawable/bg_circle_azul" android:tag="#E3F2FD"/>
+                <View android:id="@+id/c3" android:layout_width="35dp" android:layout_height="35dp" android:layout_margin="6dp" android:background="@drawable/bg_circle_verde" android:tag="#E8F5E9"/>
+                <View android:id="@+id/c4" android:layout_width="35dp" android:layout_height="35dp" android:layout_margin="6dp" android:background="@drawable/bg_circle_naranja" android:tag="#FFF3E0"/>
+                <View android:id="@+id/c5" android:layout_width="35dp" android:layout_height="35dp" android:layout_margin="6dp" android:background="@drawable/bg_circle_rosa" android:tag="#FFEBEE"/>
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGuardarColor"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Guardar Cambios"
+                android:textAllCaps="false"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/basico"
+                app:cornerRadius="16dp" />
+        </LinearLayout>
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

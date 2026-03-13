@@ -11,9 +11,11 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.databinding.ActivityProximoLibroBinding;
+import com.tfg.charmreader.ui.priv.tusLibros.CargarNuevoLibroActivity;
 import com.tfg.charmreader.viewmodel.priv.proximamente.ProximoLibroViewModel;
 
 public class ProximoLibroActivity extends AppCompatActivity {
@@ -31,6 +33,9 @@ public class ProximoLibroActivity extends AppCompatActivity {
         configurarStatusBar();
 
         int idLibro = getIntent().getIntExtra("idLibro", -1);
+        boolean mostrarSubirEpub = getIntent().getBooleanExtra("mostrarSubirEpub", false);
+
+        binding.btnSubirEpub.setVisibility(mostrarSubirEpub ? View.VISIBLE : View.GONE);
         viewModel = new ViewModelProvider(this).get(ProximoLibroViewModel.class);
 
         setupObservers();
@@ -92,6 +97,8 @@ public class ProximoLibroActivity extends AppCompatActivity {
             }
         });
 
+        binding.btnSubirEpub.setOnClickListener(v -> abrirSelectorEpub());
+
         binding.btnActualizarLibro.setOnClickListener(v -> {
             if (libroActual != null) {
                 viewModel.actualizarLibro(libroActual,
@@ -100,6 +107,27 @@ public class ProximoLibroActivity extends AppCompatActivity {
                         binding.etDetalleTema.getText().toString());
             }
         });
+    }
+
+    private void abrirSelectorEpub() {
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Aviso sobre derechos de autor")
+                .setMessage("Antes de subir un archivo EPUB recuerda:\n\n" +
+                        "• Solo está permitido compartir libros que sean de dominio público.\n\n" +
+                        "• No está permitido subir obras protegidas por derechos de autor.\n\n" +
+                        "• El uso indebido de esta funcionalidad puede conllevar sanciones dentro de la plataforma.\n\n" +
+                        "Al continuar confirmas que el archivo que vas a subir cumple estas condiciones.")
+                .setNegativeButton("Cancelar", (dialog, which) -> dialog.dismiss())
+                .setPositiveButton("Entendido", (dialog, which) -> cargarNuevoLibro())
+                .show();
+    }
+
+    private void cargarNuevoLibro() {
+        Intent intent = new Intent(this, CargarNuevoLibroActivity.class);
+        intent.putExtra("grupo", true);
+        intent.putExtra("idLibro", getIntent().getIntExtra("idLibro", -1));
+        startActivity(intent);
     }
 
     private void configurarDropdownTemas() {

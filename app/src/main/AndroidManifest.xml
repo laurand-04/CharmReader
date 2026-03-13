@@ -50,7 +50,7 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Transparent"/>
 
-        <activity android:name=".ui.priv.tusLibros.VisorNActivity"/>
+        <activity android:name=".ui.priv.tusLibros.VisorActivity"/>
 
         <activity android:name=".ui.priv.estanteria.NuevaEstanteriaActivity"
             android:windowSoftInputMode="adjustPan"

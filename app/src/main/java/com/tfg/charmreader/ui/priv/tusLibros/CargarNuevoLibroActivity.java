@@ -8,6 +8,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.ActivityCargarNuevoLibroBinding;
 import com.tfg.charmreader.viewmodel.priv.tuslibros.CargarLibroViewModel;
@@ -16,12 +17,18 @@ public class CargarNuevoLibroActivity extends AppCompatActivity {
 
     private ActivityCargarNuevoLibroBinding binding;
     private CargarLibroViewModel viewModel;
+    private boolean grupo;
+    private int idLibro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityCargarNuevoLibroBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        grupo = getIntent().getBooleanExtra("grupo", false);
+        idLibro = getIntent().getIntExtra("idLibro", -1);
+
 
         viewModel = new ViewModelProvider(this).get(CargarLibroViewModel.class);
         setupObservers();
@@ -56,7 +63,7 @@ public class CargarNuevoLibroActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 42 && resultCode == RESULT_OK && data != null) {
             int idUsuario = AuthRepository.getInstance(getApplicationContext()).getIdUsuario();
-            viewModel.procesarEpub(data.getData(), idUsuario);
+            viewModel.procesarEpub(data.getData(), idUsuario, grupo, idLibro);
         } else {
             finish();
         }

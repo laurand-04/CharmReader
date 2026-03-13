@@ -1,6 +1,5 @@
 package com.tfg.charmreader.ui.priv.fragmentView;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,7 +18,7 @@ import com.tfg.charmreader.data.model.LibrosDeUsuario;
 import com.tfg.charmreader.databinding.FragmentTusLibrosBinding;
 import com.tfg.charmreader.ui.priv.adapterRecyclerView.LibrosAdapter;
 import com.tfg.charmreader.ui.priv.tusLibros.CargarNuevoLibroActivity;
-import com.tfg.charmreader.ui.priv.tusLibros.VisorNActivity;
+import com.tfg.charmreader.ui.priv.tusLibros.VisorActivity;
 import com.tfg.charmreader.viewmodel.priv.fragmentView.TusLibrosFragmentViewModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,9 +115,9 @@ public class TusLibrosFragment extends Fragment {
     }
 
     private void abrirVisor(LibrosDeUsuario ldu, boolean esReinicio) {
-        Intent intent = new Intent(getActivity(), VisorNActivity.class);
+        Intent intent = new Intent(getActivity(), VisorActivity.class);
         intent.putExtra("OBJETO_LIBRO_USUARIO", ldu);
-        intent.putExtra("URL_LIBRO", ldu.getRuta());
+        //intent.putExtra("URL_LIBRO", ldu.getRuta());
         intent.putExtra("idL", ldu.getId().getIdL());
         if (esReinicio) intent.putExtra("REINICIAR_LECTURA", true);
         startActivity(intent);

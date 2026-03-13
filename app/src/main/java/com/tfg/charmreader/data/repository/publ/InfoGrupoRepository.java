@@ -34,6 +34,13 @@ public class InfoGrupoRepository {
     public void obtenerLibroActual(int idGrupo, Callback<BookEn> callback) {
         apiCatalogo.obtenerLibroActual(idGrupo).enqueue(callback);
     }
+    public void obtenerLibroPropuestas(int idGrupo, Callback<List<BookEn>> callback) {
+        apiCatalogo.obtenerLibroPropuestas(idGrupo).enqueue(callback);
+    }
+    public void obtenerHistorial(int idGrupo, Callback<List<BookEn>> callback) {
+        apiCatalogo.obtenerHistorial(idGrupo).enqueue(callback);
+    }
+
     public void obtenerGruposDondeEsMiembro(int idUsuario, Callback<List<GrupoLectura>> callback) {
         apiMiembro.obtenerGruposDondeEsMiembro(idUsuario).enqueue(callback);
     }

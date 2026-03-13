@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.tfg.charmreader.databinding.FragmentExplorarBinding;
 import com.tfg.charmreader.ui.publ.adapterReclyclerView.GrupoLecturaAdapter;
 import com.tfg.charmreader.ui.publ.explorar.InfoGrupoPublicaActivity;
-import com.tfg.charmreader.ui.publ.explorar.NuevoGrupoActivity;
 import com.tfg.charmreader.viewmodel.publ.fragmentView.ExplorarFragmentViewModel;
 
 import java.util.ArrayList;
@@ -76,8 +75,6 @@ public class ExplorarFragment extends Fragment {
     }
 
     private void setupListeners() {
-        binding.fabCrearGrupo.setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), NuevoGrupoActivity.class)));
 
         binding.searchViewGrupos.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override

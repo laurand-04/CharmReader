@@ -80,6 +80,14 @@ public class PerfilActivity extends AppCompatActivity {
                     wrapper.libroMap,
                     null, null);
         });
+
+        viewModel.getIsLoading().observe(this, loading -> {
+            binding.btnAbrirEdicion.setEnabled(!loading);
+            binding.btnExportarPDF.setEnabled(!loading);
+
+            // Mostrar/ocultar ruleta de foto
+            binding.pbFotoPerfil.setVisibility(loading ? View.VISIBLE : View.GONE);
+        });
     }
 
     private void setupListeners() {

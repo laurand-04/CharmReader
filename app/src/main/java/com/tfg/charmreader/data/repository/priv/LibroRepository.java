@@ -8,6 +8,7 @@ import com.tfg.charmreader.data.network.interfacesAPI.I_ApiLibrosDeUsuario;
 
 import java.util.List;
 
+import okhttp3.ResponseBody;
 import retrofit2.Callback;
 
 public class LibroRepository {
@@ -61,5 +62,14 @@ public class LibroRepository {
 
     public void obtenerHistorialLectura(int usuarioId, Callback<java.util.List<com.tfg.charmreader.data.model.LibrosDeUsuario>> callback) {
         apiLibrosDeUsuario.obtenerLibrosDeUsuario(usuarioId).enqueue(callback);
+    }
+
+    public void obtenerLibrosPorIds(List<Integer> ids, Callback<List<Libro>> callback) {
+        apiLibro.obtenerLibrosPorIds(ids).enqueue(callback);
+    }
+
+    public void eliminarLibro(int idU, int idL, Callback<ResponseBody> callback) {
+        apiLibrosDeUsuario.eliminarLibro(idU, idL).enqueue(callback);
+
     }
 }

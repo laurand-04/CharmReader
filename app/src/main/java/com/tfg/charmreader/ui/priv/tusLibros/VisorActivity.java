@@ -1,8 +1,8 @@
 package com.tfg.charmreader.ui.priv.tusLibros;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -11,16 +11,20 @@ import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tfg.charmreader.data.model.BookEn;
+import com.tfg.charmreader.data.model.GrupoLectura;
+import com.tfg.charmreader.data.model.LibrosDeUsuario;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.ActivityVisorNBinding;
 import com.tfg.charmreader.ui.priv.estanteria.ValoracionLibroActivity;
 import com.tfg.charmreader.viewmodel.priv.tuslibros.VisorViewModel;
 
-public class VisorNActivity extends AppCompatActivity {
+public class VisorActivity extends AppCompatActivity {
 
     private ActivityVisorNBinding binding;
     private VisorViewModel viewModel;
     private boolean scrollAplicado = false;
+    private boolean grupo = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +39,29 @@ public class VisorNActivity extends AppCompatActivity {
         configurarGestos();
 
         if (savedInstanceState == null) {
+            //Privada
             int idL = getIntent().getIntExtra("idL", -1);
             int idU = AuthRepository.getInstance(getApplicationContext()).getIdUsuario();
-            String url = getIntent().getStringExtra("URL_LIBRO");
-            viewModel.cargarDatos(idU, idL, Uri.parse(url));
+            LibrosDeUsuario ldu = (LibrosDeUsuario) getIntent().getSerializableExtra("OBJETO_LIBRO_USUARIO");
+            //Publica
+            BookEn libro = (BookEn) getIntent().getSerializableExtra("Libro");
+            this.grupo = getIntent().getBooleanExtra("grupoB", false);
+            GrupoLectura grupoLectura = (GrupoLectura) getIntent().getSerializableExtra("grupoO");
+
+            //String url = getIntent().getStringExtra("URL_LIBRO");
+            //viewModel.inicializarVisor(idU, idL, Uri.parse(url));
+            if(ldu != null) {
+                Log.d("Leer", "Cargando Libro en privado");
+                viewModel.verificarYAbrirLibro(ldu);
+            }
+            else if (libro != null){
+                Log.d("Leer", "Cargando Libro ");
+                viewModel.verificarYAbrirLibro(libro, grupoLectura.getIdGrupo());
+            }
+            else {
+                Log.e("onCreate de VisorActivity", "El libro de usuario es nulo");
+                finish();
+            }
         }
     }
 
@@ -55,7 +78,7 @@ public class VisorNActivity extends AppCompatActivity {
 
         binding.webViewContent.setOnScrollChangeListener((v, x, y, ox, oy) -> {
             if (viewModel.getCurrentChapterIndex() == viewModel.getTotalChapters() - 1) {
-                if (obtenerPorcentajeScroll() > 0.98f) viewModel.marcarFinalizado();
+                if (obtenerPorcentajeScroll() > 0.98f && this.grupo == false) viewModel.marcarFinalizado();
             }
         });
     }
@@ -121,6 +144,7 @@ public class VisorNActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        viewModel.guardarEstadoActual(obtenerPorcentajeScroll());
+        if(this.grupo == false)
+            viewModel.guardarEstadoActual(obtenerPorcentajeScroll());
     }
 }

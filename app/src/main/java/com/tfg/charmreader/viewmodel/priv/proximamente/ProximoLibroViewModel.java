@@ -59,22 +59,37 @@ public class ProximoLibroViewModel extends ViewModel {
 
     public void actualizarLibro(BookEn libro, String subtitulo, String resumen, String temaStr) {
         isSaving.setValue(true);
-        libro.setSubtitulo(subtitulo);
-        libro.setResumen(resumen);
-        libro.setTema(libro.mapearTema(temaStr));
-
-        repository.anadirBook(libro, new Callback<BookEn>() {
+        repository.obtenerBookPorId(libro.getId(), new Callback<BookEn>() {
             @Override
             public void onResponse(Call<BookEn> call, Response<BookEn> response) {
-                isSaving.postValue(false);
-                if (response.isSuccessful()) successAction.postValue(true);
-                else mensaje.postValue("Error al guardar cambios");
+                if (!response.isSuccessful() || response.body() == null) {
+                    isSaving.postValue(false);
+                    mensaje.postValue("No se pudo cargar el libro");
+                    return;
+                }
+                BookEn lib = response.body();
+                lib.setSubtitulo(subtitulo);
+                lib.setResumen(resumen);
+                lib.setTema(lib.mapearTema(temaStr));
+
+                repository.anadirBook(lib, new Callback<BookEn>() {
+                    @Override
+                    public void onResponse(Call<BookEn> call, Response<BookEn> response) {
+                        isSaving.postValue(false);
+                        if (response.isSuccessful()) successAction.postValue(true);
+                        else mensaje.postValue("Error al guardar cambios");
+                    }
+
+                    @Override
+                    public void onFailure(Call<BookEn> call, Throwable t) {
+                        isSaving.postValue(false);
+                        mensaje.postValue("Fallo de conexión");
+                    }
+                });
             }
 
             @Override
             public void onFailure(Call<BookEn> call, Throwable t) {
-                isSaving.postValue(false);
-                mensaje.postValue("Fallo de conexión");
             }
         });
     }
