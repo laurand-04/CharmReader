@@ -1,4 +1,4 @@
-package com.tfg.charmreader.viewmodel.publ.explorar;
+package com.tfg.charmreader.viewmodel.publ.misGrupos.creados;
 
 import android.net.Uri;
 import androidx.lifecycle.LiveData;

@@ -19,7 +19,7 @@ import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.FragmentMisGruposBinding;
 import com.tfg.charmreader.ui.publ.adapterReclyclerView.GrupoLecturaAdapter;
-import com.tfg.charmreader.ui.publ.explorar.NuevoGrupoActivity;
+import com.tfg.charmreader.ui.publ.misGrupos.creados.NuevoGrupoActivity;
 import com.tfg.charmreader.ui.publ.misGrupos.creados.ManejoGrupoActivity;
 import com.tfg.charmreader.ui.publ.misGrupos.suscritos.InfoGrupoPrivadaActivity;
 import com.tfg.charmreader.viewmodel.publ.fragmentView.MisGruposFragmentViewModel;

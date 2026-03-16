@@ -38,7 +38,14 @@ public class EsperaFragmentViewModel extends AndroidViewModel {
             public void onResponse(Call<ArrayList<LibrosSinEstrenar>> call, Response<ArrayList<LibrosSinEstrenar>> response) {
                 isLoading.postValue(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    libros.postValue(response.body());
+                    ArrayList<LibrosSinEstrenar> lista = response.body();
+
+                    lista.sort((l1, l2) -> {
+                        if (l1.getFechaPublicacion() == null || l2.getFechaPublicacion() == null) return 0;
+                        return l1.getFechaPublicacion().compareTo(l2.getFechaPublicacion());
+                    });
+
+                    libros.postValue(lista);
                 }
             }
 

@@ -13,9 +13,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         app:cardCornerRadius="24dp"
-        app:cardElevation="9dp"
-        app:cardBackgroundColor="@android:color/transparent"
-        android:outlineAmbientShadowColor="@color/basico">
+        app:cardElevation="4dp"
+        android:background="@color/white">
 
         <androidx.appcompat.widget.SearchView
             android:id="@+id/searchViewLibros"
@@ -23,9 +22,66 @@
             android:layout_height="wrap_content"
             app:iconifiedByDefault="false"
             app:queryHint="Busca tu libro..."
-            app:searchIcon="@drawable/ic_search"
             android:background="@color/white" />
     </androidx.cardview.widget.CardView>
+
+    <HorizontalScrollView
+        android:id="@+id/scrollFilters"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/cardSearch"
+        android:scrollbars="none"
+        android:paddingHorizontal="16dp"
+        android:clipToPadding="false">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupFilters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="false">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipSinEmpezar"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sin empezar" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipEmpezados"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="En curso" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTerminados"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Terminados" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipFilterAutor"
+                style="@style/Widget.MaterialComponents.Chip.Action"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipIcon="@drawable/ic_person"
+                android:text="Autor" />
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerLibros"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/scrollFilters"
+        android:layout_marginTop="8dp"
+        android:paddingHorizontal="8dp"
+        android:paddingBottom="80dp"
+        android:clipToPadding="false" />
 
     <LinearLayout
         android:id="@+id/layoutEmptyTusLibros"
@@ -48,22 +104,7 @@
             android:textColor="#1A1A1A"
             android:textSize="18sp"
             android:textStyle="bold" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sube tus archivos EPUB para empezar"
-            android:textColor="#999999"
-            android:textSize="14sp" />
     </LinearLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerLibros"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/cardSearch"
-        android:paddingHorizontal="8dp"
-        android:paddingBottom="80dp"
-        android:clipToPadding="false" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
@@ -74,7 +115,6 @@
         android:layout_margin="20dp"
         app:srcCompat="@android:drawable/ic_input_add"
         app:tint="@android:color/white"
-        app:backgroundTint="@color/basico"
-        app:elevation="8dp" />
+        app:backgroundTint="@color/basico" />
 
 </RelativeLayout>

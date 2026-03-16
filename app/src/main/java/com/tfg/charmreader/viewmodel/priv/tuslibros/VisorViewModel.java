@@ -357,6 +357,9 @@ public class VisorViewModel extends AndroidViewModel {
     public void guardarEstadoActual(float scroll) {
         LibrosDeUsuario ldu = libroUsuario.getValue();
         if (ldu != null && ldu.getFechaFin() == null) {
+            if (ldu.getFechaInicio() == null) {
+                ldu.setFechaInicio(new Date());
+            }
             ldu.setCapitulo(currentChapter);
             ldu.setScroll(scroll);
             libroRepository.actualizarProgreso(ldu, new Callback<LibrosDeUsuario>() {

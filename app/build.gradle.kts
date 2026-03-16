@@ -73,6 +73,9 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:5.0.5")
     annotationProcessor("com.github.bumptech.glide:compiler:5.0.5")
 
+    //Google Places Autocomplete
+    implementation("com.google.android.libraries.places:places:3.3.0")
+
     //Pantalla de carga con mi logo
     implementation("androidx.core:core-splashscreen:1.2.0")
 

@@ -79,8 +79,25 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
     private void setupListeners() {
         binding.btnBack.setOnClickListener(v -> finish());
 
-        // Al pulsar el círculo de color de la toolbar
         binding.statusColorContainer.setOnClickListener(v -> mostrarDialogoColores());
+
+        // --- FILTROS DE PROGRESO ---
+        binding.chipGroupFiltersEst.setOnCheckedChangeListener((group, checkedId) -> {
+            if (adapter == null) return;
+
+            if (checkedId == binding.chipSinEmpezarEst.getId()) {
+                adapter.filtrarPorEstado("SIN_EMPEZAR");
+            } else if (checkedId == binding.chipEmpezadosEst.getId()) {
+                adapter.filtrarPorEstado("EMPEZADOS");
+            } else if (checkedId == binding.chipTerminadosEst.getId()) {
+                adapter.filtrarPorEstado("TERMINADOS");
+            } else {
+                adapter.filtrarPorEstado("TODOS");
+            }
+        });
+
+        // --- FILTRO DE AUTOR ---
+        binding.chipFilterAutorEst.setOnClickListener(v -> mostrarMenuAutores());
 
         binding.fabAddLibrosEstanteria.setOnClickListener(v -> {
             Intent intent = new Intent(this, NuevoLibroEstanteriaActivity.class);
@@ -95,6 +112,36 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void mostrarMenuAutores() {
+        if (adapter == null) return;
+
+        List<String> autores = adapter.getListaAutoresUnicos();
+        if (autores.isEmpty()) {
+            Toast.makeText(this, "No hay autores en esta estantería", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(this, binding.chipFilterAutorEst);
+
+        for (int i = 0; i < autores.size(); i++) {
+            popup.getMenu().add(0, i, i, autores.get(i));
+        }
+        popup.getMenu().add(1, 999, autores.size(), "--- Limpiar Autor ---");
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 999) {
+                binding.chipFilterAutorEst.setText("Autor");
+                adapter.filtrarPorAutor(null);
+            } else {
+                String seleccionado = item.getTitle().toString();
+                binding.chipFilterAutorEst.setText(seleccionado);
+                adapter.filtrarPorAutor(seleccionado);
+            }
+            return true;
+        });
+        popup.show();
     }
 
     private void mostrarDialogoColores() {
@@ -155,11 +202,20 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
 
     private void aplicarColoresDinamicosManual(String colorPastel) {
         int fuerte = obtenerColorFuerte(colorPastel);
+        ColorStateList csl = ColorStateList.valueOf(fuerte);
+
         binding.viewEstanteriaColor.getBackground().setColorFilter(fuerte, PorterDuff.Mode.SRC_IN);
-        binding.statusColorContainer.setStrokeColor(ColorStateList.valueOf(fuerte));
-        binding.btnBack.setStrokeColor(ColorStateList.valueOf(fuerte));
+        binding.statusColorContainer.setStrokeColor(csl);
+        binding.btnBack.setStrokeColor(csl);
         binding.tvCantidadLibrosEstanteria.setTextColor(fuerte);
-        binding.fabAddLibrosEstanteria.setBackgroundTintList(ColorStateList.valueOf(fuerte));
+        binding.fabAddLibrosEstanteria.setBackgroundTintList(csl);
+
+        // Pintar los chips de filtro
+        binding.chipSinEmpezarEst.setChipIconTint(csl);
+        binding.chipEmpezadosEst.setChipIconTint(csl);
+        binding.chipTerminadosEst.setChipIconTint(csl);
+        binding.chipFilterAutorEst.setChipIconTint(csl);
+        binding.chipFilterAutorEst.setTextColor(csl);
     }
 
     private void abrirValoracion(Libro libro) {

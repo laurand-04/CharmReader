@@ -1,15 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:fitsSystemWindows="true">
 
     <android.webkit.WebView
-    android:id="@+id/webViewContent"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:alpha="0" />
+        android:id="@+id/webViewContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="30dp"
+        android:clipToPadding="false"
+        android:alpha="0" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:paddingHorizontal="15dp"
+        android:paddingVertical="8dp"
+        android:background="#F2F2F2">
+
+        <TextView
+            android:id="@+id/tvProgresoCapitulo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Capítulo: 0%"
+            android:textColor="#666666"
+            android:textSize="12sp"
+            android:gravity="start" />
+
+        <TextView
+            android:id="@+id/tvProgresoLibro"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Libro: 0%"
+            android:textColor="#666666"
+            android:textSize="12sp"
+            android:gravity="end" />
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/pbVisor"

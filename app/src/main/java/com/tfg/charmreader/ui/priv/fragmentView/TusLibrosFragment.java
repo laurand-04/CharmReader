@@ -61,7 +61,7 @@ public class TusLibrosFragment extends Fragment {
                 }
             }
         });
-        adapter.setSoloPendientes(true);
+        adapter.setSoloPendientes(false);
         adapter.setOnItemLongClickListener(this::mostrarDialogoEliminar);
         binding.recyclerLibros.setAdapter(adapter);
     }
@@ -93,6 +93,61 @@ public class TusLibrosFragment extends Fragment {
         binding.fabAdd.setOnClickListener(v -> {
             startActivityForResult(new Intent(getActivity(), CargarNuevoLibroActivity.class), 123);
         });
+
+        binding.chipGroupFilters.setOnCheckedChangeListener((group, checkedId) -> {
+            // Obtenemos cuál chip ha sido pulsado comparando IDs directamente desde el binding
+            if (checkedId == binding.chipSinEmpezar.getId()) {
+                adapter.filtrarPorEstado("SIN_EMPEZAR");
+            } else if (checkedId == binding.chipEmpezados.getId()) {
+                adapter.filtrarPorEstado("EMPEZADOS");
+            } else if (checkedId == binding.chipTerminados.getId()) {
+                adapter.filtrarPorEstado("TERMINADOS");
+            } else {
+                // Si el usuario desmarca el chip pulsando de nuevo en él
+                adapter.filtrarPorEstado("TODOS");
+            }
+        });
+
+        binding.chipFilterAutor.setOnClickListener(v -> {
+            mostrarMenuAutores();
+        });
+    }
+
+    private void mostrarMenuAutores() {
+        // 1. Obtener autores del adaptador
+        List<String> autores = adapter.getListaAutoresUnicos();
+
+        if (autores.isEmpty()) {
+            Toast.makeText(getContext(), "No hay autores disponibles", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 2. Crear el PopupMenu anclado al chip
+        androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(requireContext(), binding.chipFilterAutor);
+
+        // 3. Añadir dinámicamente los autores al menú
+        // Usamos el ID del autor como groupId o simplemente lo manejamos por el título
+        for (int i = 0; i < autores.size(); i++) {
+            popup.getMenu().add(0, i, i, autores.get(i));
+        }
+
+        // 4. Añadir opción para limpiar el filtro al final
+        popup.getMenu().add(1, 999, autores.size(), "--- Limpiar Filtro ---");
+
+        // 5. Manejar el clic en cada autor
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 999) {
+                binding.chipFilterAutor.setText("Autor");
+                adapter.filtrarPorAutor(null);
+            } else {
+                String autorSeleccionado = item.getTitle().toString();
+                binding.chipFilterAutor.setText(autorSeleccionado);
+                adapter.filtrarPorAutor(autorSeleccionado);
+            }
+            return true;
+        });
+
+        popup.show();
     }
 
     private void mostrarDialogoEliminar(Libro libro) {

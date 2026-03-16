@@ -22,6 +22,13 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
     private List<Libro> librosMostrados;
     private List<Libro> todosLosLibros;
     private List<LibrosDeUsuario> relacionesUsuario;
+
+
+    private String queryActual = "";
+    private String estadoActual = "TODOS";
+    private String autorActual = null;
+
+
     private OnItemClickListener listener;
     private OnItemLongClickListener longListener;
     private boolean soloPendientes = false;
@@ -111,26 +118,67 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
         filtrar("");
     }
 
+    /**
+     * Filtro por texto (Buscador)
+     */
     public void filtrar(String texto) {
+        this.queryActual = (texto == null) ? "" : texto.toLowerCase().trim();
+        aplicarFiltrosCombinados();
+    }
+
+    /**
+     * Filtro por estado (Chips)
+     */
+    public void filtrarPorEstado(String estado) {
+        this.estadoActual = estado;
+        aplicarFiltrosCombinados();
+    }
+
+    /**
+     * Filtro por Autor (Menú desplegable)
+     */
+    public void filtrarPorAutor(String autor) {
+        this.autorActual = autor;
+        aplicarFiltrosCombinados();
+    }
+
+    /**
+     * Lógica central de filtrado
+     */
+    private void aplicarFiltrosCombinados() {
         librosMostrados.clear();
-        String query = (texto == null) ? "" : texto.toLowerCase().trim();
 
         for (Libro libro : todosLosLibros) {
-            // 1. Verificamos si el libro coincide con el nombre o autor
-            boolean coincideBusqueda = query.isEmpty() ||
-                    libro.getNombre().toLowerCase().contains(query) ||
-                    libro.getAutor().toLowerCase().contains(query);
+            // 1. Validar Texto (Nombre o Autor)
+            boolean coincideTexto = queryActual.isEmpty() ||
+                    libro.getNombre().toLowerCase().contains(queryActual) ||
+                    libro.getAutor().toLowerCase().contains(queryActual);
 
-            if (coincideBusqueda) {
+            // 2. Validar Autor específico
+            boolean coincideAutor = (autorActual == null) ||
+                    libro.getAutor().equalsIgnoreCase(autorActual);
+
+            // 3. Validar Estado
+            boolean coincideEstado = true;
+            if (!estadoActual.equals("TODOS")) {
+                boolean iniciado = estaIniciado(libro.getId());
                 boolean finalizado = estaFinalizado(libro.getId());
 
-                // 2. Aplicamos la lógica de visualización:
-                // Si el buscador está VACÍO y queremos SOLO PENDIENTES, saltamos los finalizados.
-                // Si el buscador TIENE TEXTO, ignoramos el flag 'soloPendientes' y mostramos tod0.
-                if (query.isEmpty() && soloPendientes && finalizado) {
-                    continue;
+                switch (estadoActual) {
+                    case "SIN_EMPEZAR":
+                        coincideEstado = !iniciado;
+                        break;
+                    case "EMPEZADOS":
+                        coincideEstado = (iniciado && !finalizado);
+                        break;
+                    case "TERMINADOS":
+                        coincideEstado = finalizado;
+                        break;
                 }
+            }
 
+            // Si pasa todos los filtros, lo añadimos
+            if (coincideTexto && coincideAutor && coincideEstado) {
                 librosMostrados.add(libro);
             }
         }
@@ -146,6 +194,28 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
             }
         }
         return false;
+    }
+
+    private boolean estaIniciado(int idLibro) {
+        if (relacionesUsuario == null) return false;
+        for (LibrosDeUsuario ldu : relacionesUsuario) {
+            // Verificamos que el ID no sea nulo antes de comparar
+            if (ldu.getId() != null && ldu.getId().getIdL() == idLibro) {
+                return ldu.getFechaInicio() != null;
+            }
+        }
+        return false;
+    }
+
+    public List<String> getListaAutoresUnicos() {
+        List<String> autores = new ArrayList<>();
+        for (Libro l : todosLosLibros) {
+            if (!autores.contains(l.getAutor())) {
+                autores.add(l.getAutor());
+            }
+        }
+        java.util.Collections.sort(autores);
+        return autores;
     }
 
     public static class LibroViewHolder extends RecyclerView.ViewHolder {

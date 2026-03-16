@@ -73,10 +73,12 @@ public class VisorActivity extends AppCompatActivity {
                 if (!scrollAplicado) aplicarScrollGuardado();
                 binding.pbVisor.setVisibility(View.GONE);
                 binding.webViewContent.animate().alpha(1f).setDuration(300);
+                actualizarTextosProgreso();
             }
         });
 
         binding.webViewContent.setOnScrollChangeListener((v, x, y, ox, oy) -> {
+            actualizarTextosProgreso();
             if (viewModel.getCurrentChapterIndex() == viewModel.getTotalChapters() - 1) {
                 if (obtenerPorcentajeScroll() > 0.98f && this.grupo == false) viewModel.marcarFinalizado();
             }
@@ -104,6 +106,7 @@ public class VisorActivity extends AppCompatActivity {
                 if (e.getX() > binding.webViewContent.getWidth() / 2) viewModel.navegarCapitulo(1);
                 else viewModel.navegarCapitulo(-1);
                 scrollAplicado = true; // Al cambiar capítulo no aplicamos scroll antiguo
+                actualizarTextosProgreso();
                 return true;
             }
         });
@@ -124,6 +127,21 @@ public class VisorActivity extends AppCompatActivity {
     private float obtenerPorcentajeScroll() {
         float h = binding.webViewContent.getContentHeight() * getResources().getDisplayMetrics().density - binding.webViewContent.getHeight();
         return h <= 0 ? 1f : Math.min(1f, binding.webViewContent.getScrollY() / h);
+    }
+
+    private void actualizarTextosProgreso() {
+        // 1. Calcular porcentaje del capítulo (Scroll)
+        float porcentajeCap = obtenerPorcentajeScroll() * 100;
+        binding.tvProgresoCapitulo.setText(String.format("Capítulo: %.0f%%", porcentajeCap));
+
+        // 2. Calcular porcentaje del libro (Capítulos)
+        int total = viewModel.getTotalChapters();
+        if (total > 0) {
+            // Calculamos en qué capítulo estamos respecto al total
+            // Sumamos 1 al index porque es 0-based
+            float progresoGral = ((float) (viewModel.getCurrentChapterIndex() + 1) / total) * 100;
+            binding.tvProgresoLibro.setText(String.format("Libro: %.0f%%", progresoGral));
+        }
     }
 
     private void mostrarDialogoFinal() {
