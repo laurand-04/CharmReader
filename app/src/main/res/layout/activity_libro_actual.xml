@@ -107,7 +107,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="4dp"
-            android:text="Aquí va la descripción larga del libro..."
+            android:text="Aquí va la descripción..."
             android:textColor="#616161"
             android:textSize="15sp" />
 
@@ -115,7 +115,8 @@
             android:id="@+id/btnLeerEpub"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
+            android:visibility="visible"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
             app:strokeWidth="1dp"
@@ -129,22 +130,19 @@
                 android:padding="18dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
-
                 <ImageView
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:background="@drawable/bg_circle_upload"
                     android:padding="8dp"
                     android:src="@android:drawable/ic_media_play"
-                    app:tint="@color/basico"/>
-
+                    app:tint="#1976D2"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:layout_marginStart="16dp"
                     android:layout_weight="1">
-
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -152,23 +150,104 @@
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="#1A1A1A"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Abre el libro para leer"
+                        android:textSize="13sp"
+                        android:textColor="#777777"/>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
+            android:id="@+id/layoutIA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ANÁLISIS DE LA COMUNIDAD (IA)"
+                android:layout_marginTop="24dp"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="#E65100"
+                android:letterSpacing="0.1"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="#FFF8E1"
+                app:strokeColor="#FFE0B2"
+                app:strokeWidth="1dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:id="@+id/tvValoracionMedia"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0"
+                            android:textSize="32sp"
+                            android:textStyle="bold"
+                            android:textColor="#E65100"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="★"
+                            android:textColor="#FFB300"
+                            android:textSize="24sp"/>
+
+                        <ProgressBar
+                            android:id="@+id/pbCargandoIA"
+                            style="?android:attr/progressBarStyleSmall"
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_marginStart="16dp"
+                            android:indeterminateTint="#E65100"
+                            android:visibility="gone" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvComentarioIA"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Analizando opiniones..."
+                        android:textColor="#4E342E"
+                        android:textSize="14sp"
+                        android:lineSpacingExtra="3dp"
+                        android:fontFamily="sans-serif-light"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Abre el libro directamente para leer"
-                        android:textSize="13sp"
-                        android:textColor="#777777"/>
+                        android:layout_gravity="end"
+                        android:layout_marginTop="8dp"
+                        android:text="Generado por Gemini 2.0"
+                        android:textSize="10sp"
+                        android:textColor="#A1887F"
+                        android:textAllCaps="true"/>
                 </LinearLayout>
-
-                <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_flecha"
-                    app:tint="#BDBDBD"/>
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -67,6 +67,7 @@ public class PropuestasFragment extends Fragment {
             public void onItemClick(BookEn libro) {
                 Intent i = new Intent(getContext(), LibroActualActivity.class);
                 i.putExtra("libroSeleccionado", libro);
+                i.putExtra("esIA", true);
                 startActivity(i);
             }
 

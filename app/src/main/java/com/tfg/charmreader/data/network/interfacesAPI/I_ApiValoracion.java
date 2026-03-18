@@ -14,6 +14,10 @@ public interface I_ApiValoracion {
             @Path("tipo") Valoracion.TipoValoracion tipo,
             @Path("id") int id);
 
+    @GET("valoraciones/{titulo}")
+    Call<List<Valoracion>> verValoracionesTitulo(
+            @Path("titulo") String titulo);
+
     @GET("valoraciones/media-libro/{idGrupo}/{idBook}")
     Call<Double> obtenerMediaLibro(@Path("idGrupo") int idGrupo, @Path("idBook") int idBook);
 

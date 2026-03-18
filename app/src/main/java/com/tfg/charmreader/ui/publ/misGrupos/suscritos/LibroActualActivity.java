@@ -3,6 +3,7 @@ package com.tfg.charmreader.ui.publ.misGrupos.suscritos;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,16 +36,27 @@ public class LibroActualActivity extends AppCompatActivity {
         if (savedInstanceState == null) {
             BookEn libro = (BookEn) getIntent().getSerializableExtra("libroSeleccionado");
             viewModel.setLibro(libro);
+
+            boolean mostrarIA = getIntent().getBooleanExtra("esIA", false);
+            Log.d("DEBUG_FLOW", "mostrarIA = " + mostrarIA);
+
+            if (mostrarIA && libro != null) {
+                // Modo IA: Ocultamos el botón de lectura y mostramos el layout de IA
+                binding.btnLeerEpub.setVisibility(android.view.View.GONE);
+                binding.layoutIA.setVisibility(android.view.View.VISIBLE);
+
+                viewModel.cargarComentariosYGenerarResumen(libro.getTitulo());
+            }
         }
 
         // Botón atrás opcional (si decides añadirlo al XML o Toolbar)
         // binding.btnBack.setOnClickListener(v -> finish());
 
         binding.btnLeerEpub.setOnClickListener(v -> {
-            BookEn libro = viewModel.getLibro().getValue();
-            if (libro != null) {
-                if (libro.getUrlLibro() != null) {
-                    viewModel.descargarLibro(libro);
+            BookEn libroL = viewModel.getLibro().getValue();
+            if (libroL != null) {
+                if (libroL.getUrlLibro() != null) {
+                    viewModel.descargarLibro(libroL);
                 } else {
                     new MaterialAlertDialogBuilder(this)
                             .setTitle("Libro no disponible todavía")
@@ -82,6 +94,42 @@ public class LibroActualActivity extends AppCompatActivity {
                     .error(R.drawable.ic_libro)
                     .centerCrop()
                     .into(binding.ivDetallePortada);
+        });
+
+        viewModel.getResumenIA().observe(this, resumen -> {
+            if (resumen != null) {
+                // Si no quieres complicarte, usa esto:
+                binding.tvComentarioIA.setText(resumen);
+
+                // Pero si quieres que "aparezca" suavemente:
+                binding.tvComentarioIA.setTranslationY(20f);
+                binding.tvComentarioIA.animate()
+                        .translationY(0f)
+                        .alpha(1f)
+                        .setDuration(500)
+                        .start();
+            }
+        });
+
+        // Observar la nota media calculada
+        viewModel.getMediaValoracion().observe(this, media -> {
+            binding.tvValoracionMedia.setText(media);
+        });
+
+        // Opcional: Observar el estado de carga para feedback visual
+        viewModel.getCargandoIA().observe(this, cargando -> {
+            if (cargando != null && cargando) {
+                // MODO CARGANDO
+                binding.pbCargandoIA.setVisibility(View.VISIBLE);
+                binding.tvComentarioIA.setText("Gemini está analizando las reseñas...");
+                binding.tvComentarioIA.setAlpha(0.6f);
+                binding.tvValoracionMedia.setAlpha(0.3f);
+            } else {
+                // MODO LISTO
+                binding.pbCargandoIA.setVisibility(View.GONE);
+                binding.tvComentarioIA.setAlpha(1.0f);
+                binding.tvValoracionMedia.setAlpha(1.0f);
+            }
         });
 
         viewModel.getMensaje().observe(this, msg -> {

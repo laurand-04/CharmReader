@@ -8,18 +8,32 @@ android {
     namespace = "com.tfg.charmreader"
     compileSdk = 36
 
-
     viewBinding{
         enable = true
     }
     defaultConfig {
         applicationId = "com.tfg.charmreader"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/INDEX.LIST",
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt"
+            )
+        }
     }
 
     buildTypes {
@@ -80,6 +94,5 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.2.0")
 
     implementation("com.cloudinary:cloudinary-android:3.1.2")
-
 
 }
