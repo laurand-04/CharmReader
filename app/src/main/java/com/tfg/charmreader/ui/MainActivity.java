@@ -13,6 +13,7 @@ import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.ActivityMainBinding;
 import com.tfg.charmreader.ui.autentication.PerfilActivity;
+import com.tfg.charmreader.ui.priv.fragmentView.TusObrasFragment;
 import com.tfg.charmreader.ui.publ.PublicActivity;
 import com.tfg.charmreader.ui.priv.fragmentView.EstanteriaFragment;
 import com.tfg.charmreader.ui.priv.fragmentView.EsperaFragment;
@@ -88,6 +89,9 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.espera) {
                 selectedFragment = new EsperaFragment();
                 Log.d("MainActivity_bottomNavigation", "configurarListeners: EsperaFragment");
+            } else if (itemId == R.id.tusObras){
+                selectedFragment = new TusObrasFragment();
+                Log.d("MainActivity_bottomNavigation", "configurarListeners: TusObrasFragment");
             }
 
             loadFragment(selectedFragment);

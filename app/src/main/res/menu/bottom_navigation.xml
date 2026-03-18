@@ -10,9 +10,13 @@
     <item
         android:id="@+id/proximamente"
         android:icon="@drawable/ic_proximamente"
-        android:title="Próximamente" />
+        android:title="Próximos" />
     <item
         android:id="@+id/espera"
         android:icon="@drawable/ic_espera"
         android:title="A la espera" />
+    <item
+        android:id="@+id/tusObras"
+        android:icon="@drawable/ic_tus_obras"
+        android:title="Tus Obras" />
 </menu>
