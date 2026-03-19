@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.databinding.ActivityPublicBinding;
-import com.tfg.charmreader.ui.autentication.PerfilActivity;
+import com.tfg.charmreader.ui.autentication.perfil.PerfilActivity;
 import com.tfg.charmreader.ui.publ.fragmentView.ExplorarFragment;
 import com.tfg.charmreader.ui.publ.fragmentView.MisGruposFragment;
 import com.tfg.charmreader.viewmodel.publ.misGrupos.PublicViewModel;
@@ -65,7 +65,7 @@ public class PublicActivity extends AppCompatActivity {
         // Regresar a Privado (Estantería)
         binding.btnIrPrivado.setOnClickListener(v -> finish());
 
-        // Ir al Perfil
+        // Ir al perfil
         binding.btnPerfilPublico.setOnClickListener(v -> {
             startActivity(new Intent(this, PerfilActivity.class));
         });

@@ -71,7 +71,6 @@
                     <FrameLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content">
-
                         <com.google.android.material.imageview.ShapeableImageView
                             android:id="@+id/ivFotoPerfil"
                             android:layout_width="100dp"
@@ -82,25 +81,19 @@
                             app:strokeColor="@color/basico"
                             app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
                             android:scaleType="centerCrop" />
-
                         <ProgressBar
                             android:id="@+id/pbFotoPerfil"
                             android:layout_width="40dp"
                             android:layout_height="40dp"
                             android:layout_gravity="center"
-                            android:visibility="gone"
-                            android:indeterminateTint="@color/basico" />
-
+                            android:visibility="gone" />
                         <com.google.android.material.floatingactionbutton.FloatingActionButton
                             android:id="@+id/btnAbrirEdicion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="bottom|end"
                             app:fabCustomSize="32dp"
-                            app:srcCompat="@android:drawable/ic_menu_gallery"
-                            app:tint="@android:color/white"
-                            app:backgroundTint="@color/basico"
-                            app:elevation="4dp" />
+                            app:srcCompat="@android:drawable/ic_menu_gallery" />
                     </FrameLayout>
 
                     <LinearLayout
@@ -109,7 +102,6 @@
                         android:orientation="horizontal"
                         android:gravity="center_vertical"
                         android:layout_marginTop="16dp">
-
                         <TextView
                             android:id="@+id/tvNombreUsuario"
                             android:layout_width="wrap_content"
@@ -118,7 +110,6 @@
                             android:textSize="20sp"
                             android:textStyle="bold"
                             android:textColor="#212121"/>
-
                         <ImageView
                             android:id="@+id/btnEditarNombre"
                             android:layout_width="28dp"
@@ -127,9 +118,7 @@
                             android:padding="4dp"
                             android:src="@android:drawable/ic_menu_edit"
                             app:tint="@color/basico"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:clickable="true"
-                            android:focusable="true" />
+                            android:background="?attr/selectableItemBackgroundBorderless" />
                     </LinearLayout>
 
                     <TextView
@@ -140,6 +129,69 @@
                         android:textSize="14sp"
                         android:textColor="#757575"
                         android:layout_marginTop="4dp"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="16dp"
+                        android:background="#EEEEEE" />
+
+                    <LinearLayout
+                        android:id="@+id/containerDescripcion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Sobre mí"
+                            android:textSize="12sp"
+                            android:textColor="@color/basico"
+                            android:textStyle="bold" />
+                        <TextView
+                            android:id="@+id/tvDescripcionUsuario"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Toca para añadir una descripción..."
+                            android:textColor="#616161"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginTop="8dp"
+                        android:padding="8dp">
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Cuenta privada"
+                                android:textColor="#212121"
+                                android:textSize="16sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Otros usuarios no te verán"
+                                android:textColor="#757575"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switchPrivacidad"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" />
+                    </LinearLayout>
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 

@@ -11,8 +11,11 @@ public class Obras implements Serializable {
     private Integer id;
 
     // Usamos "usuario" porque así lo serializa Spring Boot por tus getters/setters
-    @SerializedName("usuario")
+    @SerializedName("idUsuario")
     private int idUsuario;
+
+    @SerializedName("idLibro")
+    private int idLibro;
 
     @SerializedName("ruta")
     private String ruta;
@@ -47,6 +50,7 @@ public class Obras implements Serializable {
         this.url_imagen = url_imagen;
         this.fecha_ultima_modificacion = fecha_ultima_modificacion;
         this.autor = autor;
+        this.idLibro = -1;
     }
 
     // Getters y Setters
@@ -120,5 +124,13 @@ public class Obras implements Serializable {
 
     public void setSinopsis(String sinopsis) {
         this.sinopsis = sinopsis;
+    }
+
+    public int getIdLibro() {
+        return idLibro;
+    }
+
+    public void setIdLibro(int idLibro) {
+        this.idLibro = idLibro;
     }
 }

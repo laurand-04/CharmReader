@@ -118,6 +118,14 @@ public class LibrosAdapter extends RecyclerView.Adapter<LibrosAdapter.LibroViewH
         filtrar("");
     }
 
+    //Todo prueba de funcionamiento
+    public void setLibros(List<Libro> nuevosLibros) {
+        this.todosLosLibros.clear();
+        this.todosLosLibros.addAll(nuevosLibros != null ? nuevosLibros : new ArrayList<>());
+
+        this.relacionesUsuario.clear();
+    }
+
     /**
      * Filtro por texto (Buscador)
      */

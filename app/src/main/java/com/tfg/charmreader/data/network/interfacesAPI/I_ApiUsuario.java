@@ -33,4 +33,7 @@ public interface I_ApiUsuario {
 
     @DELETE("/usuarios/eliminar/{id}")
     Call<Void> eliminarUsuario(@Path("id") int id);
+
+    @GET("/usuarios/publicos")
+    Call<List<Usuario>> obtenerUsuariosPublicos();
 }

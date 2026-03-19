@@ -12,7 +12,7 @@ import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
 import com.tfg.charmreader.databinding.ActivityMainBinding;
-import com.tfg.charmreader.ui.autentication.PerfilActivity;
+import com.tfg.charmreader.ui.autentication.perfil.PerfilActivity;
 import com.tfg.charmreader.ui.priv.fragmentView.TusObrasFragment;
 import com.tfg.charmreader.ui.publ.PublicActivity;
 import com.tfg.charmreader.ui.priv.fragmentView.EstanteriaFragment;

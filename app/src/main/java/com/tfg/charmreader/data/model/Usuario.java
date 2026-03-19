@@ -6,6 +6,8 @@ public class Usuario implements Serializable {
     private Integer id=null;
     private String correo;
     private String nombre;
+    private String descripcion;
+    private boolean publico;
     private String foto;
 
     // Constructor vacío requerido por Retrofit/Gson para la deserialización
@@ -22,6 +24,7 @@ public class Usuario implements Serializable {
         this.correo = correo;
         this.nombre = nombre;
         this.foto = foto;
+        this.publico = false;
     }
 
     public Integer getId() {
@@ -54,6 +57,22 @@ public class Usuario implements Serializable {
 
     public void setFoto(String foto) {
         this.foto = foto;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public boolean getPublico() {
+        return publico;
+    }
+
+    public void setPublico(boolean publico) {
+        this.publico = publico;
     }
 }
 

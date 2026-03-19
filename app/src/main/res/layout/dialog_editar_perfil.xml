@@ -26,7 +26,7 @@
                 android:layout_alignParentTop="true"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                android:src="@drawable/ic_close"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
                 app:tint="#999999"
                 android:clickable="true"
                 android:focusable="true" />
@@ -35,11 +35,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_below="@id/btnCerrarDialog"
-                android:layout_marginTop="-10dp"
+                android:layout_marginTop="0dp"
                 android:orientation="vertical"
                 android:gravity="center_horizontal">
 
                 <TextView
+                    android:id="@+id/tvTituloDialogEditar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Editar Nombre"
@@ -49,6 +50,7 @@
                     android:layout_marginBottom="20dp"/>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/textInputLayoutDialog"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -63,8 +65,6 @@
                         android:id="@+id/etNuevoNombreDialog"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Tu nombre"
-                        android:inputType="textPersonName"
                         android:textColor="#212121" />
                 </com.google.android.material.textfield.TextInputLayout>
 

@@ -27,6 +27,7 @@ import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.model.Obras;
 import com.tfg.charmreader.databinding.FragmentTusObrasBinding;
 import com.tfg.charmreader.ui.priv.adapterRecyclerView.ObrasAdapter;
+import com.tfg.charmreader.ui.priv.tusLibros.CargarNuevoLibroActivity;
 import com.tfg.charmreader.ui.priv.tusObras.CrearObraActivity;
 import com.tfg.charmreader.ui.priv.tusObras.EditorObraActivity;
 import com.tfg.charmreader.viewmodel.priv.fragmentView.TusObrasFragmentViewModel;
@@ -167,6 +168,7 @@ public class TusObrasFragment extends Fragment {
         MaterialButton btnMetadatos = dialogView.findViewById(R.id.btnModificarMetadatos);
         MaterialButton btnEstado = dialogView.findViewById(R.id.btnCambiarEstado);
         MaterialButton btnDescargar = dialogView.findViewById(R.id.btnDescargarLibro);
+        MaterialButton btnPublicar = dialogView.findViewById(R.id.btnPublicarLibro);
         ImageView ivPortada = dialogView.findViewById(R.id.ivPortadaDialogObra);
 
         // 4. Llenamos los datos dinámicos
@@ -231,6 +233,26 @@ public class TusObrasFragment extends Fragment {
             descargarObraLocal(obra);
         });
 
+        btnPublicar.setOnClickListener(v -> {
+            dialog.dismiss(); // Cerramos el menú de opciones
+
+            // Verificamos si la obra está marcada como finalizada
+            if (obra.getFinalizado()) {
+                // Si está finalizada, procedemos directamente
+                confirmarPublicacion(obra);
+            } else {
+                // SI NO ESTÁ FINALIZADA: Mostramos el aviso de advertencia
+                new MaterialAlertDialogBuilder(requireContext())
+                        .setTitle("Obra en borrador")
+                        .setMessage("Esta obra aún no ha sido marcada como finalizada. ¿Estás seguro de que quieres publicarla en la comunidad tal como está?")
+                        .setNegativeButton("CANCELAR", null)
+                        .setPositiveButton("PUBLICAR DE TODAS FORMAS", (d, w) -> {
+                            confirmarPublicacion(obra);
+                        })
+                        .show();
+            }
+        });
+
         // 6. Mostramos el diálogo
         dialog.show();
     }
@@ -279,6 +301,15 @@ public class TusObrasFragment extends Fragment {
                     })
                     .show();
         }
+    }
+
+    //TODO
+    private void confirmarPublicacion(Obras obra) {
+        Intent intent = new Intent(requireContext(), CargarNuevoLibroActivity.class);
+        intent.putExtra("urlObra", obra.getRuta());
+        intent.putExtra("grupo", false);
+        intent.putExtra("obra", obra);
+        startActivity(intent);
     }
 
     @Override

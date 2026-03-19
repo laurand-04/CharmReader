@@ -63,6 +63,11 @@ public class UserRepository {
         CloudinaryClient.nuevoUpload(uri).callback(callback).dispatch();
     }
 
+    public void obtenerUsuariosPublicos(Callback<List<Usuario>> callback) {
+        apiUsuario.obtenerUsuariosPublicos().enqueue(callback);
+
+    }
+
     public interface RepositoryCallback<T> {
         void onComplete(T result);
         void onError(String message);

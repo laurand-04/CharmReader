@@ -40,6 +40,9 @@
         <activity android:name=".ui.autentication.RecuperacionActivity"
             android:windowSoftInputMode="adjustResize"/>
 
+        <activity android:name=".ui.autentication.perfil.publico.PerfilPublicoActivity"
+            android:windowSoftInputMode="adjustPan"/>
+
         <activity
             android:name=".ui.MainActivity"
             android:windowSoftInputMode="adjustPan"> </activity>
@@ -119,7 +122,7 @@
         <activity android:name=".ui.publ.misGrupos.creados.NuevoGrupoActivity"
             android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".ui.autentication.PerfilActivity"/>
+        <activity android:name=".ui.autentication.perfil.PerfilActivity"/>
 
         <activity android:name=".ui.admin.AdminMainActivity"/>
 

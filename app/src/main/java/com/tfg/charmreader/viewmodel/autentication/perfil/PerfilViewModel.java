@@ -1,4 +1,4 @@
-package com.tfg.charmreader.viewmodel.autentication;
+package com.tfg.charmreader.viewmodel.autentication.perfil;
 
 import android.content.Context;
 import android.net.Uri;

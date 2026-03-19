@@ -2,6 +2,7 @@ package com.tfg.charmreader.viewmodel.priv.tusobras;
 
 import android.app.Application;
 import android.net.Uri;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -40,7 +41,9 @@ public class CrearObraViewModel extends AndroidViewModel {
     public void crearNuevaObra(String titulo, String autor, String descripcion, Uri uriPortada) {
         isLoading.setValue(true);
         executor.execute(() -> {
-            epub.generarObraDesdeCero(titulo, autor, descripcion, uriPortada, authRepository.getIdUsuario(), new Epub.CrearEpubCallback() {
+            int idUsuario = authRepository.getIdUsuario();
+            Log.d("CREAR_OBRA", "idUsuario: " + idUsuario);
+            epub.generarObraDesdeCero(titulo, autor, descripcion, uriPortada, idUsuario, new Epub.CrearEpubCallback() {
                 @Override public void onSuccess() { creacionExitosa.postValue(true); isLoading.postValue(false); }
                 @Override public void onError(String e) { mensaje.postValue(e); isLoading.postValue(false); }
             });

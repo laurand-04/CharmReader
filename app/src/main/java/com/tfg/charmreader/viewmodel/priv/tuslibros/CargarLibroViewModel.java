@@ -15,9 +15,11 @@ import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.model.CCLibrosDeUsuario;
 import com.tfg.charmreader.data.model.Libro;
 import com.tfg.charmreader.data.model.LibrosDeUsuario;
+import com.tfg.charmreader.data.model.Obras;
 import com.tfg.charmreader.data.network.API.CloudinaryClient;
 import com.tfg.charmreader.data.repository.priv.LibroRepository;
 import com.tfg.charmreader.data.repository.priv.proximamente.BookRepository;
+import com.tfg.charmreader.data.repository.priv.tusObras.ObrasRepository;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,6 +34,7 @@ import retrofit2.Response;
 
 public class CargarLibroViewModel extends AndroidViewModel {
     private final LibroRepository repository = new LibroRepository();
+    private final ObrasRepository obrasRepository = new ObrasRepository();
     private final MutableLiveData<Boolean> isProcessing = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> uploadSuccess = new MutableLiveData<>(false);
     private final MutableLiveData<String> error = new MutableLiveData<>();
@@ -43,7 +46,8 @@ public class CargarLibroViewModel extends AndroidViewModel {
     public LiveData<Boolean> getUploadSuccess() { return uploadSuccess; }
     public LiveData<String> getError() { return error; }
 
-    public void procesarEpub(Uri epubUri, int idUsuario, boolean grupo, int idLibro) {
+    public void procesarEpub(Uri epubUri, int idUsuario, boolean grupo, int idLibro, Obras obra) {
+        Log.d("DEBUG_PUBLISH", "Actualizando 2 Obra ID: " + obra);
         isProcessing.setValue(true);
         new Thread(() -> {
             try {
@@ -82,7 +86,7 @@ public class CargarLibroViewModel extends AndroidViewModel {
                                     nuevo.setUrlImagen(urlPortada);
                                     nuevo.setUrlLibro(urlEpub);
 
-                                    registrarEnApi(nuevo, rutaAbsoluta, idUsuario);
+                                    registrarEnApi(nuevo, rutaAbsoluta, idUsuario, obra);
                                 }
                             }
 
@@ -107,14 +111,28 @@ public class CargarLibroViewModel extends AndroidViewModel {
         }).start();
     }
 
-    private void registrarEnApi(Libro libro, String ruta, int idU) {
+    private void registrarEnApi(Libro libro, String ruta, int idU, Obras obra) {
+        Log.d("DEBUG_PUBLISH", "Actualizando 1 Obra ID: " + obra);
         repository.anadirLibro(libro, new Callback<Libro>() {
             @Override public void onResponse(Call<Libro> call, Response<Libro> resp) {
                 if (resp.isSuccessful() && resp.body() != null) {
+                    int nuevoIdLibro = resp.body().getId();
                     LibrosDeUsuario ldu = new LibrosDeUsuario(new CCLibrosDeUsuario(idU, resp.body().getId()), 0, ruta);
                     repository.actualizarProgreso(ldu, new Callback<LibrosDeUsuario>() {
                         @Override public void onResponse(Call<LibrosDeUsuario> c, Response<LibrosDeUsuario> r) {
-                            if (r.isSuccessful()) uploadSuccess.postValue(true);
+                            if (r.isSuccessful()) {
+                                if (obra != null) {
+                                    // Seteamos el ID del libro creado en el objeto obra
+                                    obra.setIdLibro(nuevoIdLibro);
+                                    Log.d("DEBUG_PUBLISH", "Actualizando Obra ID: " + obra.getId() + " con idLibro: " + nuevoIdLibro);
+
+                                    // Llamamos al repositorio de obras para actualizarla en la BD
+                                    actualizarIdLibroEnObra(obra);
+                                } else {
+                                    Log.d("DEBUG_PUBLISH", "Obra nula");
+                                    uploadSuccess.postValue(true);
+                                }
+                            }
                             else postError("Error al vincular con usuario");
                         }
                         @Override public void onFailure(Call<LibrosDeUsuario> c, Throwable t) { postError("Error de red"); }
@@ -146,6 +164,24 @@ public class CargarLibroViewModel extends AndroidViewModel {
                 }
             }
             @Override public void onFailure(Call<BookEn> call, Throwable t) { postError("Error al guardar libro"); }
+        });
+    }
+
+    private void actualizarIdLibroEnObra(Obras obra) {
+        // Asumo que tienes un ObrasRepository o el acceso desde este viewmodel
+        obrasRepository.guardarObra(obra, new Callback<Obras>() {
+            @Override
+            public void onResponse(Call<Obras> call, Response<Obras> response) {
+                if (response.isSuccessful()) {
+                    uploadSuccess.postValue(true);
+                } else {
+                    postError("Libro creado pero no se pudo vincular a la obra");
+                }
+            }
+            @Override
+            public void onFailure(Call<Obras> call, Throwable t) {
+                postError("Error de red al vincular obra");
+            }
         });
     }
 

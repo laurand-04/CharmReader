@@ -80,6 +80,7 @@ public class Epub {
                 }
 
                 String rutaAbsoluta = archivoEpub.getAbsolutePath();
+                Log.d("CREAR_OBRA", "1 idUsuario: " + idUsuario);
 
                 if (coverBytes != null) {
                     CloudinaryClient.subirImagenCloudinary(coverBytes, new CloudinaryClient.CloudinaryCallback() {
@@ -191,6 +192,7 @@ public class Epub {
 
     private void registrarNuevaObraApi(int idU, String t, String a, String s, String url, String ruta, CrearEpubCallback cb) {
         Obras n = new Obras();
+        Log.d("CREAR_OBRA", "2 idUsuario: " + idU);
 
         n.setIdUsuario(idU);
         n.setNombre(t);
