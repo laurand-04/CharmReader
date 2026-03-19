@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.data.model.ObrasModel;
+import com.tfg.charmreader.data.model.Obras;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -22,8 +22,8 @@ import java.util.Locale;
 
 public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHolder> {
 
-    private List<ObrasModel> obrasMostradas;
-    private List<ObrasModel> todasLasObras;
+    private List<Obras> obrasMostradas;
+    private List<Obras> todasLasObras;
 
     private String queryActual = "";
     private String estadoActual = "TODOS";
@@ -36,14 +36,14 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
     private final SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
 
     public interface OnItemClickListener {
-        void onItemClick(ObrasModel obra);
+        void onItemClick(Obras obra);
     }
 
     public interface OnItemLongClickListener {
-        void onItemLongClick(ObrasModel obra);
+        void onItemLongClick(Obras obra);
     }
 
-    public ObrasAdapter(List<ObrasModel> obras, OnItemClickListener listener) {
+    public ObrasAdapter(List<Obras> obras, OnItemClickListener listener) {
         this.todasLasObras = (obras != null) ? new ArrayList<>(obras) : new ArrayList<>();
         this.obrasMostradas = new ArrayList<>(this.todasLasObras);
         this.listener = listener;
@@ -65,7 +65,7 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
     public void onBindViewHolder(@NonNull ObraViewHolder holder, int position) {
         if (obrasMostradas.isEmpty()) return;
 
-        ObrasModel obra = obrasMostradas.get(position);
+        Obras obra = obrasMostradas.get(position);
 
         // 1. Título
         holder.tvTitulo.setText(obra.getNombre() != null ? obra.getNombre() : "Sin título");
@@ -111,7 +111,7 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
         return obrasMostradas.size();
     }
 
-    public void setData(List<ObrasModel> nuevasObras) {
+    public void setData(List<Obras> nuevasObras) {
         this.todasLasObras.clear();
         this.todasLasObras.addAll(nuevasObras != null ? nuevasObras : new ArrayList<>());
         filtrar(""); // Forzamos el refiltrado al recibir nuevos datos
@@ -147,7 +147,7 @@ public class ObrasAdapter extends RecyclerView.Adapter<ObrasAdapter.ObraViewHold
     private void aplicarFiltrosCombinados() {
         obrasMostradas.clear();
 
-        for (ObrasModel obra : todasLasObras) {
+        for (Obras obra : todasLasObras) {
             // 1. Validar Texto (Nombre de la obra)
             boolean coincideTexto = queryActual.isEmpty() ||
                     (obra.getNombre() != null && obra.getNombre().toLowerCase().contains(queryActual));

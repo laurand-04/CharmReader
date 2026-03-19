@@ -1,6 +1,6 @@
 package com.tfg.charmreader.data.repository.priv.tusObras;
 
-import com.tfg.charmreader.data.model.ObrasModel;
+import com.tfg.charmreader.data.model.Obras;
 import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiObras;
 
@@ -17,11 +17,11 @@ public class ObrasRepository {
         this.apiObras = API.getInstancia().create(I_ApiObras.class);
     }
 
-    public void guardarObra(ObrasModel nuevaObra, Callback<ObrasModel> callback) {
+    public void guardarObra(Obras nuevaObra, Callback<Obras> callback) {
         apiObras.guardarObra(nuevaObra).enqueue(callback);
     }
 
-    public void obtenerObrasDeUsuario(int idUsuario, Callback<List<ObrasModel>> callback) {
+    public void obtenerObrasDeUsuario(int idUsuario, Callback<List<Obras>> callback) {
         apiObras.obtenerObrasDeUsuario(idUsuario).enqueue(callback);
     }
 

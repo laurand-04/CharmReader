@@ -60,62 +60,51 @@ public class CargarLibroViewModel extends AndroidViewModel {
                 String isbn = book.getMetadata().getIdentifiers().isEmpty() ? "" : book.getMetadata().getIdentifiers().get(0).getValue();
                 byte[] coverData = (book.getCoverImage() != null) ? book.getCoverImage().getData() : null;
 
-                String rutaAbsoluta = copiarEpub(epubUri); // Ya tienes el archivo en el almacenamiento interno
-                File archivoEpub = new File(rutaAbsoluta); // Convertimos el String/Uri a File
+                String rutaAbsoluta = copiarEpub(epubUri);
+                File archivoEpub = new File(rutaAbsoluta);
 
-                // 1. Subir Portada
-                subirImagenCloudinary(coverData, urlPortada -> {
+                // 1. Subir Portada usando la clase estática CloudinaryClient
+                CloudinaryClient.subirImagenCloudinary(coverData, new CloudinaryClient.CloudinaryCallback() {
+                    @Override
+                    public void onUrl(String urlPortada) {
 
-                    // 2. Subir el Archivo EPUB (nuevo paso)
-                    subirArchivoRawCloudinary(archivoEpub, urlEpub -> {
-                        //Si es un libro de grupo trabajamos con -> bookEn
-                        if(grupo){
-                            registrarEnApi(idLibro, rutaAbsoluta, urlEpub);
-                        }
-                        //Si es un libro de usuario trabajamos con libro
-                        else{
-                            Libro nuevo = new Libro(isbn, title, finalAuthors, book.getSpine().size());
-                            nuevo.setUrlImagen(urlPortada); // Imagen
-                            nuevo.setUrlLibro(urlEpub);    // PDF/EPUB en Cloudinary
+                        // 2. Subir el Archivo EPUB usando la clase estática CloudinaryClient
+                        CloudinaryClient.subirArchivoRawCloudinary(archivoEpub, new CloudinaryClient.CloudinaryCallback() {
+                            @Override
+                            public void onUrl(String urlEpub) {
+                                //Si es un libro de grupo trabajamos con -> bookEn
+                                if(grupo){
+                                    registrarEnApi(idLibro, rutaAbsoluta, urlEpub);
+                                }
+                                //Si es un libro de usuario trabajamos con libro
+                                else{
+                                    Libro nuevo = new Libro(isbn, title, finalAuthors, book.getSpine().size());
+                                    nuevo.setUrlImagen(urlPortada);
+                                    nuevo.setUrlLibro(urlEpub);
 
-                            registrarEnApi(nuevo, rutaAbsoluta, idUsuario);
-                        }
-                    });
+                                    registrarEnApi(nuevo, rutaAbsoluta, idUsuario);
+                                }
+                            }
+
+                            @Override
+                            public void onError(String mensajeError) {
+                                postError(mensajeError);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String mensajeError) {
+                        // Si falla la imagen, podrías decidir continuar sin ella o cortar aquí.
+                        // En este caso, continuamos mandando "" como URL (comportamiento original)
+                        onUrl("");
+                    }
                 });
 
             } catch (Exception e) {
                 postError("Error al procesar el archivo EPUB");
             }
         }).start();
-    }
-
-    private void subirImagenCloudinary(byte[] data, CloudinaryCallback cb) {
-        if (data == null) { cb.onUrl(""); return; }
-        CloudinaryClient.nuevoUpload(data).callback(new UploadCallback() {
-            @Override public void onSuccess(String r, Map res) { cb.onUrl((String) res.get("secure_url")); }
-            @Override public void onError(String r, ErrorInfo e) { cb.onUrl(""); }
-            @Override public void onStart(String r) {}
-            @Override public void onProgress(String r, long b, long t) {}
-            @Override public void onReschedule(String r, ErrorInfo e) {}
-        }).dispatch();
-    }
-
-    private void subirArchivoRawCloudinary(File file, CloudinaryCallback cb) {
-        if (file == null || !file.exists()) { cb.onUrl(""); return; }
-
-        CloudinaryClient.nuevoUpload(file.getAbsolutePath())
-                .option("resource_type", "raw") // IMPRESCINDIBLE para .epub o .pdf
-                .option("use_filename", true)   // Opcional: mantiene el nombre original
-                .callback(new UploadCallback() {
-                    @Override public void onSuccess(String r, Map res) { cb.onUrl((String) res.get("secure_url")); }
-                    @Override public void onError(String r, ErrorInfo e) {
-                        postError("Error al subir el archivo a la nube");
-                        cb.onUrl("");
-                    }
-                    @Override public void onStart(String r) {}
-                    @Override public void onProgress(String r, long b, long t) {}
-                    @Override public void onReschedule(String r, ErrorInfo e) {}
-                }).dispatch();
     }
 
     private void registrarEnApi(Libro libro, String ruta, int idU) {
@@ -175,6 +164,4 @@ public class CargarLibroViewModel extends AndroidViewModel {
         error.postValue(m);
         isProcessing.postValue(false);
     }
-
-    interface CloudinaryCallback { void onUrl(String url); }
 }

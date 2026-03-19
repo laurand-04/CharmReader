@@ -2,9 +2,10 @@ package com.tfg.charmreader.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class ObrasModel {
+public class Obras implements Serializable {
 
     @SerializedName("id")
     private Integer id;
@@ -16,6 +17,9 @@ public class ObrasModel {
     @SerializedName("ruta")
     private String ruta;
 
+    @SerializedName("autor")
+    private String autor;
+
     @SerializedName("finalizado")
     private boolean finalizado;
 
@@ -25,19 +29,24 @@ public class ObrasModel {
     @SerializedName("url_imagen")
     private String url_imagen;
 
+    @SerializedName("sinopsis")
+    private String sinopsis;
+
     @SerializedName("fecha_ultima_modificacion")
     private Date fecha_ultima_modificacion;
 
     // Constructor vacío requerido por Retrofit/Gson
-    public ObrasModel() {
+    public Obras() {
     }
 
-    public ObrasModel(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion) {
+    public Obras(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion, String autor, String sinopsis) {
         this.idUsuario = idUsuario;
         this.ruta = ruta;
         this.finalizado = finalizado;
         this.nombre = nombre;
         this.url_imagen = url_imagen;
+        this.fecha_ultima_modificacion = fecha_ultima_modificacion;
+        this.autor = autor;
     }
 
     // Getters y Setters
@@ -95,5 +104,21 @@ public class ObrasModel {
 
     public void setFecha_ultima_modificacion(Date fecha_ultima_modificacion) {
         this.fecha_ultima_modificacion = fecha_ultima_modificacion;
+    }
+
+    public String getAutor() {
+        return autor;
+    }
+
+    public void setAutor(String autor) {
+        this.autor = autor;
+    }
+
+    public String getSinopsis() {
+        return sinopsis;
+    }
+
+    public void setSinopsis(String sinopsis) {
+        this.sinopsis = sinopsis;
     }
 }
