@@ -22,6 +22,8 @@ public class PerfilPublicoActivity extends AppCompatActivity {
 
         usuario = (Usuario) getIntent().getSerializableExtra("objetoUsuario");
 
+        binding.btnBackPerfilPublico.setOnClickListener(v -> finish());
+
         if (usuario != null) {
             cargarDatosUsuario();
             setupTabs();
@@ -54,7 +56,7 @@ public class PerfilPublicoActivity extends AppCompatActivity {
                 if (tab.getPosition() == 0) {
                     cambiarFragment(new UltimasLecturasFragment(usuario.getId()));
                 } else {
-                    cambiarFragment(new ObrasPublicadasFragment(usuario.getId()));
+                    cambiarFragment(ObrasPublicadasFragment.newInstance(usuario.getId()));
                 }
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}

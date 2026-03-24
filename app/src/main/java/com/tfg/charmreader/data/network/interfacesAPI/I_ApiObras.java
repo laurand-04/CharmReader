@@ -15,6 +15,9 @@ public interface I_ApiObras {
     @GET("obras/usuario/{idUsuario}")
     Call<List<Obras>> obtenerObrasDeUsuario(@Path("idUsuario") int idUsuario);
 
+    @GET("obras/libro/{idLibro}")
+    Call<Obras> obtenerObraPorIdLibro(@Path("idLibro") int idLibro);
+
     @DELETE("obras/eliminar/{id}")
     Call<ResponseBody> eliminarObra(@Path("id") int idObra);
 }

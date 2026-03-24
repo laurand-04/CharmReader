@@ -25,6 +25,10 @@ public class ObrasRepository {
         apiObras.obtenerObrasDeUsuario(idUsuario).enqueue(callback);
     }
 
+    public void obtenerObraPorIdLibro(int idLibro, Callback<Obras> callback) {
+        apiObras.obtenerObraPorIdLibro(idLibro).enqueue(callback);
+    }
+
     public void eliminarObra(int idObra, Callback<ResponseBody> callback) {
         apiObras.eliminarObra(idObra).enqueue(callback);
     }

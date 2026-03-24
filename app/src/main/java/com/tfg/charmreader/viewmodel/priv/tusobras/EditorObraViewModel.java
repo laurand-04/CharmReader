@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.tfg.charmreader.data.model.Obras;
+import com.tfg.charmreader.data.network.API.CloudinaryClient;
 import com.tfg.charmreader.data.repository.priv.tusObras.ObrasRepository;
 
 import java.io.File;
@@ -22,7 +23,6 @@ import nl.siegmann.epublib.domain.Book;
 import nl.siegmann.epublib.domain.Resource;
 import nl.siegmann.epublib.epub.EpubReader;
 import nl.siegmann.epublib.epub.EpubWriter;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -39,11 +39,11 @@ public class EditorObraViewModel extends AndroidViewModel {
     private final MutableLiveData<String> contenidoCapitulo = new MutableLiveData<>();
     private final MutableLiveData<Boolean> esPrimerCapitulo = new MutableLiveData<>(true);
     private final MutableLiveData<Boolean> esUltimoCapitulo = new MutableLiveData<>(true);
-    private final MutableLiveData<Boolean> puedeEliminar = new MutableLiveData<>(false); // NUEVO
+    private final MutableLiveData<Boolean> puedeEliminar = new MutableLiveData<>(false);
 
     private Book miLibro;
     private String rutaArchivo;
-    private int indiceCapituloActual = 0;
+    private int indiceCapituloActual = 1;
 
     public EditorObraViewModel(@NonNull Application application) { super(application); }
 
@@ -53,12 +53,12 @@ public class EditorObraViewModel extends AndroidViewModel {
     public LiveData<String> getContenidoCapitulo() { return contenidoCapitulo; }
     public LiveData<Boolean> getEsPrimerCapitulo() { return esPrimerCapitulo; }
     public LiveData<Boolean> getEsUltimoCapitulo() { return esUltimoCapitulo; }
-    public LiveData<Boolean> getPuedeEliminar() { return puedeEliminar; } // NUEVO
+    public LiveData<Boolean> getPuedeEliminar() { return puedeEliminar; }
 
     // --- 1. CARGAR LA OBRA ---
     public void cargarObra(String ruta, Obras obra) {
         this.rutaArchivo = ruta;
-        this.idObraActual = obra.getId();
+        this.idObraActual = (obra != null) ? obra.getId() : -1;
         this.obra = obra;
         isLoading.setValue(true);
 
@@ -66,22 +66,17 @@ public class EditorObraViewModel extends AndroidViewModel {
             try {
                 File archivo = new File(ruta);
                 if (!archivo.exists()) {
-                    mensaje.postValue("El archivo de la obra no existe.");
+                    mensaje.postValue("El archivo no existe localmente.");
                     isLoading.postValue(false);
                     return;
                 }
-
                 miLibro = new EpubReader().readEpub(new FileInputStream(archivo));
 
-                int totalCapitulos = miLibro.getSpine().size();
-                if (totalCapitulos > 0) {
-                    indiceCapituloActual = totalCapitulos - 1;
-                } else {
-                    indiceCapituloActual = 0;
-                }
+                int totalElementos = miLibro.getSpine().size();
+                // Abrir en el último capítulo por defecto
+                indiceCapituloActual = (totalElementos > 1) ? totalElementos - 1 : 0;
 
                 cargarCapituloEnUI();
-
             } catch (Exception e) {
                 Log.e("EditorVM", "Error leyendo EPUB", e);
                 mensaje.postValue("Error al abrir la obra.");
@@ -91,11 +86,12 @@ public class EditorObraViewModel extends AndroidViewModel {
         }).start();
     }
 
-    // --- 2. NAVEGACIÓN Y EDICIÓN DE CAPÍTULOS ---
+    // --- 2. NAVEGACIÓN Y EDICIÓN ---
     public void cambiarCapitulo(int direccion, String textoActualDelEditor) {
         guardarCapituloEnMemoria(textoActualDelEditor);
         int nuevoIndice = indiceCapituloActual + direccion;
-        if (nuevoIndice >= 0 && nuevoIndice < miLibro.getSpine().size()) {
+
+        if (nuevoIndice >= 1 && nuevoIndice < miLibro.getSpine().size()) {
             indiceCapituloActual = nuevoIndice;
             cargarCapituloEnUI();
         }
@@ -103,58 +99,58 @@ public class EditorObraViewModel extends AndroidViewModel {
 
     public void anadirNuevoCapitulo(String textoActualDelEditor) {
         guardarCapituloEnMemoria(textoActualDelEditor);
-        int numNuevoCap = miLibro.getSpine().size() + 1;
-        String tituloNuevo = "Capítulo " + numNuevoCap;
-        String htmlVacio = "<html><head><title>" + tituloNuevo + "</title></head><body><h1>" + tituloNuevo + "</h1><p></p></body></html>";
 
-        miLibro.addSection(tituloNuevo, new Resource(htmlVacio.getBytes(StandardCharsets.UTF_8), "capitulo_" + numNuevoCap + ".html"));
+        int nuevoNumero = miLibro.getSpine().size();
+        String tituloNuevo = "Capítulo " + nuevoNumero;
+        String htmlVacio = "<html><head><title>Cap</title></head><body><div></div></body></html>";
+
+        miLibro.addSection(tituloNuevo,
+                new Resource(htmlVacio.getBytes(StandardCharsets.UTF_8), "capitulo_" + nuevoNumero + ".html"));
 
         indiceCapituloActual = miLibro.getSpine().size() - 1;
         cargarCapituloEnUI();
         mensaje.postValue("Nuevo capítulo creado");
     }
 
-    // NUEVO: Método para eliminar el último capítulo
     public void eliminarUltimoCapitulo() {
         int ultimoIndex = miLibro.getSpine().size() - 1;
 
-        // Solo permitimos eliminar si estamos visualizando el último y si no es el único capítulo que queda
-        if (ultimoIndex > 0 && indiceCapituloActual == ultimoIndex) {
+        if (ultimoIndex > 1 && indiceCapituloActual == ultimoIndex) {
             try {
-                // Eliminamos el recurso del lomo (Spine)
                 miLibro.getSpine().getSpineReferences().remove(ultimoIndex);
-
-                // Retrocedemos al capítulo que ahora es el último
                 indiceCapituloActual = ultimoIndex - 1;
                 cargarCapituloEnUI();
-
-                mensaje.postValue("Capítulo eliminado");
-                // Importante: No guardamos físicamente aún, para que el usuario
-                // confirme los cambios pulsando el botón Guardar cuando quiera.
-
+                mensaje.postValue("Capítulo eliminado correctamente");
             } catch (Exception e) {
-                Log.e("EditorVM", "Error eliminando capítulo", e);
-                mensaje.postValue("Error al eliminar el capítulo");
+                mensaje.postValue("Error al eliminar capítulo");
             }
+        } else if (ultimoIndex <= 1) {
+            mensaje.postValue("No puedes eliminar el primer capítulo");
+        } else {
+            mensaje.postValue("Navega al último capítulo para eliminarlo");
         }
     }
 
-    // --- 3. GUARDADO FÍSICO (PISAR ARCHIVO) ---
+    // --- 3. GUARDADO FÍSICO + SINCRONIZACIÓN NUBE ---
     public void guardarObraFisicamente(String textoActualDelEditor) {
         isLoading.setValue(true);
         new Thread(() -> {
             try {
+                // Primero: Guardar el texto actual en el objeto Book en memoria
                 guardarCapituloEnMemoria(textoActualDelEditor);
 
+                // Segundo: Escribir el archivo .epub en el almacenamiento del móvil
                 EpubWriter epubWriter = new EpubWriter();
-                try (FileOutputStream out = new FileOutputStream(rutaArchivo)) {
+                File archivoLocal = new File(rutaArchivo);
+                try (FileOutputStream out = new FileOutputStream(archivoLocal)) {
                     epubWriter.write(miLibro, out);
                 }
 
+                // Tercero: Si tenemos ID de obra, subimos a Cloudinary y actualizamos servidor
                 if (idObraActual != -1) {
-                    actualizarFechaEnServidor();
+                    subirACloudinaryYSincronizar(archivoLocal);
                 } else {
-                    mensaje.postValue("Guardado en el móvil (Error de ID al sincronizar)");
+                    mensaje.postValue("Guardado localmente (Sin ID para sincronizar)");
                     isLoading.postValue(false);
                 }
 
@@ -166,51 +162,67 @@ public class EditorObraViewModel extends AndroidViewModel {
         }).start();
     }
 
-    private void actualizarFechaEnServidor() {
-        obra.setFecha_ultima_modificacion(new Date());
+    private void subirACloudinaryYSincronizar(File archivo) {
+        mensaje.postValue("Sincronizando con la nube...");
+
+        CloudinaryClient.subirArchivoRawCloudinary(archivo, new CloudinaryClient.CloudinaryCallback() {
+            @Override
+            public void onUrl(String urlEpubCloudinary) {
+                // Actualizamos el objeto obra con la nueva URL y fecha
+                obra.setUrl_obra(urlEpubCloudinary);
+                obra.setFecha_ultima_modificacion(new Date());
+
+                // Llamamos a la API para guardar los cambios en la base de datos
+                actualizarObraEnServidor();
+            }
+
+            @Override
+            public void onError(String mensajeError) {
+                Log.e("EditorVM", "Error Cloudinary: " + mensajeError);
+                mensaje.postValue("Guardado local. Error al subir a la nube.");
+                isLoading.postValue(false);
+            }
+        });
+    }
+
+    private void actualizarObraEnServidor() {
         obrasRepository.guardarObra(obra, new Callback<Obras>() {
             @Override
             public void onResponse(Call<Obras> call, Response<Obras> response) {
                 if (response.isSuccessful()) {
-                    mensaje.postValue("Obra guardada y sincronizada");
+                    mensaje.postValue("¡Obra guardada y sincronizada!");
                 } else {
-                    mensaje.postValue("Guardado localmente. Error al sincronizar con el servidor.");
+                    mensaje.postValue("Guardado local. Error al actualizar servidor.");
                 }
                 isLoading.postValue(false);
             }
 
             @Override
             public void onFailure(Call<Obras> call, Throwable t) {
-                mensaje.postValue("Guardado local. Sin conexión al servidor.");
+                mensaje.postValue("Guardado local. Sin conexión para sincronizar.");
                 isLoading.postValue(false);
             }
         });
     }
 
     // --- UTILIDADES INTERNAS ---
-
     private void cargarCapituloEnUI() {
         try {
             Resource recurso = miLibro.getSpine().getResource(indiceCapituloActual);
             String htmlBruto = new String(recurso.getData(), StandardCharsets.UTF_8);
 
-            htmlBruto = htmlBruto.replaceAll("(?is)<title>.*?</title>", "");
             htmlBruto = htmlBruto.replaceAll("(?is)<h[1-6][^>]*>.*?</h[1-6]>", "");
+            htmlBruto = htmlBruto.replaceAll("(?is)<title>.*?</title>", "");
 
             String textoPlano = Html.fromHtml(htmlBruto, Html.FROM_HTML_MODE_COMPACT).toString().trim();
+            textoPlano = textoPlano.replaceAll("(?i)^Capítulo\\s*\\d+\\s*", "");
 
-            String nombreEsperado = "Capítulo " + (indiceCapituloActual + 1);
-            tituloCapitulo.postValue(nombreEsperado);
-            contenidoCapitulo.postValue(textoPlano);
+            tituloCapitulo.postValue("Capítulo " + indiceCapituloActual);
+            contenidoCapitulo.postValue(textoPlano.trim());
 
-            boolean isPrimero = (indiceCapituloActual == 0);
-            boolean isUltimo = (indiceCapituloActual == miLibro.getSpine().size() - 1);
-
-            esPrimerCapitulo.postValue(isPrimero);
-            esUltimoCapitulo.postValue(isUltimo);
-
-            // Evaluamos si puede eliminar: Solo si es el último y hay más de 1 capítulo
-            puedeEliminar.postValue(isUltimo && miLibro.getSpine().size() > 1);
+            esPrimerCapitulo.postValue(indiceCapituloActual == 1);
+            esUltimoCapitulo.postValue(indiceCapituloActual == miLibro.getSpine().size() - 1);
+            puedeEliminar.postValue(indiceCapituloActual == miLibro.getSpine().size() - 1 && miLibro.getSpine().size() > 2);
 
         } catch (Exception e) {
             Log.e("EditorVM", "Error cargando capítulo", e);
@@ -219,12 +231,15 @@ public class EditorObraViewModel extends AndroidViewModel {
 
     private void guardarCapituloEnMemoria(String textoPlano) {
         try {
-            String titulo = "Capítulo " + (indiceCapituloActual + 1);
-
             String textoSeguro = Html.escapeHtml(textoPlano);
             String textoFormateado = textoSeguro.replace("\n", "<br>");
+            String titulo = "Capítulo " + indiceCapituloActual;
 
-            String nuevoHtml = "<html><head><title>" + titulo + "</title></head><body><h2>" + titulo + "</h2><div>" + textoFormateado + "</div></body></html>";
+            String nuevoHtml =
+                    "<html><head><title>" + titulo + "</title></head>" +
+                            "<body><h2>" + titulo + "</h2><div>" +
+                            textoFormateado +
+                            "</div></body></html>";
 
             Resource recursoExistente = miLibro.getSpine().getResource(indiceCapituloActual);
             recursoExistente.setData(nuevoHtml.getBytes(StandardCharsets.UTF_8));

@@ -1,6 +1,8 @@
 package com.tfg.charmreader.ui.autentication.perfil.publico;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,8 +28,24 @@ public class ObrasPublicadasFragment extends Fragment {
     private int idUsuario;
     private LibrosAdapter adapter;
 
-    public ObrasPublicadasFragment(int idUsuario) {
+    /*public ObrasPublicadasFragment(int idUsuario) {
         this.idUsuario = idUsuario;
+    }*/
+    // Borra el constructor con parámetros y usa esto:
+    public static ObrasPublicadasFragment newInstance(int idUsuario) {
+        ObrasPublicadasFragment fragment = new ObrasPublicadasFragment();
+        Bundle args = new Bundle();
+        args.putInt("ID_USUARIO", idUsuario);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            this.idUsuario = getArguments().getInt("ID_USUARIO");
+        }
     }
 
     @Override
@@ -79,12 +97,13 @@ public class ObrasPublicadasFragment extends Fragment {
     }
 
     private void irADetalleLibroPublico(Libro libro) {
-        // Por ahora lo dejamos preparado para la siguiente pantalla que diseñemos
-        // Intent intent = new Intent(getActivity(), DetalleObraPublicaActivity.class);
-        // intent.putExtra("OBJETO_OBRA", obra);
-        // startActivity(intent);
+        android.util.Log.d("PERFIL_PUBLICO", "Navegando a detalle de: " + libro.getNombre() + " --- " + libro.getId());
 
-        android.util.Log.d("PERFIL_PUBLICO", "Click en obra: " + libro.getNombre());
+        Intent intent = new Intent(getActivity(), DetalleObraActivity.class);
+        // Asegúrate de que tu clase Libro implemente Serializable o Parcelable
+        intent.putExtra("Libro", libro);
+        intent.putExtra("idusuario", idUsuario);
+        startActivity(intent);
     }
 
     @Override

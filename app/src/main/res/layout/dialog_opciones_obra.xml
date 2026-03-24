@@ -130,6 +130,19 @@
                 app:iconTint="@color/basico"
                 app:iconPadding="16dp" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSincronizarNube"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:gravity="start|center_vertical"
+                android:text="Sincronizar con la nube"
+                android:textColor="#333333"
+                android:textSize="16sp"
+                app:icon="@drawable/ic_sync"
+                app:iconTint="@color/basico"
+                app:iconPadding="16dp" />
+
         </LinearLayout>
     </RelativeLayout>
 </androidx.cardview.widget.CardView>

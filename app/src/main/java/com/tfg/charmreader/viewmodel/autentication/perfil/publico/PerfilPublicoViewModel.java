@@ -1,6 +1,8 @@
 package com.tfg.charmreader.viewmodel.autentication.perfil.publico;
 
 import android.app.Application;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -77,44 +79,64 @@ public class PerfilPublicoViewModel extends AndroidViewModel {
     }
 
     public void cargarObrasPublicadas(int idUsuario) {
+        Log.d("DEBUG_PERFIL", "PASO 1: Llamando a cargarObrasPublicadas para ID: " + idUsuario);
+        detallesObrasPublicadas.postValue(null);
+
         obrasRepo.obtenerObrasDeUsuario(idUsuario, new Callback<List<Obras>>() {
             @Override
             public void onResponse(Call<List<Obras>> call, Response<List<Obras>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<Obras> listaObras = response.body();
-                    android.util.Log.d("PERFIL_PUBLICO", "filtro 2: " + listaObras.size());
+                    Log.d("DEBUG_PERFIL", "PASO 2: Obras recibidas del servidor. Cantidad: " + listaObras.size());
 
-                    obrasPublicadas.postValue(listaObras);
-
-                    // 1. Extraer IDs de libros válidos (no nulos y mayores a 0)
                     List<Integer> ids = new ArrayList<>();
                     for (Obras obra : listaObras) {
+                        Log.d("DEBUG_PERFIL", "Obra encontrada: ID_Libro = " + obra.getIdLibro());
                         if (obra.getIdLibro() > 0) {
                             ids.add(obra.getIdLibro());
                         }
                     }
 
-                    // 2. Si hay IDs, pedimos los detalles de los libros
                     if (!ids.isEmpty()) {
+                        Log.d("DEBUG_PERFIL", "PASO 3: Intentando cargar detalles para " + ids.size() + " libros.");
                         cargarDetallesObras(ids);
                     } else {
+                        Log.w("DEBUG_PERFIL", "PASO 3 (FALLO): La lista de obras no tiene IDs de libros válidos.");
                         detallesObrasPublicadas.postValue(new ArrayList<>());
                     }
+                } else {
+                    Log.e("DEBUG_PERFIL", "PASO 2 (ERROR): Respuesta no exitosa. Código: " + response.code());
+                    detallesObrasPublicadas.postValue(new ArrayList<>());
                 }
             }
-            @Override public void onFailure(Call<List<Obras>> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<List<Obras>> call, Throwable t) {
+                Log.e("DEBUG_PERFIL", "PASO 2 (FALLO TOTAL): Error de red o crash: " + t.getMessage());
+                detallesObrasPublicadas.postValue(new ArrayList<>());
+            }
         });
     }
 
     private void cargarDetallesObras(List<Integer> ids) {
+        Log.d("DEBUG_PERFIL", "PASO 4: Enviando petición de detalles a libroRepo...");
         libroRepo.obtenerDetallesLibros(ids, new Callback<List<Libro>>() {
             @Override
             public void onResponse(Call<List<Libro>> call, Response<List<Libro>> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.d("DEBUG_PERFIL", "PASO 5: Detalles de libros recibidos. Cantidad: " + response.body().size());
                     detallesObrasPublicadas.postValue(response.body());
+                } else {
+                    Log.e("DEBUG_PERFIL", "PASO 5 (ERROR): Fallo al obtener detalles. Código: " + response.code());
+                    detallesObrasPublicadas.postValue(new ArrayList<>());
                 }
             }
-            @Override public void onFailure(Call<List<Libro>> call, Throwable t) {}
+
+            @Override
+            public void onFailure(Call<List<Libro>> call, Throwable t) {
+                Log.e("DEBUG_PERFIL", "PASO 5 (FALLO TOTAL): Error en detalles: " + t.getMessage());
+                detallesObrasPublicadas.postValue(new ArrayList<>());
+            }
         });
     }
 }

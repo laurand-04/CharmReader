@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/layoutContenidoDetalle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FDFDFD"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.AppBarLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/white"
+            app:elevation="0dp">
+
+            <androidx.appcompat.widget.Toolbar
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                app:contentInsetStart="0dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingHorizontal="20dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/btnBackDetalle"
+                        android:layout_width="45dp"
+                        android:layout_height="45dp"
+                        android:padding="12dp"
+                        android:src="@drawable/ic_arrow_back"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.SmallComponent"
+                        app:strokeColor="@color/basico"
+                        app:strokeWidth="2dp" />
+
+                    <TextView
+                        android:id="@+id/tvToolbarTitulo"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Detalle de Obra"
+                        android:textColor="#1A1A1A"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </androidx.appcompat.widget.Toolbar>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingBottom="24dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivDetallePortada"
+                    android:layout_width="160dp"
+                    android:layout_height="240dp"
+                    android:elevation="4dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_libro"
+                    app:cornerSize="12dp"
+                    app:shapeAppearanceOverlay="@null"
+                    app:strokeColor="#F0F0F0"
+                    app:strokeWidth="1dp" />
+
+                <TextView
+                    android:id="@+id/tvDetalleTitulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:paddingHorizontal="20dp"
+                    android:textAlignment="center"
+                    android:textColor="#1A1A1A"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    tools:text="Título de la Obra" />
+
+                <TextView
+                    android:id="@+id/tvDetalleAutor"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/basico"
+                    android:textSize="16sp"
+                    tools:text="Nombre del Autor" />
+            </LinearLayout>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sinopsis"
+                    android:textColor="#1A1A1A"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvDetalleSinopsis"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:lineSpacingExtra="6dp"
+                    android:textColor="#757575"
+                    android:textSize="15sp"
+                    tools:text="Aquí aparecerá la sinopsis completa de la obra recuperada desde la base de datos." />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnDescargarObra"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginBottom="24dp"
+                    android:text="Descargar Obra"
+                    android:textAllCaps="false"
+                    android:textSize="16sp"
+                    app:backgroundTint="@color/basico"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutLoadingDetalle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3F8F9FA"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:indeterminateTint="@color/basico" />
+    </LinearLayout>
+
+</FrameLayout>

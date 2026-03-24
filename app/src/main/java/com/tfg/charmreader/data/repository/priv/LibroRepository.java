@@ -29,6 +29,10 @@ public class LibroRepository {
         apiLibro.obtenerLibrosPorIds(ids).enqueue(callback);
     }
 
+    public void obtenerLibrosUsuarioPorIdLibro(int idLibro, Callback<List<LibrosDeUsuario>> callback) {
+        apiLibrosDeUsuario.obtenerLibrosUsuarioPorIdLibro(idLibro).enqueue(callback);
+    }
+
     public void asignarAEstanteria(int idU, int idL, int idEst, Callback<Boolean> callback) {
         apiLibrosDeUsuario.asignarLibroAEstanteria(idU, idL, idEst).enqueue(callback);
     }
@@ -68,8 +72,12 @@ public class LibroRepository {
         apiLibro.obtenerLibrosPorIds(ids).enqueue(callback);
     }
 
-    public void eliminarLibro(int idU, int idL, Callback<ResponseBody> callback) {
+    public void eliminarLibrodeUsuario(int idU, int idL, Callback<ResponseBody> callback) {
         apiLibrosDeUsuario.eliminarLibro(idU, idL).enqueue(callback);
 
+    }
+
+    public void eliminarLibro(int idL, Callback<ResponseBody> callback) {
+        apiLibro.eliminarLibro(idL).enqueue(callback);
     }
 }

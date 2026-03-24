@@ -44,6 +44,10 @@
             android:windowSoftInputMode="adjustPan"/>
 
         <activity
+            android:name=".ui.autentication.perfil.publico.DetalleObraActivity"
+            android:windowSoftInputMode="adjustPan"/>
+
+        <activity
             android:name=".ui.MainActivity"
             android:windowSoftInputMode="adjustPan"> </activity>
 

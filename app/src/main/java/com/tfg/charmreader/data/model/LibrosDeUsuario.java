@@ -66,8 +66,20 @@ public class LibrosDeUsuario implements Serializable {
         return id;
     }
 
+    public int getIdUsuario() {
+        return id.getIdU();
+    }
+
+    public int getIdLibro() {
+        return id.getIdL();
+    }
+
     public void setId(CCLibrosDeUsuario id) {
         this.id = id;
+    }
+
+    public void setIdLibro(int idL) {
+        this.id.setIdL(idL);
     }
 
     public int getCapitulo() {

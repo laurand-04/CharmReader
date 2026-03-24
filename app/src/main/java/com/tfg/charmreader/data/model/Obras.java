@@ -32,6 +32,9 @@ public class Obras implements Serializable {
     @SerializedName("url_imagen")
     private String url_imagen;
 
+    @SerializedName("url_obra")
+    private String url_obra;
+
     @SerializedName("sinopsis")
     private String sinopsis;
 
@@ -51,6 +54,24 @@ public class Obras implements Serializable {
         this.fecha_ultima_modificacion = fecha_ultima_modificacion;
         this.autor = autor;
         this.idLibro = -1;
+    }
+
+    public Obras(Obras otra) {
+        if (otra != null) {
+            this.id = otra.id;
+            this.idUsuario = otra.idUsuario;
+            this.idLibro = otra.idLibro;
+            this.ruta = otra.ruta;
+            this.autor = otra.autor;
+            this.finalizado = otra.finalizado;
+            this.nombre = otra.nombre;
+            this.url_imagen = otra.url_imagen;
+            this.sinopsis = otra.sinopsis;
+            // Las fechas son mutables, es recomendable crear una nueva instancia
+            this.fecha_ultima_modificacion = (otra.fecha_ultima_modificacion != null)
+                    ? new Date(otra.fecha_ultima_modificacion.getTime())
+                    : null;
+        }
     }
 
     // Getters y Setters
@@ -132,5 +153,13 @@ public class Obras implements Serializable {
 
     public void setIdLibro(int idLibro) {
         this.idLibro = idLibro;
+    }
+
+    public String getUrl_obra() {
+        return url_obra;
+    }
+
+    public void setUrl_obra(String url_obra) {
+        this.url_obra = url_obra;
     }
 }

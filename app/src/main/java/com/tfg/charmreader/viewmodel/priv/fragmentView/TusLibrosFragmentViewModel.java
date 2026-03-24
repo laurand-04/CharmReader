@@ -91,7 +91,7 @@ public class TusLibrosFragmentViewModel extends AndroidViewModel {
 
     public void eliminarLibro(int idLibro) {
         int idU = AuthRepository.getInstance(getApplication()).getIdUsuario();
-        libroRepo.eliminarLibro(idU, idLibro, new Callback<ResponseBody>() {
+        libroRepo.eliminarLibrodeUsuario(idU, idLibro, new Callback<ResponseBody>() {
 
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {

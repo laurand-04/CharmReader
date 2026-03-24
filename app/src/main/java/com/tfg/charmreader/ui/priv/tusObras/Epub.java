@@ -43,7 +43,7 @@ public class Epub {
     }
 
     // --- GENERAR DESDE CERO ---
-    public void generarObraDesdeCero(String titulo, String autor, String descripcion, Uri uriPortada, int idUsuario, CrearEpubCallback callback) {
+    /*public void generarObraDesdeCero(String titulo, String autor, String descripcion, Uri uriPortada, int idUsuario, CrearEpubCallback callback) {
         new Thread(() -> {
             try {
                 Book miLibro = new Book();
@@ -87,6 +87,87 @@ public class Epub {
                         @Override
                         public void onUrl(String urlPortada) {
                             registrarNuevaObraApi(idUsuario, titulo, autor, descripcion, urlPortada, rutaAbsoluta, callback);
+                        }
+
+                        @Override
+                        public void onError(String e) {
+                            registrarNuevaObraApi(idUsuario, titulo, autor, descripcion, "", rutaAbsoluta, callback);
+                        }
+                    });
+                } else {
+                    registrarNuevaObraApi(idUsuario, titulo, autor, descripcion, "", rutaAbsoluta, callback);
+                }
+
+            } catch (Exception e) {
+                Log.e("EPUB", "Error creando EPUB", e);
+                callback.onError("Error al fabricar el archivo.");
+            }
+        }).start();
+    }*/
+    public void generarObraDesdeCero(String titulo, String autor, String descripcion, Uri uriPortada, int idUsuario, CrearEpubCallback callback) {
+        new Thread(() -> {
+            try {
+                Book miLibro = new Book();
+                Metadata metadata = miLibro.getMetadata();
+                metadata.addIdentifier(new Identifier("UUID", java.util.UUID.randomUUID().toString()));
+                metadata.addTitle(titulo);
+                metadata.addAuthor(new Author(autor));
+
+                if (descripcion != null && !descripcion.isEmpty()) {
+                    metadata.setDescriptions(Collections.singletonList(descripcion));
+                }
+
+                byte[] coverBytes = null;
+
+                // ✅ LEER PORTADA BIEN
+                if (uriPortada != null) {
+                    coverBytes = leerBytesDesdeUri(uriPortada);
+                }
+
+                // ✅ 1. CREAR CAPÍTULO 1 (SIEMPRE PRIMERO)
+                String tituloCap1 = "Capítulo 1";
+                String contenidoHtml =
+                        "<html><head><title>" + tituloCap1 + "</title></head>" +
+                                "<body><h2>" + tituloCap1 + "</h2><div></div></body></html>";
+
+                miLibro.addSection(tituloCap1,
+                        new Resource(contenidoHtml.getBytes("UTF-8"), "capitulo_1.html"));
+
+                // ✅ 2. AÑADIR PORTADA SIN ROMPER SPINE
+                if (coverBytes != null) {
+
+                    Resource coverImage = new Resource(coverBytes, "cover.jpg");
+                    coverImage.setId("cover-image");
+                    miLibro.setCoverImage(coverImage);
+
+                    String portadaHtml =
+                            "<html><body style='margin:0;padding:0;text-align:center;'>" +
+                                    "<img src='cover.jpg' style='max-width:100%;height:auto;'/>" +
+                                    "</body></html>";
+
+                    Resource portada = new Resource(portadaHtml.getBytes("UTF-8"), "cover.html");
+
+                    miLibro.getResources().add(portada);
+
+                    // 🔥 IMPORTANTE: NO usar addSection aquí
+                    miLibro.getSpine().getSpineReferences().add(0, new SpineReference(portada));
+                }
+
+                // 3. GUARDADO
+                File archivoEpub = new File(context.getFilesDir(), "obra_" + System.currentTimeMillis() + ".epub");
+                try (FileOutputStream out = new FileOutputStream(archivoEpub)) {
+                    new EpubWriter().write(miLibro, out);
+                }
+
+                String rutaAbsoluta = archivoEpub.getAbsolutePath();
+
+                // 4. CLOUDINARY
+                if (coverBytes != null) {
+                    byte[] finalCoverBytes = coverBytes;
+                    CloudinaryClient.subirImagenCloudinary(finalCoverBytes, new CloudinaryClient.CloudinaryCallback() {
+                        @Override
+                        public void onUrl(String url) {
+                            registrarNuevaObraApi(idUsuario, titulo, autor, descripcion, url, rutaAbsoluta, callback);
                         }
 
                         @Override

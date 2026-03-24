@@ -2,7 +2,9 @@ package com.tfg.charmreader.data.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Libro {
+import java.io.Serializable;
+
+public class Libro implements Serializable {
     @SerializedName("id")
     private int id;
     @SerializedName("isbn")
