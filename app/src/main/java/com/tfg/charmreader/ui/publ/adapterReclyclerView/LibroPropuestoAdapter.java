@@ -26,6 +26,7 @@ public class LibroPropuestoAdapter extends RecyclerView.Adapter<LibroPropuestoAd
     private OnItemClickListener listener;
     private int totalMiembrosGrupo;
 
+    //No podemos quitar I_ApiVotacion
     private I_ApiVotacion apiVotacion;
     private int idUsuario;
     private int idGrupo;

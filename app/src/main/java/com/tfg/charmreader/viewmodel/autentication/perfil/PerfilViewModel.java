@@ -148,6 +148,31 @@ public class PerfilViewModel extends ViewModel {
         });
     }
 
+    public void eliminarCuenta() {
+        Usuario actual = userLiveData.getValue();
+        if (actual == null) return;
+
+        isLoading.setValue(true);
+        userRepository.eliminarUsuario(actual.getId(), new retrofit2.Callback<Void>() {
+            @Override
+            public void onResponse(retrofit2.Call<Void> call, retrofit2.Response<Void> response) {
+                isLoading.postValue(false);
+                if (response.isSuccessful()) {
+                    // Notificamos el éxito para que la Activity limpie la sesión local
+                    messageLiveData.postValue("Cuenta eliminada correctamente");
+                } else {
+                    messageLiveData.postValue("Error: No se pudo eliminar la cuenta del servidor");
+                }
+            }
+
+            @Override
+            public void onFailure(retrofit2.Call<Void> call, Throwable t) {
+                isLoading.postValue(false);
+                messageLiveData.postValue("Error de conexión al intentar eliminar la cuenta");
+            }
+        });
+    }
+
     // Clase envoltorio para pasar datos a la Activity
     public static class PdfDataWrapper {
         public final List<LibrosDeUsuario> relaciones;

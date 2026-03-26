@@ -128,4 +128,35 @@ public class LibrosEstanteriaViewModel extends ViewModel {
             }
         });
     }
+
+    public void actualizarNombreEstanteria(Context context, int idEstanteria, String nuevoNombre) {
+        isLoading.setValue(true);
+        estanteriaRepository.obetenerEstanteriaPorId(idEstanteria, new Callback<Estanteria>() {
+            @Override
+            public void onResponse(Call<Estanteria> call, Response<Estanteria> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Estanteria estanteria = response.body();
+                    estanteria.setNombre(nuevoNombre);
+                    estanteriaRepository.guardarEstanteria(estanteria, new Callback<Estanteria>() {
+                        @Override
+                        public void onResponse(Call<Estanteria> call, Response<Estanteria> response) {
+                            isLoading.postValue(false);
+                            if (response.isSuccessful()) {
+                                mensaje.postValue("Nombre actualizado");
+                                // Actualizamos el LiveData local si fuera necesario o notificamos
+                            }
+                        }
+                        @Override public void onFailure(Call<Estanteria> call, Throwable t) {
+                            isLoading.postValue(false);
+                        }
+                    });
+                } else {
+                    isLoading.postValue(false);
+                }
+            }
+            @Override public void onFailure(Call<Estanteria> call, Throwable t) {
+                isLoading.postValue(false);
+            }
+        });
+    }
 }

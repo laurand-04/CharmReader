@@ -15,12 +15,20 @@ public class ValoracionRepository {
         this.apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
     }
 
+    public void crear (Valoracion valoracion, Callback<Valoracion> cb) {
+        apiValoracion.crear(valoracion).enqueue(cb);
+    }
+
     public void verValoraciones (Valoracion.TipoValoracion tipo, int id, Callback<List<Valoracion>> cb) {
         apiValoracion.verValoraciones(tipo, id).enqueue(cb);
     }
 
     public void verValoracionesTitulo (String titulo, Callback<List<Valoracion>> cb) {
         apiValoracion.verValoracionesTitulo(titulo).enqueue(cb);
+    }
+
+    public void obtenerMediaLibro (int idGrupo, int idBook, Callback<Double> cb) {
+        apiValoracion.obtenerMediaLibro(idGrupo, idBook).enqueue(cb);
     }
 
     public double calcularMedia(List<Valoracion> valoraciones) {

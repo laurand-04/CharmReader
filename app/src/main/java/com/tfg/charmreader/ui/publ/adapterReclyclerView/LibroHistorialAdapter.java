@@ -5,67 +5,65 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiValoracion;
-import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.model.CatalogoLectura;
+import com.tfg.charmreader.data.pojo.LibroHistorialUI;
+
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
 public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAdapter.HistorialViewHolder> {
 
-    private List<BookEn> listaLibros;
-    private List<CatalogoLectura> listaFechas;
+    private List<LibroHistorialUI> listaHistorial;
     private OnItemClickListener listener;
 
-    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
-
     public interface OnItemClickListener {
-        void onItemClick(BookEn libro);
+        void onItemClick(LibroHistorialUI item);
     }
 
-    public LibroHistorialAdapter(List<BookEn> libros, List<CatalogoLectura> fechas, OnItemClickListener listener) {
-        this.listaLibros = libros;
-        this.listaFechas = fechas;
+    public LibroHistorialAdapter(List<LibroHistorialUI> listaHistorial, OnItemClickListener listener) {
+        this.listaHistorial = listaHistorial;
         this.listener = listener;
     }
 
     @NonNull
     @Override
     public HistorialViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Asegúrate de que el nombre del layout coincida con el que creamos (item_historial o item_libro_historial)
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_libro_historial, parent, false);
         return new HistorialViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull HistorialViewHolder holder, int position) {
-        BookEn libro = listaLibros.get(position);
-        CatalogoLectura cata = listaFechas.get(position);
+        LibroHistorialUI item = listaHistorial.get(position);
+        BookEn libro = item.getLibro();
+        CatalogoLectura cata = item.getCatalogo();
 
-        holder.tvTitulo.setText(libro.getTitulo());
+        // 1. Título
+        holder.tvTitulo.setText(libro.getTitulo() != null ? libro.getTitulo() : "Sin título");
 
-        // Carga de portada optimizada
+        // 2. Portada (Glide)
         String idPortada = libro.getCoverId();
         if (idPortada != null && !idPortada.isEmpty() && !idPortada.equals("null")) {
             String url = "https://covers.openlibrary.org/b/id/" + idPortada + "-M.jpg";
             Glide.with(holder.itemView.getContext())
                     .load(url)
                     .placeholder(R.drawable.ic_libro)
+                    .error(R.drawable.ic_libro)
                     .centerCrop()
                     .into(holder.ivPortada);
+        } else {
+            holder.ivPortada.setImageResource(R.drawable.ic_libro);
         }
 
-        // Formato de fechas
+        // 3. Fechas de lectura
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
         if (cata.getFechaComienzo() != null && cata.getFechaFinalizacion() != null) {
             String rango = sdf.format(cata.getFechaComienzo()) + " - " + sdf.format(cata.getFechaFinalizacion());
@@ -74,36 +72,40 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
             holder.tvFechas.setText("Fechas no disponibles");
         }
 
-        // Carga de la media de valoración
-        apiValoracion.obtenerMediaLibro(cata.getIdGrupo(), libro.getId()).enqueue(new Callback<Double>() {
-            @Override
-            public void onResponse(Call<Double> call, Response<Double> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    double media = response.body();
-                    // Actualizamos solo el texto numérico (la estrella es estática en el XML)
-                    holder.tvMediaNumerica.setText(String.format(Locale.getDefault(), "%.1f", media));
-                } else {
-                    holder.tvMediaNumerica.setText("0.0");
-                }
-            }
+        // 4. Valoración Media (Ya viene calculada del ViewModel)
+        double media = item.getMediaValoracion();
+        if (media > 0) {
+            holder.tvMediaNumerica.setText(String.format(Locale.getDefault(), "%.1f", media));
+        } else {
+            holder.tvMediaNumerica.setText("0.0");
+        }
 
-            @Override
-            public void onFailure(Call<Double> call, Throwable t) {
-                holder.tvMediaNumerica.setText("-.-");
+        int sesiones = item.getNumSesiones();
+        String texto = sesiones == 1 ? "1 sesión" : sesiones + " sesiones";
+        holder.tvSesionesHistorial.setText(texto);
+
+        // 5. Click Listener
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
             }
         });
-
-        holder.itemView.setOnClickListener(v -> listener.onItemClick(libro));
     }
 
     @Override
     public int getItemCount() {
-        return (listaLibros != null) ? listaLibros.size() : 0;
+        return (listaHistorial != null) ? listaHistorial.size() : 0;
+    }
+
+    // Método para actualizar los datos si es necesario
+    public void setData(List<LibroHistorialUI> nuevaLista) {
+        this.listaHistorial = nuevaLista;
+        notifyDataSetChanged();
     }
 
     public static class HistorialViewHolder extends RecyclerView.ViewHolder {
         ImageView ivPortada;
-        TextView tvTitulo, tvFechas, tvMediaNumerica;
+        TextView tvTitulo, tvFechas, tvMediaNumerica, tvSesionesHistorial;
 
         public HistorialViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -111,6 +113,7 @@ public class LibroHistorialAdapter extends RecyclerView.Adapter<LibroHistorialAd
             tvTitulo = itemView.findViewById(R.id.tvTituloHistorial);
             tvFechas = itemView.findViewById(R.id.tvFechasHistorial);
             tvMediaNumerica = itemView.findViewById(R.id.tvMediaNumerica);
+            tvSesionesHistorial = itemView.findViewById(R.id.tvSesionesHistorial);
         }
     }
 }

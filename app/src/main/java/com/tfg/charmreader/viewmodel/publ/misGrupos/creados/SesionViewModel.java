@@ -7,6 +7,7 @@ import com.tfg.charmreader.data.model.Sesion;
 import com.tfg.charmreader.data.repository.publ.SesionRepository;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import retrofit2.Call;
@@ -31,7 +32,18 @@ public class SesionViewModel extends ViewModel {
             public void onResponse(Call<List<Sesion>> call, Response<List<Sesion>> response) {
                 isLoading.postValue(false);
                 if (response.isSuccessful() && response.body() != null) {
-                    sesiones.postValue(response.body());
+                    List<Sesion> todasLasSesiones = response.body();
+                    List<Sesion> sesionesFuturas = new ArrayList<>();
+
+                    Date hoy = new Date();
+
+                    for (Sesion s : todasLasSesiones) {
+                        if (s.getFecha() != null && !s.getFecha().before(hoy)) {
+                            sesionesFuturas.add(s);
+                        }
+                    }
+
+                    sesiones.postValue(sesionesFuturas);
                 }
             }
             @Override

@@ -1,9 +1,13 @@
 package com.tfg.charmreader.data.repository;
 
+import android.net.Uri;
+
+import com.cloudinary.android.callback.UploadCallback;
 import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.model.CatalogoLectura;
 import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.data.network.API.API;
+import com.tfg.charmreader.data.network.API.CloudinaryClient;
 import com.tfg.charmreader.data.network.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiGrupoLectura;
 
@@ -41,12 +45,20 @@ public class GrupoRepository {
         apiGrupoLectura.buscarGrupoPorNombre(query).enqueue(cb);
     }
 
+    public void obtenerGrupoPorId(int idGrupo, Callback<GrupoLectura> cb) {
+        apiGrupoLectura.obtenerGrupoPorId(idGrupo).enqueue(cb);
+    }
+
     public void obtenerHistorialCatalogo(int idGrupo, Callback<List<CatalogoLectura>> cb) {
         apiCatalogo.obtenerHistorial2(idGrupo).enqueue(cb);
     }
 
     public void obtenerHistorialLibros(int idGrupo, Callback<List<BookEn>> cb) {
         apiCatalogo.obtenerHistorial(idGrupo).enqueue(cb);
+    }
+
+    public void obtenerLibroPropuestas(int idGrupo, Callback<List<BookEn>> cb) {
+        apiCatalogo.obtenerLibroPropuestas(idGrupo).enqueue(cb);
     }
 
     public void eliminarPropuesta(int idGrupo, int idLibro, Callback<Void> cb) {
@@ -59,5 +71,9 @@ public class GrupoRepository {
 
     public void gestionarSalidaAdmin(int idGrupo, int idUsuario, Callback<ResponseBody> callback) {
         apiGrupoLectura.gestionarSalidaAdmin(idGrupo, idUsuario).enqueue(callback);
+    }
+
+    public void subirImagen(Uri uri, UploadCallback callback) {
+        CloudinaryClient.nuevoUpload(uri).callback(callback).dispatch();
     }
 }

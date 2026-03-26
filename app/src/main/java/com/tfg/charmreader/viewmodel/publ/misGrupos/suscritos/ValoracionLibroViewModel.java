@@ -6,15 +6,15 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.tfg.charmreader.data.model.Valoracion;
-import com.tfg.charmreader.data.network.API.API;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
+import com.tfg.charmreader.data.repository.publ.ValoracionRepository;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ValoracionLibroViewModel extends AndroidViewModel {
-    private final I_ApiValoracion api = API.getInstancia().create(I_ApiValoracion.class);
+    private final ValoracionRepository valoracionRepository = new ValoracionRepository();
 
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> isSuccess = new MutableLiveData<>(false);
@@ -48,7 +48,7 @@ public class ValoracionLibroViewModel extends AndroidViewModel {
         v.setDescripcion(comentario.trim());
         v.setTipo(Valoracion.TipoValoracion.LIBRO);
 
-        api.crear(v).enqueue(new Callback<Valoracion>() {
+        valoracionRepository.crear(v, new Callback<Valoracion>() {
             @Override
             public void onResponse(Call<Valoracion> call, Response<Valoracion> response) {
                 isLoading.postValue(false);

@@ -13,9 +13,9 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiMiembro;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.model.GrupoLectura;
+import com.tfg.charmreader.data.repository.publ.InfoGrupoRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -31,9 +31,9 @@ public class GrupoAdapter extends RecyclerView.Adapter<GrupoAdapter.GrupoAdminVi
     private List<GrupoLectura> grupos;
     private OnGrupoDeleteListener deleteListener;
 
+    //I_ApiMiembro no lo podemos quitar
     private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
-    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
-
+    InfoGrupoRepository infoGrupoRepository = new InfoGrupoRepository();
     public interface OnGrupoDeleteListener {
         void onGrupoDelete(GrupoLectura grupo);
     }
@@ -95,7 +95,7 @@ public class GrupoAdapter extends RecyclerView.Adapter<GrupoAdapter.GrupoAdminVi
         });
 
         // 5. Cargar Valoración Media
-        apiValoracion.obtenerMediaGrupo(grupo.getIdGrupo()).enqueue(new Callback<Double>() {
+        infoGrupoRepository.obtenerMediaGrupo(grupo.getIdGrupo(), new Callback<Double>() {
             @Override
             public void onResponse(Call<Double> call, Response<Double> response) {
                 if (response.isSuccessful() && response.body() != null) {

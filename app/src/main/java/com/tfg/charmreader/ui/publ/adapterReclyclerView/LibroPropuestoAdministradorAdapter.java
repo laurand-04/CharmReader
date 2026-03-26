@@ -21,6 +21,7 @@ public class LibroPropuestoAdministradorAdapter extends RecyclerView.Adapter<Lib
 
     private List<BookEn> listaLibros;
     private int idGrupo;
+    //No podemos quitar I_ApiVotacion
     private final I_ApiVotacion apiVotacion = API.getInstancia().create(I_ApiVotacion.class);
 
     private OnLibroClickListener listener;

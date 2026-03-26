@@ -5,10 +5,16 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
+
+import com.bumptech.glide.Glide;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.databinding.ActivityEditarGrupoBinding;
 import com.tfg.charmreader.viewmodel.publ.misGrupos.creados.EditarGrupoViewModel;
@@ -19,6 +25,15 @@ public class EditarGrupoActivity extends AppCompatActivity {
     private EditarGrupoViewModel viewModel;
     private GrupoLectura grupoOriginal;
 
+    private final ActivityResultLauncher<Intent> galleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    viewModel.cambiarFoto(result.getData().getData(), grupoOriginal);
+                }
+            }
+    );
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -26,12 +41,24 @@ public class EditarGrupoActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         grupoOriginal = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
-        if (grupoOriginal == null) { finish(); return; }
+        if (grupoOriginal == null) {
+            finish();
+            return;
+        }
 
         viewModel = new ViewModelProvider(this).get(EditarGrupoViewModel.class);
 
         setupUI();
         setupObservers();
+        setupListener();
+    }
+
+    private void setupListener() {
+        binding.btnAbrirEdicion.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            galleryLauncher.launch(intent);
+        });
     }
 
     private void setupUI() {
@@ -48,7 +75,10 @@ public class EditarGrupoActivity extends AppCompatActivity {
 
         binding.btnBackEditar.setOnClickListener(v -> comprobarYSalir());
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override public void handleOnBackPressed() { comprobarYSalir(); }
+            @Override
+            public void handleOnBackPressed() {
+                comprobarYSalir();
+            }
         });
 
         binding.btnGuardarEdicion.setOnClickListener(v -> {
@@ -58,6 +88,12 @@ public class EditarGrupoActivity extends AppCompatActivity {
                     binding.etDescEdicion.getText().toString().trim(),
                     binding.spinnerFrecuencia.getText().toString());
         });
+
+        Glide.with(this)
+                .load(grupoOriginal.getUrl())
+                .placeholder(R.drawable.ic_person)
+                .centerCrop()
+                .into(binding.ivFotoPerfil);
     }
 
     private void setupObservers() {
@@ -69,7 +105,7 @@ public class EditarGrupoActivity extends AppCompatActivity {
         viewModel.getGrupoActualizado().observe(this, grupo -> {
             Toast.makeText(this, "¡Grupo actualizado!", Toast.LENGTH_SHORT).show();
             Intent data = new Intent();
-            data.putExtra("grupoActualizado", grupo);
+            data.putExtra("grupoActualizado", viewModel.getGrupoActualizado().getValue());
             setResult(RESULT_OK, data);
             finish();
         });

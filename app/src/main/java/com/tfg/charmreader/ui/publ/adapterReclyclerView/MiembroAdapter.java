@@ -17,10 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiUsuario;
-import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.model.Miembro;
 import com.tfg.charmreader.data.model.Usuario;
+import com.tfg.charmreader.data.repository.publ.UserRepository;
 
 import java.util.List;
 
@@ -32,7 +31,10 @@ public class MiembroAdapter extends RecyclerView.Adapter<MiembroAdapter.ViewHold
 
     private List<Miembro> lista;
     private OnEliminarClickListener listener;
-    private final I_ApiUsuario apiUsuario = API.getInstancia().create(I_ApiUsuario.class);
+    private final UserRepository userRepository = new UserRepository();
+
+    public List<Miembro> getLista() { return lista; }
+
 
     public void updateData(List<Miembro> nuevosMiembros) {
         this.lista.clear();
@@ -64,7 +66,7 @@ public class MiembroAdapter extends RecyclerView.Adapter<MiembroAdapter.ViewHold
         holder.tvNombre.setText("Cargando...");
         holder.ivFoto.setImageResource(R.drawable.ic_person);
 
-        apiUsuario.obtenerUsuarioPorId(m.getIdUsuario()).enqueue(new Callback<Usuario>() {
+        userRepository.obtenerUsuarioPorId(m.getIdUsuario(), new Callback<Usuario>() {
             @Override
             public void onResponse(Call<Usuario> call, Response<Usuario> response) {
                 if (response.isSuccessful() && response.body() != null) {

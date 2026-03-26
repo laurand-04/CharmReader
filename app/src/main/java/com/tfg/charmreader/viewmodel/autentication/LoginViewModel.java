@@ -11,7 +11,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.tfg.charmreader.data.model.Usuario;
 import com.tfg.charmreader.data.repository.autentication.AuthRepository;
-import com.tfg.charmreader.utils.Utilidades;
+//import com.tfg.charmreader.utils.Utilidades;
 
 public class LoginViewModel extends ViewModel {
     private AuthRepository authRepository;
@@ -69,8 +69,10 @@ public class LoginViewModel extends ViewModel {
         new Thread(() -> {
             try {
                 // Usamos tu objeto de utilidades o el api directamente
-                retrofit2.Response<Usuario> response = Utilidades.apiUsuario.getIdUsuarioPorCorreo(email).execute();
-                int id = (response.isSuccessful() && response.body() != null) ? response.body().getId() : -1;
+                /*retrofit2.Response<Usuario> response = Utilidades.apiUsuario.getIdUsuarioPorCorreo(email).execute();
+                int id = (response.isSuccessful() && response.body() != null) ? response.body().getId() : -1;*/
+                int id = authRepository.getIdUsuario();
+
                 authRepository.saveSession(false, email, id);
                 Log.d("DEBUG_REG", "Sesion guardada con exito, codigo: " + id);
                 loginState.postValue(new LoginState(true, false, false, false, null));

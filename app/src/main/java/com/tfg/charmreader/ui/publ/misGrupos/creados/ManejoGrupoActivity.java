@@ -6,14 +6,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Toast;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
+
 import com.bumptech.glide.Glide;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -29,22 +29,6 @@ public class ManejoGrupoActivity extends AppCompatActivity {
     private ManejoGrupoViewModel viewModel;
     private GrupoLectura grupo;
 
-    private final ActivityResultLauncher<Intent> editarGrupoLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    viewModel.refrescarDatosGrupo(grupo.getIdGrupo());
-                }
-            });
-
-    private final ActivityResultLauncher<Intent> nuevaPropuestaLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result.getResultCode() == RESULT_OK) {
-                    // Esto disparará la recarga de datos en los fragmentos
-                    viewModel.refrescarDatosGrupo(grupo.getIdGrupo());
-                    viewModel.consumeRefresh();
-                }
-            });
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -54,7 +38,10 @@ public class ManejoGrupoActivity extends AppCompatActivity {
         configurarStatusBar();
 
         grupo = (GrupoLectura) getIntent().getSerializableExtra("objetoGrupo");
-        if (grupo == null) { finish(); return; }
+        if (grupo == null) {
+            finish();
+            return;
+        }
 
         viewModel = new ViewModelProvider(this).get(ManejoGrupoViewModel.class);
         viewModel.setGrupoInicial(grupo);
@@ -66,11 +53,21 @@ public class ManejoGrupoActivity extends AppCompatActivity {
         viewModel.refrescarDatosGrupo(grupo.getIdGrupo());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        viewModel.refrescarDatosGrupo(grupo.getIdGrupo());
+    }
+
     private void setupObservers() {
         viewModel.getGrupo().observe(this, g -> {
             this.grupo = g;
+            Glide.with(this)
+                    .load(g.getUrl() + "?t=" + System.currentTimeMillis())
+                    .placeholder(R.drawable.ic_people)
+                    .circleCrop()
+                    .into(binding.ivAvatarGrupo);
             binding.tvTituloManejo.setText(g.getNombre());
-            Glide.with(this).load(g.getUrl()).placeholder(R.drawable.ic_people).circleCrop().into(binding.ivAvatarGrupo);
         });
 
         viewModel.getContadorMiembros().observe(this, count ->
@@ -91,7 +88,7 @@ public class ManejoGrupoActivity extends AppCompatActivity {
         binding.ivEditarGrupo.setOnClickListener(v -> {
             Intent i = new Intent(this, EditarGrupoActivity.class);
             i.putExtra("objetoGrupo", grupo);
-            editarGrupoLauncher.launch(i);
+            startActivity(i);
         });
 
         binding.fabAnadirLectura.setOnClickListener(v -> {
@@ -114,13 +111,6 @@ public class ManejoGrupoActivity extends AppCompatActivity {
                     .setNegativeButton("Cancelar", null)
                     .show();
         });
-
-        binding.fabAnadirLectura.setOnClickListener(v -> {
-            Intent i = new Intent(this, NuevoLibroPropuestoActivity.class);
-            i.putExtra("idGrupo", grupo.getIdGrupo());
-            // CAMBIO: Usar el launcher en lugar de startActivity(i)
-            nuevaPropuestaLauncher.launch(i);
-        });
     }
 
 
@@ -129,9 +119,15 @@ public class ManejoGrupoActivity extends AppCompatActivity {
 
         new TabLayoutMediator(binding.tabsManejo, binding.viewPagerManejo, (tab, position) -> {
             switch (position) {
-                case 0: tab.setText("Propuestas"); break;
-                case 1: tab.setText("Actual"); break;
-                case 2: tab.setText("Finalizadas"); break;
+                case 0:
+                    tab.setText("Propuestas");
+                    break;
+                case 1:
+                    tab.setText("Actual");
+                    break;
+                case 2:
+                    tab.setText("Finalizadas");
+                    break;
             }
         }).attach();
 
@@ -158,13 +154,21 @@ public class ManejoGrupoActivity extends AppCompatActivity {
 
     private static class ManejoPagerAdapter extends FragmentStateAdapter {
         private final int idGrupo;
+
         public ManejoPagerAdapter(AppCompatActivity activity, int idGrupo) {
             super(activity);
             this.idGrupo = idGrupo;
         }
-        @NonNull @Override public Fragment createFragment(int position) {
+
+        @NonNull
+        @Override
+        public Fragment createFragment(int position) {
             return ListaLibrosManejoFragment.newInstance(idGrupo, position);
         }
-        @Override public int getItemCount() { return 3; }
+
+        @Override
+        public int getItemCount() {
+            return 3;
+        }
     }
 }

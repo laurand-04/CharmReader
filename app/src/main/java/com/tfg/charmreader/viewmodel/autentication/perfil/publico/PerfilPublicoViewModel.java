@@ -92,7 +92,7 @@ public class PerfilPublicoViewModel extends AndroidViewModel {
                     List<Integer> ids = new ArrayList<>();
                     for (Obras obra : listaObras) {
                         Log.d("DEBUG_PERFIL", "Obra encontrada: ID_Libro = " + obra.getIdLibro());
-                        if (obra.getIdLibro() > 0) {
+                        if (obra.isPublicado()) {
                             ids.add(obra.getIdLibro());
                         }
                     }

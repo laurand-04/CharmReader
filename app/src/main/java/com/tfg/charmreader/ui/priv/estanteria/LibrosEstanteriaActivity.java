@@ -112,6 +112,8 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        binding.tvTituloEstanteria.setOnClickListener(v -> mostrarDialogoNombre());
     }
 
     private void mostrarMenuAutores() {
@@ -248,6 +250,43 @@ public class LibrosEstanteriaActivity extends AppCompatActivity {
                 .setNegativeButton("CANCELAR", null)
                 .setPositiveButton("QUITAR", (d, w) -> viewModel.desvincularLibro(this, libro.getId(), idEstanteria))
                 .show();
+    }
+
+    private void mostrarDialogoNombre() {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_editar_nombre_estanteria, null);
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+
+        com.google.android.material.textfield.TextInputEditText etNombre = dialogView.findViewById(R.id.etNuevoNombre);
+        MaterialButton btnGuardar = dialogView.findViewById(R.id.btnGuardarNombre);
+        ImageView btnClose = dialogView.findViewById(R.id.btnCloseDialog);
+        ImageView ivIcono = dialogView.findViewById(R.id.ivIconoDialog);
+
+        // Configurar color actual en el diálogo
+        int colorFuerte = obtenerColorFuerte(getIntent().getStringExtra("Color"));
+        ivIcono.getBackground().setColorFilter(colorFuerte, PorterDuff.Mode.SRC_IN);
+        btnGuardar.setBackgroundTintList(ColorStateList.valueOf(colorFuerte));
+
+        // Poner el nombre actual en el edit text
+        etNombre.setText(binding.tvTituloEstanteria.getText().toString());
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        btnGuardar.setOnClickListener(v -> {
+            String nuevoNombre = etNombre.getText().toString().trim();
+            if (!nuevoNombre.isEmpty()) {
+                binding.tvTituloEstanteria.setText(nuevoNombre); // Cambio visual inmediato
+                viewModel.actualizarNombreEstanteria(this, idEstanteria, nuevoNombre);
+                dialog.dismiss();
+            } else {
+                etNombre.setError("El nombre no puede estar vacío");
+            }
+        });
+
+        dialog.show();
     }
 
     private void aplicarColoresDinamicos() {

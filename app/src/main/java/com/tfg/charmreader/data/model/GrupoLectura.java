@@ -74,4 +74,17 @@ public class GrupoLectura implements Serializable {
             default: return Frecuencia.SEMANAL;
         }
     }
+
+    @Override public String toString() {
+        return "GrupoLectura{" +
+                "idGrupo=" + idGrupo +
+                ", idUsuario=" + idUsuario +
+                ", nombre='" + nombre + '\'' +
+                ", ubicacion='" + ubicacion + '\'' +
+                ", descripcion='" + descripcion + '\'' +
+                ", fechaCreacion=" + fechaCreacion +
+                ", frecuenciaReunion=" + frecuenciaReunion +
+                ", url='" + url + '\'' +
+                '}';
+    }
 }

@@ -31,6 +31,7 @@ public class LibroActualActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(LibroActualViewModel.class);
 
         setupObservers();
+        setupListeners();
 
         // Recuperar datos
         if (savedInstanceState == null) {
@@ -48,9 +49,10 @@ public class LibroActualActivity extends AppCompatActivity {
                 viewModel.cargarComentariosYGenerarResumen(libro.getTitulo());
             }
         }
+    }
 
-        // Botón atrás opcional (si decides añadirlo al XML o Toolbar)
-        // binding.btnBack.setOnClickListener(v -> finish());
+    private void setupListeners() {
+        binding.btnBackDetalle.setOnClickListener(v -> finish());
 
         binding.btnLeerEpub.setOnClickListener(v -> {
             BookEn libroL = viewModel.getLibro().getValue();

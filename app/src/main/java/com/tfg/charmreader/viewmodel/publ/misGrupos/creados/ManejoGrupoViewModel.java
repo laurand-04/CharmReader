@@ -1,10 +1,13 @@
 package com.tfg.charmreader.viewmodel.publ.misGrupos.creados;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.tfg.charmreader.data.model.GrupoLectura;
 import com.tfg.charmreader.data.model.Miembro;
+import com.tfg.charmreader.data.repository.GrupoRepository;
 import com.tfg.charmreader.data.repository.publ.InfoGrupoRepository;
 import java.util.List;
 import retrofit2.Call;
@@ -13,6 +16,8 @@ import retrofit2.Response;
 
 public class ManejoGrupoViewModel extends ViewModel {
     private final InfoGrupoRepository repository = new InfoGrupoRepository();
+    private final GrupoRepository grupoRepository = new GrupoRepository();
+
     private final MutableLiveData<GrupoLectura> grupo = new MutableLiveData<>();
     private final MutableLiveData<Integer> contadorMiembros = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
@@ -25,7 +30,10 @@ public class ManejoGrupoViewModel extends ViewModel {
     public LiveData<String> getMensaje() { return mensaje; }
     public LiveData<Boolean> getVotacionCerradaExito() { return votacionCerradaExito; }
 
-    public void setGrupoInicial(GrupoLectura g) { grupo.setValue(g); }
+    // En ManejoGrupoViewModel.java
+    public void setGrupoInicial(GrupoLectura g) {
+        this.grupo.setValue(g); // Esto disparará el Observer en la Activity
+    }
 
     public void refrescarDatosGrupo(int idGrupo) {
         isLoading.setValue(true);
@@ -39,6 +47,17 @@ public class ManejoGrupoViewModel extends ViewModel {
                 }
             }
             @Override public void onFailure(Call<List<Miembro>> call, Throwable t) { isLoading.postValue(false); }
+        });
+        grupoRepository.obtenerGrupoPorId(idGrupo, new Callback<GrupoLectura>() {
+            @Override
+            public void onResponse(Call<GrupoLectura> call, Response<GrupoLectura> response) {
+                isLoading.postValue(false);
+                Log.d("ManejoGrupoViewModel", "Respuesta: " + response.body() + "\nGrupo en memoria antes de setear\n" + grupo.getValue());
+                if (response.isSuccessful() && response.body() != null) {
+                    grupo.setValue(response.body());
+                }
+            }
+            @Override public void onFailure(Call<GrupoLectura> call, Throwable t) { isLoading.postValue(false); }
         });
     }
 

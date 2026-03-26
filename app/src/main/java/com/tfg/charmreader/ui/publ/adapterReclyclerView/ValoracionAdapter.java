@@ -10,10 +10,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.tfg.charmreader.R;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiUsuario;
-import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.model.Usuario;
 import com.tfg.charmreader.data.model.Valoracion;
+import com.tfg.charmreader.data.repository.publ.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +26,7 @@ public class ValoracionAdapter extends RecyclerView.Adapter<ValoracionAdapter.Va
 
     private List<Valoracion> valoraciones;
     private OnItemClickListener listener;
-    // API para obtener datos del autor del comentario
-    private final I_ApiUsuario apiUsuario = API.getInstancia().create(I_ApiUsuario.class);
+    private final UserRepository userRepository = new UserRepository();
 
     public interface OnItemClickListener {
         void onItemClick(Valoracion valoracion);
@@ -60,7 +58,7 @@ public class ValoracionAdapter extends RecyclerView.Adapter<ValoracionAdapter.Va
         holder.ivAvatar.setImageResource(R.drawable.ic_person);
 
         // 3. Obtener nombre y foto real del autor
-        apiUsuario.obtenerUsuarioPorId(valoracion.getIdUsuario()).enqueue(new Callback<Usuario>() {
+        userRepository.obtenerUsuarioPorId(valoracion.getIdUsuario(), new Callback<Usuario>(){
             @Override
             public void onResponse(Call<Usuario> call, Response<Usuario> response) {
                 if (response.isSuccessful() && response.body() != null) {

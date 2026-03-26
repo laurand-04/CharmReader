@@ -292,6 +292,7 @@ public class CargarLibroViewModel extends AndroidViewModel {
 
         Obras copia = new Obras(obra);
         copia.setIdLibro(nuevoIdLibro);
+        copia.setPublicado(true);
 
         obrasRepository.guardarObra(copia, new Callback<Obras>() {
             @Override

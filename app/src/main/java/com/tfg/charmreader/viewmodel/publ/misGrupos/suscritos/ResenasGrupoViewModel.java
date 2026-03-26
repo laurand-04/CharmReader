@@ -4,8 +4,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.tfg.charmreader.data.model.Valoracion;
-import com.tfg.charmreader.data.network.API.API;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiValoracion;
+import com.tfg.charmreader.data.repository.publ.ValoracionRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -13,7 +13,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ResenasGrupoViewModel extends ViewModel {
-    private final I_ApiValoracion api = API.getInstancia().create(I_ApiValoracion.class);
+    private final ValoracionRepository valoracionRepository = new ValoracionRepository();
 
     private final MutableLiveData<List<Valoracion>> valoraciones = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
@@ -26,7 +26,7 @@ public class ResenasGrupoViewModel extends ViewModel {
     public void cargarResenas(int idGrupo) {
         isLoading.setValue(true);
         // idLibro = -1 para valoraciones de grupo según tu lógica
-        api.verValoraciones(Valoracion.TipoValoracion.GRUPO, idGrupo).enqueue(new Callback<List<Valoracion>>() {
+        valoracionRepository.verValoraciones(Valoracion.TipoValoracion.GRUPO, idGrupo, new Callback<List<Valoracion>>() {
             @Override
             public void onResponse(Call<List<Valoracion>> call, Response<List<Valoracion>> response) {
                 isLoading.postValue(false);

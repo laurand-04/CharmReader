@@ -7,9 +7,9 @@ import androidx.lifecycle.ViewModel;
 import com.tfg.charmreader.data.model.BookEn;
 import com.tfg.charmreader.data.model.Votacion;
 import com.tfg.charmreader.data.network.API.API;
-import com.tfg.charmreader.data.network.interfacesAPI.I_APICatalogo;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiMiembro;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiVotacion;
+import com.tfg.charmreader.data.repository.GrupoRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,9 +25,10 @@ public class PropuestasFragmentViewModel extends ViewModel {
     private final MutableLiveData<Integer> totalMiembros = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
     private final MutableLiveData<String> toastMessage = new MutableLiveData<>();
-
-    private final I_APICatalogo apiCatalogo = API.getInstancia().create(I_APICatalogo.class);
+    private final GrupoRepository grupoRepository = new GrupoRepository();
+    //No se peude quitar I_ApiMiembro
     private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
+    //No se peude quitar I_ApiVotacion
     private final I_ApiVotacion apiVotacion = API.getInstancia().create(I_ApiVotacion.class);
 
     public LiveData<List<BookEn>> getListaLibros() { return listaLibros; }
@@ -60,7 +61,7 @@ public class PropuestasFragmentViewModel extends ViewModel {
     }
 
     private void cargarLibros(int idGrupo) {
-        apiCatalogo.obtenerLibroPropuestas(idGrupo).enqueue(new Callback<List<BookEn>>() {
+        grupoRepository.obtenerLibroPropuestas(idGrupo, new Callback<List<BookEn>>() {
             @Override
             public void onResponse(Call<List<BookEn>> call, Response<List<BookEn>> response) {
                 if (response.isSuccessful() && response.body() != null) {

@@ -84,14 +84,6 @@ public class ExplorarFragment extends Fragment {
             startActivity(intent);
         });
 
-        // Inicializar Adaptador de Usuarios
-        usuarioAdapter = new UsuarioAdapter(new ArrayList<>(), usuario -> {
-            // Aquí podrías abrir el perfil del usuario
-            // Intent intent = new Intent(getActivity(), PerfilUsuarioActivity.class);
-            // intent.putExtra("usuario", usuario);
-            // startActivity(intent);
-        });
-
         usuarioAdapter = new UsuarioAdapter(new ArrayList<>(), usuario -> {
             // Solo permitimos navegar si el usuario es público (opcional, según tu lógica de adapter)
             Intent intent = new Intent(getActivity(), PerfilPublicoActivity.class);

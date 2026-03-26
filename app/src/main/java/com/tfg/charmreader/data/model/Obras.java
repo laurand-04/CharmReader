@@ -26,6 +26,9 @@ public class Obras implements Serializable {
     @SerializedName("finalizado")
     private boolean finalizado;
 
+    @SerializedName("publicado")
+    private boolean publicado;
+
     @SerializedName("nombre")
     private String nombre;
 
@@ -45,7 +48,7 @@ public class Obras implements Serializable {
     public Obras() {
     }
 
-    public Obras(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion, String autor, String sinopsis) {
+    public Obras(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion, String autor, String sinopsis, boolean publicado) {
         this.idUsuario = idUsuario;
         this.ruta = ruta;
         this.finalizado = finalizado;
@@ -54,6 +57,7 @@ public class Obras implements Serializable {
         this.fecha_ultima_modificacion = fecha_ultima_modificacion;
         this.autor = autor;
         this.idLibro = -1;
+        this.publicado = publicado;
     }
 
     public Obras(Obras otra) {
@@ -71,10 +75,20 @@ public class Obras implements Serializable {
             this.fecha_ultima_modificacion = (otra.fecha_ultima_modificacion != null)
                     ? new Date(otra.fecha_ultima_modificacion.getTime())
                     : null;
+            this.publicado = otra.isPublicado();
         }
     }
 
     // Getters y Setters
+
+    public boolean isPublicado() {
+        return publicado;
+    }
+
+    public void setPublicado(boolean publicado) {
+        this.publicado = publicado;
+    }
+
     public Integer getId() {
         return id;
     }

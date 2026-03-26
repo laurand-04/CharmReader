@@ -44,4 +44,8 @@ public class InfoGrupoRepository {
     public void obtenerGruposDondeEsMiembro(int idUsuario, Callback<List<GrupoLectura>> callback) {
         apiMiembro.obtenerGruposDondeEsMiembro(idUsuario).enqueue(callback);
     }
+
+    public void obtenerMediaGrupo(int idGrupo, Callback<Double> cb) {
+        apiValoracion.obtenerMediaGrupo(idGrupo).enqueue(cb);
+    }
 }

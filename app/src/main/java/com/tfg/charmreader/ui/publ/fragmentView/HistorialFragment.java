@@ -5,14 +5,15 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import com.tfg.charmreader.data.model.BookEn;
-import com.tfg.charmreader.data.model.CatalogoLectura;
+
 import com.tfg.charmreader.data.model.GrupoLectura;
+import com.tfg.charmreader.data.pojo.LibroHistorialUI;
 import com.tfg.charmreader.databinding.FragmentHistorialBinding;
 import com.tfg.charmreader.ui.publ.adapterReclyclerView.LibroHistorialAdapter;
 import com.tfg.charmreader.ui.publ.misGrupos.suscritos.ValoracionesLibroActivity;
@@ -39,8 +40,10 @@ public class HistorialFragment extends Fragment {
 
         viewModel = new ViewModelProvider(this).get(HistorialFragmentViewModel.class);
 
+        // Configuración básica del RecyclerView
         binding.rvHistorial.setLayoutManager(new LinearLayoutManager(getContext()));
 
+        // Recuperar objeto grupo del Intent de la Activity contenedora
         if (getActivity() != null && getActivity().getIntent().hasExtra("objetoGrupo")) {
             grupo = (GrupoLectura) getActivity().getIntent().getSerializableExtra("objetoGrupo");
             setupObservers();
@@ -49,33 +52,33 @@ public class HistorialFragment extends Fragment {
     }
 
     private void setupObservers() {
-        // Observamos el estado vacío
+        // Observamos si la lista está vacía para mostrar el layout de aviso
         viewModel.getIsEmpty().observe(getViewLifecycleOwner(), estaVacio -> {
             binding.layoutEmptyHistorial.setVisibility(estaVacio ? View.VISIBLE : View.GONE);
             binding.rvHistorial.setVisibility(estaVacio ? View.GONE : View.VISIBLE);
         });
 
-        // Observamos los datos (el ViewModel garantiza que se cargan juntos)
-        viewModel.getLibros().observe(getViewLifecycleOwner(), listaLibros -> {
-            List<CatalogoLectura> listaFechas = viewModel.getCatalogo().getValue();
-            if (listaLibros != null && listaFechas != null) {
-                configurarAdapter(listaLibros, listaFechas);
+        // Observamos la lista única de objetos UI (Libro + Fecha + Valoración)
+        viewModel.getLibrosHistorial().observe(getViewLifecycleOwner(), listaUI -> {
+            if (listaUI != null) {
+                configurarAdapter(listaUI);
             }
         });
 
-        // Opcional: ProgressBar
+        // Observamos el estado de carga (opcional, por si quieres mostrar un Spinner)
         viewModel.getIsLoading().observe(getViewLifecycleOwner(), loading -> {
+            // Si añades un ProgressBar al XML, contrólalo aquí:
             // binding.progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
     }
 
-    private void configurarAdapter(List<BookEn> listaLibros, List<CatalogoLectura> listaFechas) {
+    private void configurarAdapter(List<LibroHistorialUI> listaUI) {
         LibroHistorialAdapter adapter = new LibroHistorialAdapter(
-                listaLibros,
-                listaFechas,
-                libro -> {
+                listaUI,
+                itemUI -> {
+                    // Al hacer click, enviamos los datos a la actividad de valoraciones
                     Intent intent = new Intent(getContext(), ValoracionesLibroActivity.class);
-                    intent.putExtra("idLibro", libro.getId());
+                    intent.putExtra("idLibro", itemUI.getLibro().getId());
                     intent.putExtra("idGrupo", grupo.getIdGrupo());
                     startActivity(intent);
                 }

@@ -11,9 +11,10 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.tfg.charmreader.R;
 import com.tfg.charmreader.data.network.interfacesAPI.I_ApiMiembro;
-import com.tfg.charmreader.data.network.interfacesAPI.I_ApiValoracion;
 import com.tfg.charmreader.data.network.API.API;
 import com.tfg.charmreader.data.model.GrupoLectura;
+import com.tfg.charmreader.data.repository.publ.InfoGrupoRepository;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -27,9 +28,12 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
     private List<GrupoLectura> listaOriginal;
     private OnItemClickListener listener;
     private OnItemLongClickListener longListener; // 🔥 Listener para clic largo
-
+    //No podemos quitar I_ApiMiembro
     private final I_ApiMiembro apiMiembro = API.getInstancia().create(I_ApiMiembro.class);
-    private final I_ApiValoracion apiValoracion = API.getInstancia().create(I_ApiValoracion.class);
+    private final InfoGrupoRepository infoGrupoRepository = new InfoGrupoRepository();
+
+
+    // 🔥 Interfaz para el clic
 
     public interface OnItemClickListener {
         void onItemClick(GrupoLectura grupo);
@@ -87,7 +91,7 @@ public class GrupoLecturaAdapter extends RecyclerView.Adapter<GrupoLecturaAdapte
             @Override public void onFailure(Call<Long> call, Throwable t) { holder.tvMiembros.setText("0 miembros"); }
         });
 
-        apiValoracion.obtenerMediaGrupo(grupo.getIdGrupo()).enqueue(new Callback<Double>() {
+        infoGrupoRepository.obtenerMediaGrupo(grupo.getIdGrupo(), new Callback<Double>() {
             @Override
             public void onResponse(Call<Double> call, Response<Double> response) {
                 if (response.isSuccessful() && response.body() != null) {

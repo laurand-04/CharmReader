@@ -104,6 +104,17 @@ public class PerfilActivity extends AppCompatActivity {
             // Mostrar/ocultar ruleta de foto
             binding.pbFotoPerfil.setVisibility(loading ? View.VISIBLE : View.GONE);
         });
+
+        viewModel.getMessage().observe(this, msg -> {
+            if (msg != null) {
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+
+                // Si el mensaje viene del ViewModel tras el éxito del DELETE
+                if (msg.contains("eliminada correctamente")) {
+                    cerrarSesion(); // Tu métod que ya hace FirebaseAuth.signOut() y limpia SharedPreferences
+                }
+            }
+        });
     }
 
     private void setupListeners() {
@@ -138,9 +149,17 @@ public class PerfilActivity extends AppCompatActivity {
             viewModel.cambiarPassword();
         });
 
-        // Añade esto al final del método setupListeners()
         binding.containerDescripcion.setOnClickListener(v -> mostrarDialogoDescripcion());
         setupSwitchListener();
+
+        binding.btnEliminarCuenta.setOnClickListener(v -> {
+            new MaterialAlertDialogBuilder(this)
+                    .setTitle("⚠️ ACCIÓN CRÍTICA")
+                    .setMessage("Al eliminar tu cuenta perderás todos tus libros, progresos y grupos. Esta acción no se puede deshacer.")
+                    .setPositiveButton("CONTINUAR", (dialog, which) -> mostrarDialogoSeguridadEliminar())
+                    .setNegativeButton("CANCELAR", null)
+                    .show();
+        });
     }
 
     private void setupSwitchListener() {
@@ -251,6 +270,56 @@ public class PerfilActivity extends AppCompatActivity {
                 })
                 .setCancelable(false) // Obligamos a elegir una opción
                 .show();
+    }
+
+    private void mostrarDialogoSeguridadEliminar() {
+        // Reutilizamos el diseño de diálogo que ya tienes para NOMBRE/DESCRIPCIÓN
+        final android.app.Dialog dialog = new android.app.Dialog(this);
+        dialog.setContentView(R.layout.dialog_editar_perfil);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        TextView tvTitulo = dialog.findViewById(R.id.tvTituloDialogEditar);
+        com.google.android.material.textfield.TextInputEditText et = dialog.findViewById(R.id.etNuevoNombreDialog);
+        com.google.android.material.button.MaterialButton btnEliminar = dialog.findViewById(R.id.btnGuardarNombre);
+        ImageView btnCerrar = dialog.findViewById(R.id.btnCerrarDialog);
+
+        // Configuración para la ELIMINACIÓN
+        if (tvTitulo != null) tvTitulo.setText("Confirmar Eliminación");
+        if (tvTitulo != null) tvTitulo.setTextColor(Color.parseColor("#D32F2F"));
+
+        et.setHint("Escribe 'confirmar eliminacion'");
+        et.setText("");
+
+        btnEliminar.setText("ELIMINAR DEFINITIVAMENTE");
+        btnEliminar.setBackgroundColor(Color.parseColor("#D32F2F"));
+        btnEliminar.setEnabled(false); // Empezamos desactivado
+
+        // Escuchador de texto para validar la palabra mágica
+        et.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String texto = s.toString().trim().toLowerCase();
+                // Validamos la frase (sin tildes para facilitar al usuario)
+                btnEliminar.setEnabled(texto.equals("confirmar eliminacion"));
+            }
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        if (btnCerrar != null) btnCerrar.setOnClickListener(v -> dialog.dismiss());
+
+        btnEliminar.setOnClickListener(v -> {
+            viewModel.eliminarCuenta();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void cerrarSesion() {
