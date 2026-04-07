@@ -22,6 +22,7 @@ import com.tfg.charmreader.data.repository.priv.tusObras.ObrasRepository;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.ResponseBody;
@@ -50,8 +51,13 @@ public class CargarLibroViewModel extends AndroidViewModel {
         super(application);
     }
 
-    public LiveData<Boolean> getUploadSuccess() { return uploadSuccess; }
-    public LiveData<String> getError() { return error; }
+    public LiveData<Boolean> getUploadSuccess() {
+        return uploadSuccess;
+    }
+
+    public LiveData<String> getError() {
+        return error;
+    }
 
     public void procesarEpub(Uri epubUri, int idUsuario, boolean grupo, int idLibro, Obras obra) {
         Log.d(TAG, "1. Iniciando procesarEpub. Usuario: " + idUsuario + ", Grupo: " + grupo + ", idLibro: " + idLibro);
@@ -92,7 +98,7 @@ public class CargarLibroViewModel extends AndroidViewModel {
                 Book book = new EpubReader().readEpub(is);
 
                 String title = book.getTitle();
-                Log.d(TAG, "2.1. EPUB Leído. Título: " + title);
+                Log.d(TAG, "2.1. EPUB Leído. Título: " + title + ". Capitulos: " + book.getContents().size());
 
                 StringBuilder authors = new StringBuilder();
                 for (Author a : book.getMetadata().getAuthors()) {
@@ -134,9 +140,11 @@ public class CargarLibroViewModel extends AndroidViewModel {
                                     registrarEnApi(idLibro, rutaAbsoluta, urlEpub);
                                 } else {
                                     Log.d(TAG, "5. Flujo INDIVIDUAL: Creando objeto Libro...");
-                                    Libro nuevo = new Libro(isbn, title, finalAuthors, book.getSpine().size());
+                                    Libro nuevo = new Libro(isbn, title, finalAuthors, book.getContents().size());
                                     nuevo.setUrlImagen(urlPortada);
                                     nuevo.setUrlLibro(urlEpub);
+                                    if (obra != null && obra.getIdLibro() > 0)
+                                        nuevo.setId(obra.getIdLibro());
                                     registrarEnApi(nuevo, rutaAbsoluta, idUsuario, obra);
                                 }
                             }
@@ -179,7 +187,7 @@ public class CargarLibroViewModel extends AndroidViewModel {
 
                 if (seguidoresTemporales != null && !seguidoresTemporales.isEmpty()) {
                     Log.d(TAG, "7. Iniciando migración de " + seguidoresTemporales.size() + " seguidores...");
-                    migrarSeguidoresSecuencial(0, nuevoIdLibro, obra, ruta, idU);
+                    //migrarSeguidoresSecuencial(0, nuevoIdLibro, obra, ruta, idU);
                 } else {
                     Log.d(TAG, "7. No hay seguidores. Vinculando usuario actual directamente...");
                     vincularUsuarioYFinalizar(idU, nuevoIdLibro, ruta, obra);
@@ -197,7 +205,6 @@ public class CargarLibroViewModel extends AndroidViewModel {
     private void migrarSeguidoresSecuencial(int index, int nuevoIdLibro, Obras obra, String ruta, int idUsuario) {
         if (seguidoresTemporales == null || index >= seguidoresTemporales.size()) {
             Log.d(TAG, "8. Migración finalizada. Eliminando libro antiguo de la BD...");
-
             // --- PASO CLAVE: Eliminar el libro viejo de la tabla Libro ---
             repository.eliminarLibro(obra.getIdLibro(), new Callback<ResponseBody>() {
                 @Override
@@ -212,6 +219,7 @@ public class CargarLibroViewModel extends AndroidViewModel {
                     actualizarIdLibroEnObraSeguro(obra, nuevoIdLibro);
                 }
             });
+
             return;
         }
 
@@ -336,14 +344,16 @@ public class CargarLibroViewModel extends AndroidViewModel {
     private void registrarEnApi(int idLibro, String rutaAbsoluta, String urlEpub) {
         Log.d(TAG, "6-G. Buscando libro de grupo ID: " + idLibro);
         bookRepository.obtenerBookPorId(idLibro, new Callback<BookEn>() {
-            @Override public void onResponse(Call<BookEn> call, Response<BookEn> resp) {
+            @Override
+            public void onResponse(Call<BookEn> call, Response<BookEn> resp) {
                 if (resp.isSuccessful() && resp.body() != null) {
                     BookEn libro = resp.body();
                     libro.setRuta(rutaAbsoluta);
                     libro.setUrlLibro(urlEpub);
                     Log.d(TAG, "6-G.1. Actualizando BookEn con nuevas URLs...");
                     bookRepository.anadirBook(libro, new Callback<BookEn>() {
-                        @Override public void onResponse(Call<BookEn> call, Response<BookEn> r) {
+                        @Override
+                        public void onResponse(Call<BookEn> call, Response<BookEn> r) {
                             if (r.isSuccessful()) {
                                 Log.d(TAG, "7-G. Éxito en flujo de grupo.");
                                 uploadSuccess.postValue(true);
@@ -352,11 +362,19 @@ public class CargarLibroViewModel extends AndroidViewModel {
                                 postError("Error al vincular libro de grupo");
                             }
                         }
-                        @Override public void onFailure(Call<BookEn> call, Throwable t) { postError("Error de red"); }
+
+                        @Override
+                        public void onFailure(Call<BookEn> call, Throwable t) {
+                            postError("Error de red");
+                        }
                     });
                 }
             }
-            @Override public void onFailure(Call<BookEn> call, Throwable t) { postError("Error al guardar libro"); }
+
+            @Override
+            public void onFailure(Call<BookEn> call, Throwable t) {
+                postError("Error al guardar libro");
+            }
         });
     }
 }

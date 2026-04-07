@@ -171,7 +171,7 @@ public class EditorObraViewModel extends AndroidViewModel {
                 // Actualizamos el objeto obra con la nueva URL y fecha
                 obra.setUrl_obra(urlEpubCloudinary);
                 obra.setFecha_ultima_modificacion(new Date());
-
+                obra.setPaginas(miLibro.getContents().size());
                 // Llamamos a la API para guardar los cambios en la base de datos
                 actualizarObraEnServidor();
             }
@@ -214,11 +214,15 @@ public class EditorObraViewModel extends AndroidViewModel {
             htmlBruto = htmlBruto.replaceAll("(?is)<h[1-6][^>]*>.*?</h[1-6]>", "");
             htmlBruto = htmlBruto.replaceAll("(?is)<title>.*?</title>", "");
 
-            String textoPlano = Html.fromHtml(htmlBruto, Html.FROM_HTML_MODE_COMPACT).toString().trim();
-            textoPlano = textoPlano.replaceAll("(?i)^Capítulo\\s*\\d+\\s*", "");
+            CharSequence textoFormateado = Html.fromHtml(htmlBruto, Html.FROM_HTML_MODE_LEGACY);
+
+            String textoFinal = textoFormateado.toString().trim();
+
+            //String textoPlano = Html.fromHtml(htmlBruto, Html.FROM_HTML_MODE_COMPACT).toString().trim();
+            //textoPlano = textoPlano.replaceAll("(?i)^Capítulo\\s*\\d+\\s*", "");
 
             tituloCapitulo.postValue("Capítulo " + indiceCapituloActual);
-            contenidoCapitulo.postValue(textoPlano.trim());
+            contenidoCapitulo.postValue(textoFinal);
 
             esPrimerCapitulo.postValue(indiceCapituloActual == 1);
             esUltimoCapitulo.postValue(indiceCapituloActual == miLibro.getSpine().size() - 1);
@@ -231,15 +235,28 @@ public class EditorObraViewModel extends AndroidViewModel {
 
     private void guardarCapituloEnMemoria(String textoPlano) {
         try {
-            String textoSeguro = Html.escapeHtml(textoPlano);
-            String textoFormateado = textoSeguro.replace("\n", "<br>");
             String titulo = "Capítulo " + indiceCapituloActual;
+            StringBuilder cuerpoHtml = new StringBuilder();
+
+            // Dividimos el texto por saltos de línea para crear párrafos <p>
+            String[] parrafos = textoPlano.split("\n");
+            for (String p : parrafos) {
+                if (!p.trim().isEmpty()) {
+                    // Escapamos caracteres básicos manualmente para no romper el HTML
+                    String textoEscapado = p.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+                    cuerpoHtml.append("<p>").append(textoEscapado).append("</p>");
+                } else {
+                    // Si es un salto de línea vacío, añadimos un párrafo vacío o un break
+                    cuerpoHtml.append("<br/>");
+                }
+            }
 
             String nuevoHtml =
-                    "<html><head><title>" + titulo + "</title></head>" +
-                            "<body><h2>" + titulo + "</h2><div>" +
-                            textoFormateado +
-                            "</div></body></html>";
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                            "<html><head><title>" + titulo + "</title></head>" +
+                            "<body><h1>" + titulo + "</h1>" +
+                            cuerpoHtml.toString() +
+                            "</body></html>";
 
             Resource recursoExistente = miLibro.getSpine().getResource(indiceCapituloActual);
             recursoExistente.setData(nuevoHtml.getBytes(StandardCharsets.UTF_8));

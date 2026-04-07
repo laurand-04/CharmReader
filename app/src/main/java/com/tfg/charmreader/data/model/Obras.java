@@ -44,11 +44,14 @@ public class Obras implements Serializable {
     @SerializedName("fecha_ultima_modificacion")
     private Date fecha_ultima_modificacion;
 
+    @SerializedName("paginas")
+    private int paginas;
+
     // Constructor vacío requerido por Retrofit/Gson
     public Obras() {
     }
 
-    public Obras(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion, String autor, String sinopsis, boolean publicado) {
+    public Obras(int idUsuario, String ruta, boolean finalizado, String nombre, String url_imagen, Date fecha_ultima_modificacion, String autor, String sinopsis, boolean publicado, int paginas) {
         this.idUsuario = idUsuario;
         this.ruta = ruta;
         this.finalizado = finalizado;
@@ -58,6 +61,8 @@ public class Obras implements Serializable {
         this.autor = autor;
         this.idLibro = -1;
         this.publicado = publicado;
+        this.paginas = paginas;
+        this.sinopsis = sinopsis;
     }
 
     public Obras(Obras otra) {
@@ -71,6 +76,8 @@ public class Obras implements Serializable {
             this.nombre = otra.nombre;
             this.url_imagen = otra.url_imagen;
             this.sinopsis = otra.sinopsis;
+            this.url_obra = otra.url_obra;
+            this.paginas = otra.paginas;
             // Las fechas son mutables, es recomendable crear una nueva instancia
             this.fecha_ultima_modificacion = (otra.fecha_ultima_modificacion != null)
                     ? new Date(otra.fecha_ultima_modificacion.getTime())
@@ -175,5 +182,13 @@ public class Obras implements Serializable {
 
     public void setUrl_obra(String url_obra) {
         this.url_obra = url_obra;
+    }
+
+    public int getPaginas() {
+        return paginas;
+    }
+
+    public void setPaginas(int paginas) {
+        this.paginas = paginas;
     }
 }

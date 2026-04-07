@@ -116,7 +116,8 @@
                 android:background="?attr/selectableItemBackground"
                 android:padding="8dp"
                 android:text="¿No tienes cuenta? Regístrate"
-                android:textColor="#2C3E50"
+                android:textColor="#3498DB"
+                android:textStyle="bold"
                 android:textSize="14sp" />
 
         </LinearLayout>

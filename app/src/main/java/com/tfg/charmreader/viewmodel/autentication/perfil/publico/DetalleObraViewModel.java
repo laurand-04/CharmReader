@@ -113,7 +113,7 @@ public class DetalleObraViewModel extends AndroidViewModel {
         }
     }
 
-    // Método auxiliar para evitar repetir código de actualización
+    // Métod auxiliar para evitar repetir código de actualización
     private void ejecutarActualizacion(LibrosDeUsuario relacion) {
         libroRepo.actualizarProgreso(relacion, new Callback<LibrosDeUsuario>() {
             @Override
