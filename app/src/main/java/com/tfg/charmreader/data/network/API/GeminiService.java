@@ -23,7 +23,7 @@ public class GeminiService {
 
     public void generarTexto(String prompt, GeminiCallback callback) {
         // Pega tu clave real aquí
-        String apiKey = "AIzaSyB_cXWIyGfR9Sli0drroA0Hkf5sYB_zSk4";
+        String apiKey = "?";
 
         new Thread(() -> {
             try {
