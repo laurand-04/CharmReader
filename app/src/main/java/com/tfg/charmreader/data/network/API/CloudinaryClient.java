@@ -28,8 +28,8 @@ public class CloudinaryClient {
         if (!inicializado) {
             Map<String, String> config = new HashMap<>();
             config.put("cloud_name", "dsmxhglte"); // Reemplazar
-            config.put("api_key", "174419754634384");       // Reemplazar
-            config.put("api_secret", "mGhLHRwgUqbal6z4n8QrSzsI-Pg"); // Reemplazar
+            config.put("api_key", "?");       // Reemplazar
+            config.put("api_secret", "?-Pg"); // Reemplazar
 
             MediaManager.init(context, config);
             inicializado = true;
